@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="SMART goals — define goals, break them into tasks, track progress. Stored only in your browser.">
+  <title>Goals · SMART Tracker</title>
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("edi_goals_theme");
+        if (!t) t = window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+        document.documentElement.dataset.theme = t;
+      } catch (e) {
+        document.documentElement.dataset.theme = "dark";
+      }
+    })();
+  </script>
+  <link rel="stylesheet" href="assets/styles/style.css">
+</head>
+<body>
+  <div class="aurora" aria-hidden="true"><span></span><span></span><span></span></div>
+
+  <div class="app-container">
+    <header class="page-header">
+      <div class="title-block">
+        <div class="eyebrow">SMART Goal Tracker</div>
+        <h1>Goals</h1>
+      </div>
+      <div class="header-actions">
+        <select class="select" id="categoryFilter" aria-label="Filter by category">
+          <option value="">All categories</option>
+        </select>
+        <select class="select" id="statusFilter" aria-label="Filter by status">
+          <option value="">All statuses</option>
+          <option value="active">Active</option>
+          <option value="completed">Completed</option>
+          <option value="archived">Archived</option>
+        </select>
+        <button class="btn-primary" id="newGoalBtn">＋ New goal</button>
+      </div>
+    </header>
+
+    <section class="stats-row" id="statsRow" aria-label="Overview stats"></section>
+
+    <main id="goalsMain" class="goals-grid" aria-live="polite"></main>
+
+    <p class="empty-state" id="emptyState" hidden>
+      No goals yet. Press <strong>＋ New goal</strong> to set your first one with the SMART framework.
+    </p>
+  </div>
+
+  <!-- SMART Setup Wizard -->
+  <dialog class="wizard-modal" id="wizardModal">
+    <form class="wizard-form" id="wizardForm" method="dialog">
+      <div class="modal-header">
+        <div>
+          <div class="eyebrow" id="wizardEyebrow">New Goal</div>
+          <h3 id="wizardTitle">Define a SMART goal</h3>
+        </div>
+        <button type="button" class="icon-btn modal-close" id="closeWizard" title="Close">×</button>
+      </div>
+
+      <ol class="wizard-steps" id="wizardSteps" aria-label="SMART framework steps">
+        <li data-step="specific" aria-current="step">Specific</li>
+        <li data-step="measurable">Measurable</li>
+        <li data-step="achievable">Achievable</li>
+        <li data-step="relevant">Relevant</li>
+        <li data-step="timebound">Time-bound</li>
+      </ol>
+
+      <input type="hidden" id="goalId">
+
+      <div class="wizard-panel" data-panel="specific">
+        <p class="wizard-help">What exactly do you want to achieve? Be as precise as possible.</p>
+        <label class="field">
+          <span>Title</span>
+          <input class="input" id="gTitle" maxlength="120" placeholder="Run a half-marathon" required>
+        </label>
+        <label class="field">
+          <span>Specific description</span>
+          <textarea class="textarea" id="gSpecific" rows="3" maxlength="500" placeholder="What, why, and for whom?"></textarea>
+        </label>
+        <label class="field">
+          <span>Category</span>
+          <input class="input" id="gCategory" maxlength="40" placeholder="Health, Career, Finance…" list="categoryList">
+          <datalist id="categoryList"></datalist>
+        </label>
+      </div>
+
+      <div class="wizard-panel" data-panel="measurable" hidden>
+        <p class="wizard-help">How will you know it’s done? Pick a measurable success signal.</p>
+        <label class="field">
+          <span>Success metric</span>
+          <input class="input" id="gMetric" maxlength="120" placeholder="Finish in under 2 hours">
+        </label>
+        <label class="field-row">
+          <label class="field">
+            <span>Target value</span>
+            <input class="input" id="gTarget" type="number" min="0" step="any" placeholder="21.1">
+          </label>
+          <label class="field">
+            <span>Unit</span>
+            <input class="input" id="gUnit" maxlength="20" placeholder="km, $, books">
+          </label>
+        </label>
+      </div>
+
+      <div class="wizard-panel" data-panel="achievable" hidden>
+        <p class="wizard-help">Break the goal into small, doable tasks. Add at least one.</p>
+        <div class="task-editor">
+          <input class="input" id="taskTitle" maxlength="150" placeholder="First task — e.g., pick a race">
+          <button type="button" class="btn-ghost" id="addTaskBtn">＋ Add</button>
+        </div>
+        <ul class="task-preview" id="taskPreview"></ul>
+      </div>
+
+      <div class="wizard-panel" data-panel="relevant" hidden>
+        <p class="wizard-help">Why does this matter to you right now?</p>
+        <label class="field">
+          <span>Why this goal?</span>
+          <textarea class="textarea" id="gRelevant" rows="3" maxlength="400" placeholder="It connects to long-term health…"></textarea>
+        </label>
+        <label class="field">
+          <span>Priority</span>
+          <select class="select" id="gPriority">
+            <option value="low">Low</option>
+            <option value="medium" selected>Medium</option>
+            <option value="high">High</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="wizard-panel" data-panel="timebound" hidden>
+        <p class="wizard-help">When will it be done? A deadline makes it real.</p>
+        <label class="field">
+          <span>Deadline</span>
+          <input class="input" id="gDeadline" type="date">
+        </label>
+        <label class="field">
+          <span>Start date</span>
+          <input class="input" id="gStart" type="date">
+        </label>
+      </div>
+
+      <p class="wizard-error" id="wizardError" role="alert" hidden></p>
+
+      <div class="wizard-actions">
+        <button type="button" class="btn-ghost" id="prevStepBtn" hidden>← Back</button>
+        <span class="wizard-progress" id="wizardProgress">Step 1 of 5</span>
+        <button type="button" class="btn-ghost" id="nextStepBtn">Next →</button>
+        <button type="submit" class="btn-primary" id="wizardSubmit" hidden>Save goal</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Goal Detail Modal -->
+  <dialog class="detail-modal" id="detailModal">
+    <div class="detail-header">
+      <div>
+        <div class="eyebrow" id="detailCategory">Category</div>
+        <h3 id="detailTitle">Goal</h3>
+      </div>
+      <button type="button" class="icon-btn modal-close" id="closeDetail" title="Close">×</button>
+    </div>
+
+    <div class="detail-meta" id="detailMeta"></div>
+
+    <section class="detail-progress">
+      <div class="progress-head">
+        <strong id="progressLabel">0%</strong>
+        <span id="progressCount">0 / 0 tasks complete</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+      <div class="progress-actions">
+        <button type="button" class="btn-ghost" id="bumpProgressBtn">＋ Update progress</button>
+        <button type="button" class="btn-ghost" id="editGoalBtn">Edit SMART</button>
+        <button type="button" class="btn-ghost btn-danger" id="deleteGoalBtn">Delete</button>
+      </div>
+    </section>
+
+    <section class="smart-summary" id="smartSummary"></section>
+
+    <section class="tasks-section">
+      <h4>Tasks</h4>
+      <form class="add-task-row" id="addTaskForm">
+        <input class="input" id="newTaskInput" maxlength="150" placeholder="Add a task…" required>
+        <button type="submit" class="btn-primary">＋ Add</button>
+      </form>
+      <ul class="tasks-list" id="tasksList"></ul>
+    </section>
+
+    <section class="notes-section">
+      <h4>Notes &amp; reflections</h4>
+      <textarea class="textarea" id="goalNotes" rows="3" maxlength="2000" placeholder="Wins, blockers, journal-style notes…"></textarea>
+    </section>
+  </dialog>
+
+  <div class="toast" id="toast"></div>
+  <script src="assets/scripts/app.js" defer></script>
+</body>
+</html>

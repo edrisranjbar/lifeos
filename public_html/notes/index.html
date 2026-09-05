@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Sticky notes — draggable, sortable notes scattered around the page.">
+  <title>Notes · Edi Life OS</title>
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("edi_notes_theme");
+        if (!t) t = localStorage.getItem("edi_os_theme") || (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+        document.documentElement.dataset.theme = t;
+      } catch (e) {
+        document.documentElement.dataset.theme = "dark";
+      }
+    })();
+  </script>
+  <link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+  <header class="notes-toolbar">
+    <div class="toolbar-left">
+      <h1>Notes</h1>
+      <span class="small-note" id="notesCount">0 notes</span>
+    </div>
+    <div class="toolbar-right">
+      <input class="input search" id="searchInput" placeholder="Search…" aria-label="Search notes">
+      <button class="btn-primary" id="newNoteBtn" title="Add a new sticky note (⌘N)">＋ New note</button>
+    </div>
+  </header>
+
+  <main class="canvas" id="canvas" aria-label="Sticky notes canvas">
+    <p class="empty-state" id="emptyState" hidden>No notes yet. Press ＋ to drop one on the canvas.</p>
+  </main>
+
+  <div class="toast" id="toast"></div>
+  <script src="static/app.js" defer></script>
+</body>
+</html>

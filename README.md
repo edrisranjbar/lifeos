@@ -16,6 +16,23 @@ Configurable 25/5/15 minute intervals; a long break after four completed focus s
 
 Two original synthesized ambient music loops, rain-like noise and brown noise are generated with Web Audio. Users can also choose local audio, which loops without upload. Custom audio must be reselected after reload. Playback starts only after a click.
 
+## Kanban
+
+Kanban board for project management with drag-and-drop cards, multiple boards, and localStorage persistence. Features include:
+
+- Multiple boards with customizable columns
+- Drag-and-drop cards between columns
+- Card editing with title, description, priority, and labels
+- LocalStorage persistence - all data stays in your browser
+- Responsive design that works on mobile and desktop
+- Dark/light theme support matching the OS theme
+- Keyboard accessible with modal dialogs
+
+Data Structure:
+- Boards contain columns (To Do, In Progress, Done by default)
+- Cards contain title, description, priority (low/medium/high), and labels
+- All data stored under localStorage key "kanban_boards_v1"
+
 ## Hosting privacy
 
 Habittify retains its existing unauthenticated API. Protect this personal app with your shared host's directory password protection before exposing it on the internet. Do not upload the repository root, `.secrets`, or `.npm-cache`; only the release package or `public_html` contents. Finance uses existing third-party CDN libraries and fonts.

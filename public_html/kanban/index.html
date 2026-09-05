@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Kanban board — project management with drag-and-drop cards, stored only in your browser.">
+  <title>Kanban · Project Board</title>
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("edi_kanban_theme");
+        if (!t) t = window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+        document.documentElement.dataset.theme = t;
+      } catch (e) {
+        document.documentElement.dataset.theme = "dark";
+      }
+    })();
+  </script>
+  <link rel="stylesheet" href="assets/styles/style.css">
+</head>
+<body>
+  <div class="aurora" aria-hidden="true"><span></span><span></span><span></span></div>
+
+  <div class="app-container">
+    <header class="board-header">
+      <div class="board-title">
+        <div class="eyebrow">Project Board</div>
+        <h1>Kanban</h1>
+      </div>
+      <div class="board-actions">
+        <button class="btn-primary" id="addBoardBtn">＋ New Board</button>
+      </div>
+    </header>
+
+    <nav class="board-tabs" id="boardTabs" aria-label="Board navigation">
+      <!-- Board tabs rendered by JS -->
+    </nav>
+
+    <main class="board-main" id="boardMain">
+      <div class="columns-container" id="columnsContainer">
+        <!-- Columns rendered by JS -->
+      </div>
+    </main>
+  </div>
+
+  <!-- Board Modal -->
+  <dialog class="board-modal" id="boardModal">
+    <form class="board-form" id="boardForm" method="dialog">
+      <div class="modal-header">
+        <h3 id="boardModalTitle">New Board</h3>
+        <button type="button" class="icon-btn modal-close" id="closeBoardModal" title="Close">×</button>
+      </div>
+      <input type="hidden" id="boardId">
+      <label class="field">
+        <span>Board Name</span>
+        <input class="input" id="boardName" maxlength="60" placeholder="My Project…" autocomplete="off" required>
+      </label>
+      <div class="modal-actions">
+        <button type="button" class="btn-ghost btn-danger" id="deleteBoardBtn" hidden>Delete Board</button>
+        <button type="submit" class="btn-primary">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Card Detail / Edit Modal -->
+  <dialog class="card-modal" id="cardModal">
+    <form class="card-form" id="cardForm" method="dialog">
+      <div class="modal-header">
+        <h3 id="cardModalTitle">Card</h3>
+        <button type="button" class="icon-btn modal-close" id="closeCardModal" title="Close">×</button>
+      </div>
+      <input type="hidden" id="cardBoardId">
+      <input type="hidden" id="cardColumnId">
+      <input type="hidden" id="cardId">
+      <label class="field">
+        <span>Title</span>
+        <input class="input" id="cardTitle" maxlength="120" placeholder="What needs doing?" required>
+      </label>
+      <label class="field">
+        <span>Description</span>
+        <textarea class="input textarea" id="cardDescription" rows="4" maxlength="2000" placeholder="Add details, links, acceptance criteria…"></textarea>
+      </label>
+      <div class="card-form-row">
+        <label class="field">
+          <span>Priority</span>
+          <select class="input" id="cardPriority">
+            <option value="low">Low</option>
+            <option value="medium" selected>Medium</option>
+            <option value="high">High</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>Labels</span>
+          <input class="input" id="cardLabels" maxlength="120" placeholder="frontend, bug, v2">
+        </label>
+      </div>
+      <p class="card-form-error" id="cardFormError" role="alert" hidden></p>
+      <div class="modal-actions">
+        <button type="button" class="btn-ghost btn-danger" id="deleteCardBtn">Delete</button>
+        <span class="card-form-meta" id="cardFormMeta"></span>
+        <button type="submit" class="btn-primary">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast"></div>
+  <script src="assets/scripts/app.js" defer></script>
+</body>
+</html>
