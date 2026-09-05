@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Jalali Habit Dashboard</title>
+  <script>
+    (function () {
+      try {
+        var theme = localStorage.getItem("habittify_theme");
+        if (!theme) theme = window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+        document.documentElement.dataset.theme = theme;
+      } catch (error) {
+        document.documentElement.dataset.theme = "dark";
+      }
+    })();
+  </script>
+  <link rel="icon" href="static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+  <div class="aurora" aria-hidden="true"><span></span><span></span><span></span></div>
+  <main class="app">
+    <section class="panel stats-panel" aria-label="Month navigation">
+      <header class="topbar">
+        <div>
+          <div class="eyebrow">Habit Tracker</div>
+          <h1 id="monthName">—</h1>
+          <p id="monthSubtitle">—</p>
+        </div>
+        <div class="topbar-actions">
+          <button class="icon-btn theme-toggle" id="themeToggle" title="Switch color theme" aria-label="Switch color theme">
+            <span class="theme-icon" aria-hidden="true">◐</span>
+          </button>
+          <button class="ghost-btn today-button" id="todayBtn">Today</button>
+          <div class="nav-buttons" aria-label="Month navigation">
+            <button class="icon-btn" id="prevMonth" title="Previous month">‹</button>
+            <button class="icon-btn" id="nextMonth" title="Next month">›</button>
+          </div>
+        </div>
+      </header>
+
+    </section>
+
+    <section class="workspace-grid">
+      <section class="panel panel-pad habit-manager compact-card">
+        <div class="section-title">
+          <div>
+            <h3>Habits</h3>
+            <span class="small-note" id="habitCount">0 active</span>
+          </div>
+        </div>
+
+        <form class="add-form" id="addForm">
+          <input class="input" id="habitName" maxlength="80" placeholder="Habit name…" autocomplete="off">
+          <select class="input" id="habitCategory">
+            <option value="">Uncategorized</option>
+          </select>
+          <input class="input icon-input" id="habitIcon" maxlength="4" value="✓" title="Icon">
+          <input type="color" id="habitColor" value="#39e6ad" title="Habit color">
+          <button class="primary-btn" title="Add habit">Add</button>
+        </form>
+
+        <div class="habit-list" id="habitList"></div>
+      </section>
+
+      <div class="side-stack">
+        <aside class="panel panel-pad focus-card compact-card">
+          <div class="section-title">
+            <div>
+              <h3>Today</h3>
+              <span class="small-note" id="todayDateLabel">—</span>
+            </div>
+          </div>
+          <div class="today-list" id="todayList"></div>
+        </aside>
+
+        <aside class="panel panel-pad focus-card compact-card">
+          <div class="section-title">
+            <div>
+              <h3>Categories</h3>
+              <span class="small-note" id="categoryCount">0 categories</span>
+            </div>
+          </div>
+          <form class="category-add-form" id="categoryAddForm">
+            <input class="input" id="categoryName" maxlength="60" placeholder="New category…" autocomplete="off">
+            <button class="primary-btn" title="Add category">Add</button>
+          </form>
+          <div class="category-list" id="categoryList"></div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="panel calendar-panel">
+      <div class="toolbar">
+        <div>
+          <h3>Monthly grid</h3>
+          <p class="small-note">Click a cell to check or uncheck a habit for that day.</p>
+        </div>
+        <div class="toolbar-actions">
+          <span class="pill-label" id="monthCompletionPill">0% complete</span>
+        </div>
+      </div>
+      <div class="calendar-scroll" id="calendarScroll">
+        <table class="habit-table" id="habitTable"></table>
+      </div>
+    </section>
+
+    <section class="panel panel-pad activity-panel">
+      <div class="section-title">
+        <div>
+          <h3>Monthly activity</h3>
+          <p class="small-note" id="activitySubtitle">Selected month</p>
+        </div>
+        <div class="activity-legend">
+          <span>Less</span>
+          <span class="legend-swatch level-0"></span>
+          <span class="legend-swatch level-1"></span>
+          <span class="legend-swatch level-2"></span>
+          <span class="legend-swatch level-3"></span>
+          <span class="legend-swatch level-4"></span>
+          <span>More</span>
+        </div>
+      </div>
+      <div class="activity-grid" id="activityGrid"></div>
+    </section>
+  </main>
+
+  <button class="floating-add" id="quickAdd" title="Add habit">+</button>
+
+  <dialog class="edit-dialog" id="editDialog">
+    <form class="edit-card" id="editForm" method="dialog">
+      <div class="edit-head">
+        <div>
+          <h3>Edit habit</h3>
+          <p>Update name, category, icon, or color.</p>
+        </div>
+        <button type="button" class="icon-btn" id="closeEdit" title="Close">×</button>
+      </div>
+      <input type="hidden" id="editHabitId">
+      <label>
+        <span>Name</span>
+        <input class="input" id="editHabitName" maxlength="80" autocomplete="off">
+      </label>
+      <label>
+        <span>Category</span>
+        <select class="input" id="editHabitCategory">
+          <option value="">Uncategorized</option>
+        </select>
+      </label>
+      <div class="edit-row">
+        <label>
+          <span>Icon</span>
+          <input class="input icon-input" id="editHabitIcon" maxlength="4">
+        </label>
+        <label>
+          <span>Color</span>
+          <input type="color" id="editHabitColor">
+        </label>
+      </div>
+      <div class="edit-actions">
+        <button type="button" class="ghost-btn danger-text" id="deleteHabit">Remove</button>
+        <button type="submit" class="primary-btn">Save changes</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast"></div>
+  <script src="static/app.js" defer></script>
+</body>
+</html>

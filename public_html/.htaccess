@@ -1,0 +1,6 @@
+Options -Indexes
+DirectoryIndex index.html
+AddType application/javascript .mjs
+<FilesMatch "^\.">
+Require all denied
+</FilesMatch>

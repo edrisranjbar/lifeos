@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="EdiFinance — a private, offline-first personal ledger. Income streams, budgets and expenses in Toman, stored only in your browser."
+    />
+    <title>EdiFinance - My personal Ledger</title>
+    <script>
+      // Apply saved theme & language before first paint to avoid a flash.
+      (function () {
+        try {
+          var t = localStorage.getItem("edifinance_theme");
+          if (!t)
+            t = window.matchMedia("(prefers-color-scheme: light)").matches
+              ? "light"
+              : "dark";
+          document.documentElement.dataset.theme = t;
+        } catch (e) {
+          document.documentElement.dataset.theme = "dark";
+        }
+        try {
+          var l = localStorage.getItem("edifinance_lang");
+          if (!l)
+            l = (navigator.language || "").toLowerCase().indexOf("fa") === 0
+              ? "fa"
+              : "en";
+          document.documentElement.lang = l;
+          document.documentElement.dir = l === "fa" ? "rtl" : "ltr";
+        } catch (e) {}
+      })();
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <link href="assets/styles/style.css" rel="stylesheet" />
+  </head>
+  <body>
+    <div class="aurora" aria-hidden="true"><span></span><span></span><span></span></div>
+    <div id="toast"></div>
+
+    <!-- ═══ HERO HEADER ═══ -->
+    <div
+      id="pageRoot"
+      style="position: relative; z-index: 2"
+      class="px-6 md:px-10 pt-12 pb-6 max-w-7xl mx-auto"
+    >
+      <div class="flex items-start justify-between mb-3 flex-wrap gap-4">
+        <div>
+          <div class="eyebrow mb-3">Personal Ledger</div>
+          <h1
+            class="display"
+            style="
+              font-size: clamp(34px, 5vw, 52px);
+              font-weight: 600;
+              line-height: 0.95;
+              color: var(--text);
+            "
+          >
+            EdiFinance
+          </h1>
+          <div id="printMeta" class="print-only print-meta"></div>
+        </div>
+        <div class="flex items-center gap-3 flex-wrap header-actions">
+          <div class="period-nav">
+            <button
+              class="nav-chev"
+              onclick="gotoPeriod(-1)"
+              title="Previous month"
+            >
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <label class="period-picker" for="periodSelect">
+              <span data-i18n="period">Period</span>
+              <select id="periodSelect" onchange="switchPeriod(this.value)"></select>
+            </label>
+            <button
+              class="nav-chev"
+              onclick="gotoPeriod(1)"
+              title="Next month"
+            >
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
+          <button
+            class="btn-ghost btn-import-ghost"
+            onclick="openImportModal()"
+          >
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            <span data-i18n="importExcel">Import Excel</span>
+          </button>
+          <button class="btn-ghost btn-export-ghost" onclick="exportToExcel()">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <span data-i18n="exportExcel">Export Excel</span>
+          </button>
+          <button class="btn-ghost btn-print-ghost" onclick="printLedger()">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            <span data-i18n="print">Print</span>
+          </button>
+          <button
+            class="theme-toggle"
+            id="settingsBtn"
+            onclick="openSettingsModal()"
+            title="Settings"
+          >
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- ═══ ZONE 1: MACRO METRICS ═══ -->
+      <div
+        class="grid gap-px metric-grid mb-10"
+        style="
+          grid-template-columns: repeat(4, 1fr);
+          background: var(--ink-line);
+          border: 1px solid var(--ink-line);
+          border-radius: 6px;
+          overflow: hidden;
+        "
+      >
+        <div class="metric-card p-7" style="background: var(--ink-card)">
+          <div class="stub-label mb-2" data-i18n="mIncomeLabel">01 · Income</div>
+          <div
+            class="num metric-num-anim"
+            id="metricIncome"
+            style="font-size: 26px; font-weight: 600; color: #39e6ad"
+          >
+            0
+          </div>
+          <div class="metric-rule"></div>
+          <div style="font-size: 11px; color: var(--muted-2)" data-i18n="mIncomeSub">
+            Toman logged this period
+          </div>
+        </div>
+        <div class="metric-card p-7" style="background: var(--ink-card)">
+          <div class="stub-label mb-2" data-i18n="mAllocatedLabel">02 · Allocated</div>
+          <div
+            class="num metric-num-anim"
+            id="metricBudget"
+            style="font-size: 26px; font-weight: 600; color: var(--brass)"
+          >
+            0
+          </div>
+          <div class="metric-rule"></div>
+          <div style="font-size: 11px; color: var(--muted-2)" data-i18n="mAllocatedSub">
+            Toman across all categories
+          </div>
+        </div>
+        <div class="metric-card p-7" style="background: var(--ink-card)">
+          <div class="stub-label mb-2" data-i18n="mSpentLabel">03 · Spent</div>
+          <div
+            class="num metric-num-anim"
+            id="metricSpent"
+            style="font-size: 26px; font-weight: 600; color: #ff8060"
+          >
+            0
+          </div>
+          <div class="metric-rule"></div>
+          <div style="font-size: 11px; color: var(--muted-2)" data-i18n="mSpentSub">
+            Toman actually paid out
+          </div>
+        </div>
+        <div class="metric-card p-7" style="background: var(--ink-card)">
+          <div class="stub-label mb-2" data-i18n="mBalanceLabel">04 · Balance</div>
+          <div
+            class="num metric-num-anim"
+            id="metricBalance"
+            style="font-size: 26px; font-weight: 600"
+          >
+            0
+          </div>
+          <div class="metric-rule"></div>
+          <div style="font-size: 11px; color: var(--muted-2)" data-i18n="mBalanceSub">
+            Toman remaining net
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ ZONE 2: INPUTS & LEDGER ═══ -->
+      <div
+        class="grid gap-6 main-grid mb-10"
+        style="grid-template-columns: 1fr 1fr"
+      >
+        <!-- Income Manager -->
+        <div class="ledger-card p-7 reveal">
+          <div class="section-label" data-i18n="incomeStreams">Income Streams</div>
+          <div
+            id="incomeList"
+            class="space-y-2 mb-6 scrollable"
+            style="max-height: 230px"
+          ></div>
+          <button
+            class="btn-primary"
+            style="width: 100%"
+            onclick="openAddIncomeModal()"
+          >
+            ＋ <span data-i18n="addIncomeStream">Add Income Stream</span>
+          </button>
+        </div>
+
+        <!-- Expense Logger -->
+        <div class="ledger-card p-7 reveal">
+          <div class="section-label screen-only" data-i18n="logExpenseHeading">Log Expense</div>
+          <div class="section-label print-only" data-i18n="expensesHeading">Expenses</div>
+          <button
+            class="btn-primary"
+            style="width: 100%; margin-bottom: 24px"
+            onclick="openAddExpenseModal()"
+          >
+            ＋ <span data-i18n="logExpenseButton">Log Expense</span>
+          </button>
+
+          <div class="stub-label mb-3" data-i18n="recentEntries">Recent Entries</div>
+          <div class="scrollable" style="max-height: 230px">
+            <table style="width: 100%; border-collapse: collapse" id="txTable">
+              <thead>
+                <tr
+                  style="
+                    font-size: 10.5px;
+                    color: var(--muted-2);
+                    letter-spacing: 0.06em;
+                    text-transform: uppercase;
+                  "
+                >
+                  <th
+                    style="
+                      text-align: start;
+                      padding: 0 0 10px;
+                      font-weight: 700;
+                    "
+                  >
+                    <span data-i18n="thCategory">Category</span>
+                  </th>
+                  <th
+                    style="
+                      text-align: start;
+                      padding: 0 0 10px;
+                      font-weight: 700;
+                    "
+                  >
+                    <span data-i18n="thDesc">Desc</span>
+                  </th>
+                  <th
+                    style="
+                      text-align: end;
+                      padding: 0 0 10px;
+                      font-weight: 700;
+                    "
+                  >
+                    <span data-i18n="thToman">Toman</span>
+                  </th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="txBody" style="font-size: 12px"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid gap-6 mb-12">
+        <!-- Budget Tracker -->
+        <div class="ledger-card budget-panel p-7 reveal">
+          <div class="budget-panel-head">
+            <div>
+              <div class="section-label budget-heading" data-i18n="budgetTracker">Budget Tracker</div>
+              <p class="section-copy" data-i18n="budgetCopy">Set limits, track progress, and adjust a category at any time.</p>
+            </div>
+            <button class="btn-primary budget-add-btn" onclick="openAddBudgetModal()">
+              <span aria-hidden="true">+</span> <span data-i18n="addCategoryShort">Add category</span>
+            </button>
+          </div>
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              margin-bottom: 16px;
+            "
+          >
+            <div class="section-label" style="margin-bottom: 0; flex: 1" data-i18n="budgetTracker">
+              Budget Tracker
+            </div>
+          </div>
+          <button
+            class="btn-ghost mb-5"
+            style="width: 100%"
+            onclick="openAddBudgetModal()"
+          >
+            <span data-i18n="addBudgetCategory">＋ Add Budget Category</span>
+          </button>
+          <div id="budgetSummary" class="budget-summary" aria-label="Budget overview"></div>
+          <div id="budgetTracker" class="budget-grid"></div>
+          <table class="print-only print-budget-table" aria-label="Budget report">
+            <thead>
+              <tr>
+                <th>Category</th>
+                <th>Budget</th>
+                <th>Spent</th>
+                <th>Remaining</th>
+                <th>Used</th>
+              </tr>
+            </thead>
+            <tbody id="printBudgetBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ═══ ZONE 3: ANALYTICS ═══ -->
+      <div
+        class="grid gap-6 chart-grid mb-12 analytics-section"
+        style="grid-template-columns: 1fr 1.4fr"
+      >
+        <div class="ledger-card p-7 reveal">
+          <div class="section-label" data-i18n="incomeBreakdown">Income Breakdown</div>
+          <div
+            class="chart-wrap"
+            style="
+              height: 270px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            "
+          >
+            <canvas id="incomeChart"></canvas>
+          </div>
+        </div>
+        <div class="ledger-card p-7 reveal">
+          <div class="section-label" data-i18n="spendingByCategory">Spending by Category</div>
+          <div class="chart-wrap" style="height: 270px">
+            <canvas id="spendChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-rule mb-6 screen-footer"></div>
+      <div class="screen-footer" style="text-align: center; padding-bottom: 28px">
+        <span class="eyebrow" style="color: var(--muted-2)" data-i18n="footerNote"
+          >localStorage, not "the cloud" — there is no cloud, it's just someone
+          else's computer</span
+        >
+      </div>
+    </div>
+
+    <script src="assets/scripts/i18n.js"></script>
+    <script src="assets/scripts/script.js"></script>
+  </body>
+</html>
