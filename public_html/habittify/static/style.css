@@ -825,3 +825,20 @@ input[type="color"] { padding: 4px; cursor: pointer; }
   .habit-table th:first-child, .habit-table td:first-child { min-width: 190px; max-width: 190px; }
   .floating-add { width: 42px; height: 42px; right: 16px; bottom: 16px; }
 }
+
+/* Clean neutral presentation: habit identity comes from name and icon, not a
+   different color for every row. */
+.aurora { display: none; }
+body { background: var(--bg); background-image: none; }
+.panel { border-radius: 14px; box-shadow: 0 10px 28px rgba(15, 23, 42, .07); }
+.app { max-width: 1240px; }
+.topbar { padding-bottom: 22px; }
+.eyebrow, .stat-icon, .primary-btn, .floating-add { color: var(--accent); }
+.primary-btn, .floating-add { background: var(--accent); color: #fff; }
+.primary-btn:hover, .floating-add:hover { background: var(--accent-strong); }
+.habit-dot, .mini-dot { background: var(--accent) !important; }
+.today-check.done, .check-btn.done { background: var(--accent) !important; border-color: var(--accent) !important; }
+.activity-cell.level-1, .legend-swatch.level-1 { background: #dbe4ee; border-color: #dbe4ee; }
+.activity-cell.level-2, .legend-swatch.level-2 { background: #aebdce; border-color: #aebdce; }
+.activity-cell.level-3, .legend-swatch.level-3 { background: #7f91a7; border-color: #7f91a7; }
+.activity-cell.level-4, .legend-swatch.level-4 { background: #53677f; border-color: #53677f; }

@@ -1,13 +1,14 @@
 <!doctype html>
 <html lang="en" dir="ltr">
 <head>
+  <script src="/assets/storage.js"></script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Jalali Habit Dashboard</title>
   <script>
     (function () {
       try {
-        var theme = localStorage.getItem("habittify_theme");
+        var theme = appStorage.getItem("habittify_theme");
         if (!theme) theme = window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
         document.documentElement.dataset.theme = theme;
       } catch (error) {
@@ -19,7 +20,6 @@
   <link rel="stylesheet" href="static/style.css">
 </head>
 <body>
-  <div class="aurora" aria-hidden="true"><span></span><span></span><span></span></div>
   <main class="app">
     <section class="panel stats-panel" aria-label="Month navigation">
       <header class="topbar">
@@ -56,8 +56,6 @@
           <select class="input" id="habitCategory">
             <option value="">Uncategorized</option>
           </select>
-          <input class="input icon-input" id="habitIcon" maxlength="4" value="✓" title="Icon">
-          <input type="color" id="habitColor" value="#39e6ad" title="Habit color">
           <button class="primary-btn" title="Add habit">Add</button>
         </form>
 
@@ -133,7 +131,7 @@
       <div class="edit-head">
         <div>
           <h3>Edit habit</h3>
-          <p>Update name, category, icon, or color.</p>
+          <p>Update the habit name or category.</p>
         </div>
         <button type="button" class="icon-btn" id="closeEdit" title="Close">×</button>
       </div>
@@ -148,16 +146,6 @@
           <option value="">Uncategorized</option>
         </select>
       </label>
-      <div class="edit-row">
-        <label>
-          <span>Icon</span>
-          <input class="input icon-input" id="editHabitIcon" maxlength="4">
-        </label>
-        <label>
-          <span>Color</span>
-          <input type="color" id="editHabitColor">
-        </label>
-      </div>
       <div class="edit-actions">
         <button type="button" class="ghost-btn danger-text" id="deleteHabit">Remove</button>
         <button type="submit" class="primary-btn">Save changes</button>

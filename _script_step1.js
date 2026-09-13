@@ -22,12 +22,6 @@ let state = {
   expenses: [], // { id, categoryId, desc, amount, date }
   categories: [], // { id, label, target }
 };
-
-// ── Tiny template helper (replaces former t() with {var} interpolation) ──
-function __t(str, vars) {
-  if (!vars) return str;
-  return str.replace(/\{(\w+)\}/g, (m, k) => (k in vars ? String(vars[k]) : m));
-}
 let periods = {};
 let activePeriod = "Current";
 
@@ -58,7 +52,7 @@ function normalizeState(value) {
 
 // ── PERSISTENCE ───────────────────────────────────────────────────────────────
 function load() {
-  const savedPeriods = appStorage.getItem(PERIODS_STORAGE_KEY);
+  const savedPeriods = localStorage.getItem(PERIODS_STORAGE_KEY);
   if (savedPeriods) {
     try {
       periods = JSON.parse(savedPeriods);
@@ -67,20 +61,20 @@ function load() {
     }
   }
   if (!periods || Object.keys(periods).length === 0) {
-    const legacy = appStorage.getItem("daramd_v1");
+    const legacy = localStorage.getItem("daramd_v1");
     periods = { Current: normalizeState(legacy ? JSON.parse(legacy) : freshState()) };
   }
-  activePeriod = appStorage.getItem(ACTIVE_PERIOD_KEY) || "Current";
+  activePeriod = localStorage.getItem(ACTIVE_PERIOD_KEY) || "Current";
   if (!periods[activePeriod]) activePeriod = Object.keys(periods)[0];
   state = cloneState(normalizeState(periods[activePeriod]));
   save();
 }
 function save() {
   periods[activePeriod] = cloneState(normalizeState(state));
-  appStorage.setItem(PERIODS_STORAGE_KEY, JSON.stringify(periods));
-  appStorage.setItem(ACTIVE_PERIOD_KEY, activePeriod);
+  localStorage.setItem(PERIODS_STORAGE_KEY, JSON.stringify(periods));
+  localStorage.setItem(ACTIVE_PERIOD_KEY, activePeriod);
   // Keep the legacy key synchronized for backwards compatibility.
-  appStorage.setItem("daramd_v1", JSON.stringify(state));
+  localStorage.setItem("daramd_v1", JSON.stringify(state));
 }
 
 function switchPeriod(periodName) {
@@ -88,8 +82,8 @@ function switchPeriod(periodName) {
   save();
   activePeriod = periodName;
   state = cloneState(normalizeState(periods[periodName]));
-  appStorage.setItem(ACTIVE_PERIOD_KEY, activePeriod);
-  appStorage.setItem("daramd_v1", JSON.stringify(state));
+  localStorage.setItem(ACTIVE_PERIOD_KEY, activePeriod);
+  localStorage.setItem("daramd_v1", JSON.stringify(state));
   render();
   pulseMain();
 }
@@ -139,8 +133,8 @@ function gotoPeriod(delta) {
   }
   activePeriod = target;
   state = cloneState(normalizeState(periods[target]));
-  appStorage.setItem(ACTIVE_PERIOD_KEY, activePeriod);
-  appStorage.setItem("daramd_v1", JSON.stringify(state));
+  localStorage.setItem(ACTIVE_PERIOD_KEY, activePeriod);
+  localStorage.setItem("daramd_v1", JSON.stringify(state));
   save();
   render();
   pulseMain();
@@ -231,7 +225,7 @@ function applyTheme(theme) {
   const normalized = theme === "light" ? "light" : "dark";
   document.documentElement.dataset.theme = normalized;
   try {
-    appStorage.setItem(THEME_KEY, normalized);
+    localStorage.setItem(THEME_KEY, normalized);
   } catch {}
   const toggle = document.getElementById("themeToggle");
   if (toggle) {
@@ -295,6 +289,16 @@ function openSettingsModal() {
       </button>
     </div>
 
+    <label class="field-label">${esc("Language")}</label>
+    <div class="seg mb-5" role="group" aria-label="${esc("Language")}">
+      <button type="button" class="seg-btn${currentLang === "en" ? " active" : ""}" onclick="setAppLang('en')">
+        <span>${esc("English")}</span>
+      </button>
+      <button type="button" class="seg-btn${currentLang === "fa" ? " active" : ""}" onclick="setAppLang('fa')">
+        <span>${esc("فارسی")}</span>
+      </button>
+    </div>
+
     <div class="danger-zone">
       <div class="danger-copy">
         <strong>${esc("Reset all data")}</strong>
@@ -308,6 +312,11 @@ function openSettingsModal() {
 function setAppTheme(value) {
   setTheme(value);
   openSettingsModal(); // refresh active states
+}
+
+function setAppLang(value) {
+  setLang(value);
+  openSettingsModal(); // re-render modal in the new language
 }
 
 // ── EXCEL IMPORT (Khordad Budget structure) ──────────────────────────────────
@@ -1332,7 +1341,7 @@ function renderCharts(totalIncome) {
             position: "bottom",
             labels: {
               color: v("--chart-label"),
-              font: { family: "Inter", size: 11 },
+              font: { family: uiFont(), size: 11 },
               padding: 14,
               usePointStyle: true,
               pointStyle: "circle",
@@ -1343,7 +1352,7 @@ function renderCharts(totalIncome) {
             borderColor: v("--chart-tip-border"),
             borderWidth: 1,
             padding: 12,
-            titleFont: { family: "Inter", weight: "600" },
+            titleFont: { family: uiFont(), weight: "600" },
             bodyFont: { family: "JetBrains Mono" },
             callbacks: {
               label: (ctx) =>
@@ -1416,7 +1425,7 @@ function renderCharts(totalIncome) {
           legend: {
             labels: {
               color: v("--chart-label"),
-              font: { family: "Inter", size: 11 },
+              font: { family: uiFont(), size: 11 },
               usePointStyle: true,
               pointStyle: "rect",
             },
@@ -1426,7 +1435,7 @@ function renderCharts(totalIncome) {
             borderColor: v("--chart-tip-border"),
             borderWidth: 1,
             padding: 12,
-            titleFont: { family: "Inter", weight: "600" },
+            titleFont: { family: uiFont(), weight: "600" },
             bodyFont: { family: "JetBrains Mono" },
             callbacks: {
               label: (ctx) =>
@@ -1445,7 +1454,7 @@ function renderCharts(totalIncome) {
           y: {
             ticks: {
               color: v("--chart-label"),
-              font: { size: 11, family: "Inter" },
+              font: { size: 11, family: uiFont() },
             },
             grid: { color: "transparent" },
           },

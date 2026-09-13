@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+require_once dirname(__DIR__, 2) . '/auth.php';
+life_os_require_auth();
+
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
 
@@ -33,62 +36,21 @@ function body(): array
 
 function database(): PDO
 {
-    $storage = __DIR__ . DIRECTORY_SEPARATOR . 'storage';
-    if (!is_dir($storage) && !mkdir($storage, 0755, true) && !is_dir($storage)) {
-        throw new RuntimeException('Could not create the storage directory.');
-    }
-
-    $db = new PDO('sqlite:' . $storage . DIRECTORY_SEPARATOR . 'habits.db');
-    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    $db->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-    $db->exec('PRAGMA foreign_keys = ON');
+    $db = life_os_db();
     migrate($db);
     return $db;
 }
 
 function migrate(PDO $db): void
 {
-    $db->exec(<<<'SQL'
-CREATE TABLE IF NOT EXISTS habits (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL CHECK(length(trim(name)) > 0),
-    category TEXT NOT NULL DEFAULT '',
-    color TEXT NOT NULL DEFAULT '#8b5cf6',
-    icon TEXT NOT NULL DEFAULT '✓',
-    created_at TEXT NOT NULL,
-    archived INTEGER NOT NULL DEFAULT 0
-);
-CREATE TABLE IF NOT EXISTS categories (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL UNIQUE CHECK(length(trim(name)) > 0),
-    created_at TEXT NOT NULL
-);
-CREATE TABLE IF NOT EXISTS habit_logs (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    habit_id INTEGER NOT NULL,
-    log_date TEXT NOT NULL,
-    done INTEGER NOT NULL DEFAULT 1,
-    created_at TEXT NOT NULL,
-    UNIQUE(habit_id, log_date),
-    FOREIGN KEY(habit_id) REFERENCES habits(id) ON DELETE CASCADE
-);
-CREATE INDEX IF NOT EXISTS idx_logs_date ON habit_logs(log_date);
-CREATE INDEX IF NOT EXISTS idx_logs_habit_date ON habit_logs(habit_id, log_date);
-CREATE INDEX IF NOT EXISTS idx_habits_category ON habits(category);
-SQL);
-
-    $columns = $db->query('PRAGMA table_info(habits)')->fetchAll();
-    if ($columns && !in_array('category', array_column($columns, 'name'), true)) {
-        $db->exec("ALTER TABLE habits ADD COLUMN category TEXT NOT NULL DEFAULT ''");
-    }
-
-    $db->exec("INSERT OR IGNORE INTO categories(name, created_at)
-               SELECT DISTINCT category, '" . utc_now() . "' FROM habits WHERE trim(category) != ''");
+    $statement = $db->prepare("INSERT IGNORE INTO categories(name, created_at)
+               SELECT DISTINCT category, ? FROM habits WHERE TRIM(category) != ''");
+    $statement->execute([utc_now()]);
 
     if ((int) $db->query('SELECT COUNT(*) FROM habits')->fetchColumn() === 0) {
         $now = utc_now();
         $db->beginTransaction();
-        $category = $db->prepare('INSERT OR IGNORE INTO categories(name, created_at) VALUES (?, ?)');
+        $category = $db->prepare('INSERT IGNORE INTO categories(name, created_at) VALUES (?, ?)');
         foreach (['Focus', 'Health', 'Learning'] as $name) {
             $category->execute([$name, $now]);
         }
@@ -209,7 +171,7 @@ try {
             }
             $stmt = $db->prepare('UPDATE habits SET name = ?, category = ?, color = ?, icon = ? WHERE id = ? AND archived = 0');
             $stmt->execute([$name, $categoryName, $color, $icon, $id]);
-            if (!$stmt->rowCount()) respond(['error' => 'Habit not found.'], 404);
+            if (!$stmt->rowCount() && !habit($db, $id)) respond(['error' => 'Habit not found.'], 404);
             respond(['habit' => habit($db, $id)]);
         }
         if ($parts[0] === 'categories') {
@@ -257,5 +219,5 @@ try {
     respond(['error' => 'Not found.'], 404);
 } catch (Throwable $e) {
     error_log($e->__toString());
-    respond(['error' => 'Server error. Check PHP SQLite support and storage permissions.'], 500);
+    respond(['error' => 'Database unavailable. Check config.php and MySQL.'], 503);
 }

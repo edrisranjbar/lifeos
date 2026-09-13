@@ -176,7 +176,6 @@ function renderHabitList() {
       <div class="habit-row-wrap">
         ${habits.map(habit => `
           <article class="habit-item">
-            <div class="habit-dot" style="background:${sanitizeColor(habit.color)}">${escapeHtml(habit.icon || "✓")}</div>
             <div>
               <div class="habit-name">${escapeHtml(habit.name)}</div>
               <div class="habit-meta">${escapeHtml(habit.category || "No category")}</div>
@@ -321,7 +320,7 @@ function renderTodayList() {
     const done = isDone(habit.id, todayIso);
     return `
       <div class="today-item ${done ? "done" : ""}" data-today-habit="${habit.id}">
-        <button class="today-check ${done ? "done" : ""}" style="${done ? `background:${sanitizeColor(habit.color)}` : ""}" data-toggle-today="${habit.id}">✓</button>
+        <button class="today-check ${done ? "done" : ""}" data-toggle-today="${habit.id}">✓</button>
         <span class="today-name">${escapeHtml(habit.name)}</span>
         <span class="today-meta">${escapeHtml(habit.category || "")}</span>
       </div>
@@ -385,7 +384,7 @@ function renderTable() {
         <tr>
           <td class="habit-label-cell">
             <div class="habit-label">
-              <span class="mini-dot" style="background:${sanitizeColor(habit.color)}"></span>
+              <span class="mini-dot"></span>
               <span class="table-label-text">
                 <strong>${escapeHtml(habit.name)}</strong>
                 <small>${escapeHtml(habit.category || "Uncategorized")}</small>
@@ -396,7 +395,7 @@ function renderTable() {
             const done = isDone(habit.id, day.iso);
             return `
               <td class="check-cell">
-                <button class="check-btn ${done ? "done" : ""}" style="--habit-color:${sanitizeColor(habit.color)}" data-habit="${habit.id}" data-date="${day.iso}" aria-pressed="${done}" title="${day.jd} ${JALALI_MONTHS_FA[day.jm - 1]} ${day.jy}"></button>
+                <button class="check-btn ${done ? "done" : ""}" data-habit="${habit.id}" data-date="${day.iso}" aria-pressed="${done}" title="${day.jd} ${JALALI_MONTHS_FA[day.jm - 1]} ${day.jy}"></button>
               </td>
             `;
           }).join("")}
@@ -444,8 +443,6 @@ function openEditDialog(id) {
   $("editHabitId").value = habit.id;
   $("editHabitName").value = habit.name;
   renderCategorySelect($("editHabitCategory"), habit.category || "");
-  $("editHabitIcon").value = habit.icon || "✓";
-  $("editHabitColor").value = sanitizeColor(habit.color);
   $("editDialog").showModal();
 }
 
@@ -461,8 +458,7 @@ async function saveEdit() {
     body: JSON.stringify({
       name,
       category: $("editHabitCategory").value.trim(),
-      icon: $("editHabitIcon").value.trim() || "✓",
-      color: $("editHabitColor").value,
+      color: "#64748b",
     }),
   });
   $("editDialog").close();
@@ -485,9 +481,7 @@ function escapeHtml(value) {
   return String(value).replace(/[&<>'"]/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[char]));
 }
 
-function sanitizeColor(value) {
-  return /^#[0-9a-f]{6}$/i.test(String(value)) ? value : "#39e6ad";
-}
+function sanitizeColor() { return "#64748b"; }
 
 async function refresh() {
   await Promise.all([loadHabits(), loadCategories()]);
@@ -503,7 +497,7 @@ function bindEvents() {
   $("themeToggle").addEventListener("click", () => {
     const nextTheme = document.documentElement.dataset.theme === "light" ? "dark" : "light";
     document.documentElement.dataset.theme = nextTheme;
-    try { localStorage.setItem("habittify_theme", nextTheme); } catch (error) {}
+    try { appStorage.setItem("habittify_theme", nextTheme); } catch (error) {}
     showToast(`${nextTheme === "light" ? "Light" : "Dark"} theme enabled`);
   });
 
@@ -539,13 +533,11 @@ function bindEvents() {
       body: JSON.stringify({
         name,
         category: $("habitCategory").value.trim(),
-        color: $("habitColor").value,
-        icon: $("habitIcon").value.trim() || "✓",
+      color: "#64748b",
       }),
     });
     nameInput.value = "";
     $("habitCategory").value = "";
-    $("habitIcon").value = "✓";
     await refresh();
     showToast("Habit added");
   });
@@ -585,4 +577,8 @@ async function boot() {
   await refresh();
 }
 
-boot().catch(error => showToast(error.message));
+window.appStorageReady.then(() => {
+  const theme = appStorage.getItem('habittify_theme');
+  if (theme) document.documentElement.dataset.theme = theme;
+  return boot();
+}).catch(error => showToast(error.message));

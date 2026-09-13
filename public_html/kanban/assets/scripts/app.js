@@ -25,7 +25,7 @@ const KEY = "kanban_boards_v1";
 
 function applyTheme() {
   try {
-    const theme = localStorage.getItem("edi_kanban_theme") ||
+    const theme = appStorage.getItem("edi_kanban_theme") ||
                   (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
     document.documentElement.dataset.theme = theme;
   } catch (e) {
@@ -33,7 +33,8 @@ function applyTheme() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  await window.appStorageReady;
   loadState();
   applyTheme();
   setupEventListeners();
@@ -42,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function loadState() {
   try {
-    const saved = localStorage.getItem(KEY);
+    const saved = appStorage.getItem(KEY);
     if (saved) {
       const parsed = JSON.parse(saved);
       state.boards = parsed.boards || [];
@@ -136,13 +137,13 @@ function setupEventListeners() {
 
 function saveState() {
   try {
-    localStorage.setItem(KEY, JSON.stringify({
+    appStorage.setItem(KEY, JSON.stringify({
       boards: state.boards,
       activeBoardId: state.activeBoardId
     }));
   } catch (e) {
     console.error("Failed to save kanban state:", e);
-    showToast("Unable to save - browser storage full", "error");
+    showToast("Unable to save board", "error");
   }
 }
 

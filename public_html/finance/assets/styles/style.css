@@ -254,6 +254,33 @@ html.theme-switching *::after {
     stroke 0.35s ease !important;
 }
 
+/* Finance is embedded in an iframe and must not depend on the Tailwind CDN. */
+.flex { display: flex; }
+.grid { display: grid; }
+.items-start { align-items: flex-start; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.gap-3 { gap: .75rem; }
+.gap-4 { gap: 1rem; }
+.gap-6 { gap: 1.5rem; }
+.gap-px { gap: 1px; }
+.flex-wrap { flex-wrap: wrap; }
+.px-6 { padding-inline: 1.5rem; }
+.pt-12 { padding-top: 3rem; }
+.pb-6 { padding-bottom: 1.5rem; }
+.p-7 { padding: 1.75rem; }
+.mb-2 { margin-bottom: .5rem; }
+.mb-3 { margin-bottom: .75rem; }
+.mb-5 { margin-bottom: 1.25rem; }
+.mb-6 { margin-bottom: 1.5rem; }
+.mb-10 { margin-bottom: 2.5rem; }
+.mb-12 { margin-bottom: 3rem; }
+.mx-auto { margin-inline: auto; }
+.max-w-7xl { max-width: 80rem; }
+.space-y-2 > * + * { margin-top: .5rem; }
+.relative { position: relative; }
+@media (min-width: 768px) { .md\\:px-10 { padding-inline: 2.5rem; } }
+
 /* ── RTL / Persian (fa) ─────────────────────────────────────────────────────── */
 html[lang="fa"] body,
 html[lang="fa"] input,

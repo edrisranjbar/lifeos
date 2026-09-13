@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <script src="/assets/storage.js"></script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="SMART goals — define goals, break them into tasks, track progress. Stored only in your browser.">
@@ -8,7 +9,7 @@
   <script>
     (function () {
       try {
-        var t = localStorage.getItem("edi_goals_theme");
+        var t = appStorage.getItem("edi_goals_theme");
         if (!t) t = window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
         document.documentElement.dataset.theme = t;
       } catch (e) {

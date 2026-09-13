@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en" dir="ltr">
   <head>
+    <script src="/assets/storage.js"></script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
@@ -9,10 +10,10 @@
     />
     <title>EdiFinance - My personal Ledger</title>
     <script>
-      // Apply saved theme & language before first paint to avoid a flash.
+      // Apply saved theme before first paint to avoid a flash.
       (function () {
         try {
-          var t = localStorage.getItem("edifinance_theme");
+          var t = appStorage.getItem("edifinance_theme");
           if (!t)
             t = window.matchMedia("(prefers-color-scheme: light)").matches
               ? "light"
@@ -21,18 +22,8 @@
         } catch (e) {
           document.documentElement.dataset.theme = "dark";
         }
-        try {
-          var l = localStorage.getItem("edifinance_lang");
-          if (!l)
-            l = (navigator.language || "").toLowerCase().indexOf("fa") === 0
-              ? "fa"
-              : "en";
-          document.documentElement.lang = l;
-          document.documentElement.dir = l === "fa" ? "rtl" : "ltr";
-        } catch (e) {}
       })();
     </script>
-    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <link href="assets/styles/style.css" rel="stylesheet" />
@@ -339,13 +330,17 @@
       <div class="hero-rule mb-6 screen-footer"></div>
       <div class="screen-footer" style="text-align: center; padding-bottom: 28px">
         <span class="eyebrow" style="color: var(--muted-2)" data-i18n="footerNote"
-          >localStorage, not "the cloud" — there is no cloud, it's just someone
-          else's computer</span
+          >Your ledger is saved in MySQL on this server.</span
         >
       </div>
     </div>
 
-    <script src="assets/scripts/i18n.js"></script>
-    <script src="assets/scripts/script.js"></script>
+    <script>
+      window.appStorageReady.then(() => {
+        const script = document.createElement('script');
+        script.src = 'assets/scripts/script.js';
+        document.body.append(script);
+      });
+    </script>
   </body>
 </html>

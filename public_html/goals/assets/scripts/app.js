@@ -1,4 +1,4 @@
-// SMART Goals — vanilla JS, localStorage only.
+// SMART Goals — vanilla JS, persisted through the MySQL state service.
 const $ = (id) => document.getElementById(id);
 const $$ = (sel) => document.querySelectorAll(sel);
 
@@ -27,7 +27,7 @@ let state = {
 // ── Storage ──────────────────────────────────────────────────────────────────
 function load() {
   try {
-    const raw = localStorage.getItem(KEY);
+    const raw = appStorage.getItem(KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed.goals)) state.goals = parsed.goals;
@@ -40,10 +40,10 @@ function load() {
 
 function save() {
   try {
-    localStorage.setItem(KEY, JSON.stringify({ goals: state.goals }));
+    appStorage.setItem(KEY, JSON.stringify({ goals: state.goals }));
   } catch (e) {
     console.error("Failed to save goals:", e);
-    showToast("Unable to save — browser storage full", "error");
+    showToast("Unable to save goals", "error");
   }
 }
 
@@ -121,7 +121,7 @@ function deadlineText(goal) {
 // ── Theme ────────────────────────────────────────────────────────────────────
 function applyTheme() {
   try {
-    const t = localStorage.getItem("edi_goals_theme") ||
+    const t = appStorage.getItem("edi_goals_theme") ||
       (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
     document.documentElement.dataset.theme = t;
   } catch (e) {
@@ -657,7 +657,8 @@ function setupEventListeners() {
   });
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+  await window.appStorageReady;
   load();
   setupEventListeners();
   render();

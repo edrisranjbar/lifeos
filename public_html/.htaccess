@@ -1,6 +1,8 @@
 Options -Indexes
-DirectoryIndex index.html
-AddType application/javascript .mjs
+DirectoryIndex router.php
+RewriteEngine On
+RewriteRule ^router\.php$ - [L]
+RewriteRule ^ router.php [L]
 <FilesMatch "^\.">
 Require all denied
 </FilesMatch>

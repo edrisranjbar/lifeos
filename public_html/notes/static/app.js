@@ -14,7 +14,7 @@ const state = {
 
 function loadState() {
   try {
-    const saved = JSON.parse(localStorage.getItem(KEY));
+    const saved = JSON.parse(appStorage.getItem(KEY));
     if (saved && Array.isArray(saved.notes)) {
       state.notes = saved.notes.map(normalizeNote).filter(Boolean);
     }
@@ -55,7 +55,7 @@ function makeNote(title, body, pos) {
     id: cryptoId(),
     title: title || "",
     body: body || "",
-    color: pickColor(),
+    color: COLORS[state.notes.length % COLORS.length],
     x: pos?.x ?? 80,
     y: pos?.y ?? 80,
     w: NOTE_W,
@@ -65,14 +65,6 @@ function makeNote(title, body, pos) {
   };
 }
 
-function pickColor() {
-  // Most-used color wins for a colorful canvas on first load
-  if (!state.notes.length) return "yellow";
-  const counts = Object.fromEntries(COLORS.map((c) => [c, 0]));
-  for (const n of state.notes) counts[n.color]++;
-  return COLORS.sort((a, b) => counts[a] - counts[b])[0];
-}
-
 function cryptoId() {
   if (window.crypto && typeof window.crypto.randomUUID === "function") return window.crypto.randomUUID();
   return "n_" + Math.random().toString(36).slice(2) + Date.now().toString(36);
@@ -80,16 +72,66 @@ function cryptoId() {
 
 function persist() {
   try {
-    localStorage.setItem(KEY, JSON.stringify({ notes: state.notes }));
+    appStorage.setItem(KEY, JSON.stringify({ notes: state.notes }));
   } catch (e) {
-    showToast("Browser storage is unavailable.", "error");
+    showToast("Unable to save note.", "error");
   }
+}
+
+function escapeHtml(value) {
+  return value.replace(/[&<>"']/g, (character) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  })[character]);
+}
+
+function renderInline(value) {
+  let html = escapeHtml(value);
+  html = html.replace(/`([^`]+)`/g, "<code>$1</code>");
+  html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+  html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+  html = html.replace(/\*(.+?)\*/g, "<em>$1</em>");
+  html = html.replace(/~~(.+?)~~/g, "<del>$1</del>");
+  return html;
+}
+
+function renderMarkdown(source) {
+  if (!source.trim()) return '<p class="preview-empty">Double-click or press Edit to write Markdown.</p>';
+  const lines = source.replace(/\r\n?/g, "\n").split("\n");
+  const output = [];
+  let list = "", code = false, codeLines = [];
+  const closeList = () => { if (list) { output.push(`</${list}>`); list = ""; } };
+  for (const line of lines) {
+    if (/^\s*```/.test(line)) {
+      closeList();
+      if (code) { output.push(`<pre><code>${escapeHtml(codeLines.join("\n"))}</code></pre>`); codeLines = []; }
+      code = !code;
+      continue;
+    }
+    if (code) { codeLines.push(line); continue; }
+    if (!line.trim()) { closeList(); continue; }
+    const heading = line.match(/^(#{1,6})\s+(.+)$/);
+    if (heading) { closeList(); const level = heading[1].length; output.push(`<h${level}>${renderInline(heading[2])}</h${level}>`); continue; }
+    const bullet = line.match(/^\s*[-*+]\s+(.+)$/);
+    const numbered = line.match(/^\s*\d+[.)]\s+(.+)$/);
+    if (bullet || numbered) {
+      const next = bullet ? "ul" : "ol";
+      if (list !== next) { closeList(); output.push(`<${next}>`); list = next; }
+      output.push(`<li>${renderInline((bullet || numbered)[1])}</li>`);
+      continue;
+    }
+    closeList();
+    const quote = line.match(/^>\s?(.*)$/);
+    output.push(quote ? `<blockquote>${renderInline(quote[1])}</blockquote>` : `<p>${renderInline(line)}</p>`);
+  }
+  closeList();
+  if (code) output.push(`<pre><code>${escapeHtml(codeLines.join("\n"))}</code></pre>`);
+  return output.join("");
 }
 
 function applyTheme() {
   try {
-    let theme = localStorage.getItem("edi_notes_theme");
-    if (!theme) theme = localStorage.getItem("edi_os_theme");
+    let theme = appStorage.getItem("edi_notes_theme");
+    if (!theme) theme = appStorage.getItem("edi_os_theme");
     if (!theme) theme = window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
     document.documentElement.dataset.theme = theme;
   } catch (e) {
@@ -113,7 +155,7 @@ function renderAll() {
   for (const node of canvas.querySelectorAll(".sticky")) node.remove();
 
   const filteredIds = new Set(getFiltered().map((n) => n.id));
-  $("notesCount").textContent = `${state.notes.length} note${state.notes.length === 1 ? "" : "s"}`;
+  $("notesCount").textContent = `${state.notes.length} note${state.notes.length === 1 ? "" : "s"} · Markdown`;
   $("emptyState").hidden = state.notes.length > 0;
 
   for (const note of state.notes) {
@@ -134,11 +176,37 @@ function renderSticky(note) {
   el.style.height = note.h + "px";
   el.style.zIndex = note.z;
 
-  const body = document.createElement("div");
+  const body = document.createElement("textarea");
   body.className = "sticky-body";
-  body.contentEditable = "false";
   body.spellcheck = true;
-  body.textContent = note.body || (note.title || "");
+  body.value = note.body || (note.title || "");
+  body.placeholder = "Write Markdown…";
+  body.setAttribute("aria-label", "Markdown source");
+  const preview = document.createElement("div");
+  preview.className = "markdown-preview";
+  preview.innerHTML = renderMarkdown(body.value);
+  body.hidden = true;
+  const editBtn = document.createElement("button");
+  editBtn.type = "button";
+  editBtn.textContent = "Edit";
+  editBtn.setAttribute("aria-label", "Edit Markdown");
+  const swatch = document.createElement("div");
+  swatch.className = "swatch";
+  for (const color of COLORS) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.dataset.color = color;
+    button.title = `Color ${color}`;
+    button.setAttribute("aria-label", `Color ${color}`);
+    button.setAttribute("aria-pressed", String(note.color === color));
+    button.onclick = () => {
+      note.color = color;
+      el.dataset.color = color;
+      for (const option of swatch.children) option.setAttribute("aria-pressed", String(option === button));
+      persist();
+    };
+    swatch.append(button);
+  }
 
   const actions = document.createElement("div");
   actions.className = "actions";
@@ -151,50 +219,19 @@ function renderSticky(note) {
     e.stopPropagation();
     deleteNote(note.id);
   };
-  actions.append(delBtn);
-
-  const swatch = document.createElement("div");
-  swatch.className = "swatch";
-  for (const c of COLORS) {
-    const sw = document.createElement("button");
-    sw.type = "button";
-    sw.title = c;
-    sw.style.background = colorHex(c);
-    sw.dataset.active = String(c === note.color);
-    sw.setAttribute("aria-label", `Color ${c}`);
-    sw.onclick = (e) => {
-      e.stopPropagation();
-      note.color = c;
-      note.updated = Date.now();
-      persist();
-      renderAll();
-    };
-    swatch.append(sw);
-  }
+  actions.append(editBtn, delBtn);
 
   const resize = document.createElement("div");
   resize.className = "resize-handle";
   resize.setAttribute("aria-label", "Resize note");
   resize.title = "Resize";
 
-  el.append(body, swatch, actions, resize);
+  el.append(preview, body, swatch, actions, resize);
   bindDrag(el, note);
   bindResize(el, note, resize);
-  bindEdit(el, note, body);
+  bindEdit(el, note, body, preview, editBtn);
 
   return el;
-}
-
-function colorHex(name) {
-  const map = {
-    yellow: "#fef3a4",
-    pink: "#fdc4d4",
-    blue: "#b9d8ff",
-    green: "#bde7c8",
-    lavender: "#d8c8f4",
-    peach: "#fcb89a"
-  };
-  return map[name] || map.yellow;
 }
 
 function deleteNote(id) {
@@ -220,10 +257,7 @@ function createNote() {
   // Focus the new note for immediate editing
   const el = document.querySelector(`.sticky[data-id="${note.id}"] .sticky-body`);
   if (el) {
-    el.contentEditable = "true";
-    el.classList.add("editing-parent");
-    el.closest(".sticky").classList.add("editing");
-    el.focus();
+    el.closest(".sticky").querySelector('[aria-label="Edit Markdown"]').click();
   }
 }
 
@@ -233,7 +267,7 @@ function bindDrag(el, note) {
 
   const onDown = (e) => {
     // Only drag when not editing, and ignore clicks on the action/swatch/resize areas
-    if (e.target.closest(".actions") || e.target.closest(".swatch") || e.target.closest(".resize-handle")) return;
+    if (e.target.closest("button, a, textarea, .swatch, .resize-handle")) return;
     if (el.classList.contains("editing")) return;
     e.preventDefault();
     pointerId = e.pointerId;
@@ -321,32 +355,40 @@ function bindResize(el, note, handle) {
   handle.addEventListener("pointercancel", onUp);
 }
 
-function bindEdit(el, note, body) {
+function bindEdit(el, note, body, preview, editBtn) {
   const enter = () => {
     el.classList.add("editing");
-    body.contentEditable = "true";
+    editBtn.textContent = "Done";
+    editBtn.setAttribute("aria-label", "Finish editing Markdown");
+    body.hidden = false;
+    preview.hidden = true;
     body.focus();
-    placeCaretAtEnd(body);
+    body.setSelectionRange(body.value.length, body.value.length);
   };
   const exit = () => {
     el.classList.remove("editing");
-    body.contentEditable = "false";
+    editBtn.textContent = "Edit";
+    editBtn.setAttribute("aria-label", "Edit Markdown");
+    preview.innerHTML = renderMarkdown(body.value);
+    body.hidden = true;
+    preview.hidden = false;
   };
+  editBtn.onclick = () => el.classList.contains("editing") ? body.blur() : enter();
 
   el.addEventListener("dblclick", (e) => {
-    if (e.target.closest(".actions") || e.target.closest(".swatch")) return;
+    if (e.target.closest(".actions, .swatch, a")) return;
     if (!el.classList.contains("editing")) enter();
   });
 
   // Save on every input so a re-render (theme change, switch app, etc.) doesn't lose work
   body.addEventListener("input", () => {
-    note.body = body.textContent;
+    note.body = body.value;
     note.updated = Date.now();
     persist();
   });
 
   body.addEventListener("blur", () => {
-    note.body = body.textContent;
+    note.body = body.value;
     note.updated = Date.now();
     persist();
     exit();
@@ -407,7 +449,8 @@ function showToast(message, kind) {
   showToast._t = setTimeout(() => toast.classList.remove("show"), 1800);
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+  await window.appStorageReady;
   applyTheme();
   loadState();
   bindEvents();
