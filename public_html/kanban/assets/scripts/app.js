@@ -18,7 +18,9 @@ const state = {
     boardId: null,
     columnId: null,
     cardId: null
-  }
+  },
+  draftLabelIds: [],
+  draftChecklist: []
 };
 
 const KEY = "kanban_boards_v1";
@@ -52,8 +54,10 @@ function loadState() {
         state.activeBoardId = state.boards[0].id;
       }
       // Migrate existing boards to new column structure
+      let migrated = false;
       state.boards.forEach(board => {
         if (board.columns && board.columns.length === 3) {
+          migrated = true;
           // Add "To Review" and "Backlog" columns to existing boards
           const backlogCol = { id: crypto.randomUUID(), name: "Backlog", cards: [] };
           const reviewCol = { id: crypto.randomUUID(), name: "To Review", cards: [] };
@@ -65,7 +69,26 @@ function loadState() {
           board.columns.unshift(backlogCol);
           board.columns.splice(3, 0, reviewCol);
         }
+        if (!Array.isArray(board.labelDefs)) { board.labelDefs = []; migrated = true; }
+        board.columns.forEach(column => column.cards.forEach(card => {
+          if (!Array.isArray(card.labelIds)) {
+            migrated = true;
+            card.labelIds = (card.labels || '').split(',').map(name => name.trim()).filter(Boolean).map(name => {
+              let definition = board.labelDefs.find(label => label.name.toLowerCase() === name.toLowerCase());
+              if (!definition) {
+                const lower = name.toLowerCase();
+                definition = {id: crypto.randomUUID(), name, color: lower.includes('urgent') || lower.includes('high') ? '#dc2626' : lower.includes('low') ? '#16a34a' : '#d97706'};
+                board.labelDefs.push(definition);
+              }
+              return definition.id;
+            });
+            delete card.labels;
+          }
+          if (!Array.isArray(card.checklist)) { card.checklist = []; migrated = true; }
+          if (typeof card.dueDate !== 'string') { card.dueDate = ''; migrated = true; }
+        }));
       });
+      if (migrated) saveState();
     } else {
       state.boards.push(createBoard("My Projects"));
       state.activeBoardId = state.boards[0].id;
@@ -124,12 +147,21 @@ function setupEventListeners() {
   $('deleteCardBtn')?.addEventListener('click', deleteCurrentCard);
   $('cardTitle')?.addEventListener('input', clearCardFormError);
   $('cardDescription')?.addEventListener('input', clearCardFormError);
-  $('cardLabels')?.addEventListener('input', clearCardFormError);
+  $('addLabelBtn')?.addEventListener('click', addBoardLabel);
+  $('addChecklistItemBtn')?.addEventListener('click', addChecklistItem);
+  $('newLabelName')?.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addBoardLabel(); } });
+  $('newChecklistItem')?.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addChecklistItem(); } });
+
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.column-menu')) closeColumnMenus();
+  });
 
   // Keyboard shortcuts
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
-      if ($('cardModal')?.open) closeCardModal();
+      const openMenuButton = document.querySelector('.column-actions[aria-expanded="true"]');
+      if (openMenuButton) { closeColumnMenus(); openMenuButton.focus(); }
+      else if ($('cardModal')?.open) closeCardModal();
       else if ($('boardModal')?.open) closeModal('boardModal');
     }
   });
@@ -151,6 +183,7 @@ function createBoard(name) {
   return {
     id: crypto.randomUUID(),
     name: name.trim() || "New Board",
+    labelDefs: [],
     columns: [
       { id: crypto.randomUUID(), name: "Backlog", cards: [] },
       { id: crypto.randomUUID(), name: "To Do", cards: [] },
@@ -499,6 +532,11 @@ function handleColumnDropOnColumn(e) {
 }
 
 // Render board content (columns and cards) - simplified inline approach
+function closeColumnMenus() {
+  document.querySelectorAll('.column-actions-menu').forEach(menu => { menu.hidden = true; });
+  document.querySelectorAll('.column-actions').forEach(button => button.setAttribute('aria-expanded', 'false'));
+}
+
 function renderBoardContent() {
   const container = $('columnsContainer');
   if (!container) return;
@@ -524,9 +562,13 @@ function renderBoardContent() {
           <span class="column-count">${column.cards.length}</span>
         </div>
         <div class="column-menu">
-          <button class="icon-btn delete-col-btn" title="Delete column" aria-label="Delete column">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
-          </button>
+          <button class="icon-btn column-actions" type="button" aria-label="Actions for ${escapeHtml(column.name)}" aria-haspopup="menu" aria-expanded="false" title="Column actions">⋯</button>
+          <div class="column-actions-menu" role="menu" hidden>
+            <button type="button" role="menuitem" data-action="add">Add card</button>
+            <button type="button" role="menuitem" data-action="rename">Rename column</button>
+            <div class="menu-divider" role="separator"></div>
+            <button type="button" role="menuitem" data-action="delete" class="menu-danger">Delete column</button>
+          </div>
         </div>
       </div>
       <div class="column-cards" id="column-${column.id}"></div>
@@ -554,7 +596,9 @@ function renderBoardContent() {
         title: '',
         description: '',
         priority: 'medium',
-        labels: ''
+        labelIds: [],
+        dueDate: '',
+        checklist: []
       };
       column.cards.push(newCard);
       saveState();
@@ -581,10 +625,31 @@ function renderBoardContent() {
       showToast('Card added', 'success');
     });
 
-    // Delete column button
-    const deleteColBtn = colEl.querySelector('.delete-col-btn');
-    deleteColBtn.addEventListener('click', (e) => {
+    const actionsButton = colEl.querySelector('.column-actions');
+    const actionsMenu = colEl.querySelector('.column-actions-menu');
+    colEl.querySelector('.column-menu').addEventListener('dragstart', e => e.stopPropagation());
+    actionsButton.addEventListener('click', e => {
       e.stopPropagation();
+      const opening = actionsMenu.hidden;
+      closeColumnMenus();
+      actionsMenu.hidden = !opening;
+      actionsButton.setAttribute('aria-expanded', String(opening));
+      if (opening) actionsMenu.querySelector('button').focus();
+    });
+    actionsMenu.addEventListener('keydown', e => {
+      if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+      e.preventDefault();
+      const items = [...actionsMenu.querySelectorAll('[role="menuitem"]')];
+      const index = items.indexOf(document.activeElement);
+      items[(index + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length].focus();
+    });
+    actionsMenu.addEventListener('click', e => {
+      e.stopPropagation();
+      const action = e.target.closest('[data-action]')?.dataset.action;
+      closeColumnMenus();
+      if (action === 'add') { addCardBtn.click(); return; }
+      if (action === 'rename') { startColumnRename(titleSpan, column.id); return; }
+      if (action !== 'delete') return;
       if (column.cards.length > 0) {
         if (!confirm(`Delete column "${column.name}" and all its ${column.cards.length} card(s)?`)) return;
       } else {
@@ -624,19 +689,14 @@ function renderBoardContent() {
       const priorityClass = `priority-${card.priority || 'medium'}`;
 
       // Labels HTML
-      const labelsHtml = (card.labels || '').split(',')
-        .map(label => label.trim())
-        .filter(label => label.length > 0)
-        .map(label => {
-          const labelLower = label.toLowerCase();
-          let labelClass = 'label-medium';
-          if (labelLower.includes('urgent') || labelLower.includes('high')) {
-            labelClass = 'label-high';
-          } else if (labelLower.includes('low')) {
-            labelClass = 'label-low';
-          }
-          return `<span class="label-tag ${labelClass}">${escapeHtml(label)}</span>`;
-        }).join('');
+      const labelsHtml = (card.labelIds || []).map(id => board.labelDefs.find(label => label.id === id)).filter(Boolean)
+        .map(label => `<span class="label-tag" style="background:${safeLabelColor(label.color)};color:${labelTextColor(label.color)}">${escapeHtml(label.name)}</span>`).join('');
+      const checklist = card.checklist || [];
+      const completed = checklist.filter(item => item.done).length;
+      const dueDate = /^\d{4}-\d{2}-\d{2}$/.test(card.dueDate || '') ? card.dueDate : '';
+      const now = new Date();
+      const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      const dueClass = dueDate && column.name.toLowerCase() !== 'done' ? (dueDate < today ? 'overdue' : dueDate === today ? 'due-today' : '') : '';
 
       // Card content with inline edit support
       cardEl.innerHTML = `
@@ -649,23 +709,8 @@ function renderBoardContent() {
           <div class="card-labels">${labelsHtml}</div>
           <span class="card-priority-badge ${priorityClass}">${escapeHtml((card.priority || 'medium').toUpperCase())}</span>
         </div>
+        ${(dueDate || checklist.length) ? `<div class="card-details-meta">${dueDate ? `<span class="due-badge ${dueClass}" title="Due date">◷ ${escapeHtml(dueDate)}</span>` : ''}${checklist.length ? `<span class="checklist-badge" title="Checklist progress">☑ ${completed}/${checklist.length}</span>` : ''}</div>` : ''}
       `;
-
-      // Make title editable on double-click
-      const titleEl = cardEl.querySelector('.card-title');
-      titleEl.addEventListener('dblclick', (e) => {
-        e.stopPropagation();
-        const currentText = titleEl.textContent.trim();
-        startInlineEdit(titleEl, currentText, (newValue) => {
-          if (newValue) {
-            card.title = newValue;
-            titleEl.textContent = newValue;
-            saveState();
-          } else {
-            titleEl.textContent = currentText;
-          }
-        });
-      });
 
       // Remove card
       cardEl.querySelector('.card-remove').addEventListener('click', (e) => {
@@ -677,10 +722,10 @@ function renderBoardContent() {
         showToast('Card deleted', 'success');
       });
 
-      // Click anywhere on card (except title/remove) opens edit modal
+      // Open details from any part of the card, as on a Trello board.
       cardEl.addEventListener('click', (e) => {
         if (e.target.closest('.card-remove')) return;
-        if (e.target.closest('.card-title')) return; // dblclick handles title
+        if (e.target.closest('.inline-edit-input')) return;
         openCardModal({
           boardId: state.activeBoardId,
           columnId: column.id,
@@ -896,6 +941,120 @@ function closeModal(modalId) {
 }
 
 // Card modal — open / close / save / delete
+function safeLabelColor(value) {
+  return /^#[0-9a-fA-F]{6}$/.test(value || '') ? value : '#2563eb';
+}
+
+function labelTextColor(hex) {
+  const color = safeLabelColor(hex).slice(1);
+  const channels = [0, 2, 4].map(offset => parseInt(color.slice(offset, offset + 2), 16) / 255)
+    .map(value => value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4);
+  return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722 > 0.36 ? '#172033' : '#ffffff';
+}
+
+function renderLabelOptions() {
+  const board = getBoard(state.cardModal.boardId);
+  const container = $('cardLabelOptions');
+  container.replaceChildren();
+  if (!board) return;
+  board.labelDefs.forEach(label => {
+    const row = document.createElement('div');
+    row.className = 'label-option';
+    const check = document.createElement('input');
+    check.type = 'checkbox';
+    check.checked = state.draftLabelIds.includes(label.id);
+    check.setAttribute('aria-label', `Assign ${label.name}`);
+    check.addEventListener('change', () => {
+      state.draftLabelIds = check.checked ? [...state.draftLabelIds, label.id] : state.draftLabelIds.filter(id => id !== label.id);
+    });
+    const color = document.createElement('input');
+    color.type = 'color';
+    color.value = safeLabelColor(label.color);
+    color.setAttribute('aria-label', `Color for ${label.name}`);
+    color.addEventListener('change', () => { label.color = color.value; saveState(); renderBoardContent(); });
+    const name = document.createElement('input');
+    name.className = 'input';
+    name.value = label.name;
+    name.maxLength = 30;
+    name.setAttribute('aria-label', 'Label name');
+    name.addEventListener('change', () => {
+      const next = name.value.trim();
+      if (!next || board.labelDefs.some(other => other.id !== label.id && other.name.toLowerCase() === next.toLowerCase())) {
+        name.value = label.name;
+        showToast('Label names must be unique', 'error');
+        return;
+      }
+      label.name = next;
+      saveState();
+      renderBoardContent();
+    });
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'icon-btn';
+    remove.textContent = '×';
+    remove.setAttribute('aria-label', `Delete ${label.name} label`);
+    remove.addEventListener('click', () => {
+      if (!confirm(`Delete label "${label.name}" from this board and all cards?`)) return;
+      board.labelDefs = board.labelDefs.filter(other => other.id !== label.id);
+      board.columns.forEach(column => column.cards.forEach(card => { card.labelIds = (card.labelIds || []).filter(id => id !== label.id); }));
+      state.draftLabelIds = state.draftLabelIds.filter(id => id !== label.id);
+      saveState(); renderLabelOptions(); renderBoardContent();
+    });
+    row.append(check, color, name, remove);
+    container.append(row);
+  });
+}
+
+function addBoardLabel() {
+  const board = getBoard(state.cardModal.boardId);
+  if (!board) return;
+  const name = $('newLabelName').value.trim();
+  if (!name || board.labelDefs.some(label => label.name.toLowerCase() === name.toLowerCase())) {
+    showToast('Enter a unique label name', 'error');
+    return;
+  }
+  const label = {id: crypto.randomUUID(), name, color: safeLabelColor($('newLabelColor').value)};
+  board.labelDefs.push(label);
+  state.draftLabelIds.push(label.id);
+  $('newLabelName').value = '';
+  saveState(); renderLabelOptions();
+}
+
+function renderChecklist() {
+  const container = $('cardChecklist');
+  container.replaceChildren();
+  const total = state.draftChecklist.length;
+  const done = state.draftChecklist.filter(item => item.done).length;
+  $('checklistProgress').textContent = total ? `${done}/${total} complete` : 'No items yet';
+  state.draftChecklist.forEach(item => {
+    const row = document.createElement('div');
+    row.className = 'checklist-item';
+    const check = document.createElement('input');
+    check.type = 'checkbox'; check.checked = !!item.done;
+    check.setAttribute('aria-label', `Complete ${item.text}`);
+    check.addEventListener('change', () => { item.done = check.checked; renderChecklist(); });
+    const input = document.createElement('input');
+    input.className = 'input'; input.value = item.text; input.maxLength = 120;
+    input.setAttribute('aria-label', 'Checklist item');
+    input.addEventListener('input', () => { item.text = input.value; });
+    const remove = document.createElement('button');
+    remove.type = 'button'; remove.className = 'icon-btn'; remove.textContent = '×';
+    remove.setAttribute('aria-label', `Remove ${item.text}`);
+    remove.addEventListener('click', () => { state.draftChecklist = state.draftChecklist.filter(entry => entry.id !== item.id); renderChecklist(); });
+    row.append(check, input, remove);
+    container.append(row);
+  });
+}
+
+function addChecklistItem() {
+  const text = $('newChecklistItem').value.trim();
+  if (!text) return;
+  state.draftChecklist.push({id: crypto.randomUUID(), text, done: false});
+  $('newChecklistItem').value = '';
+  renderChecklist();
+  $('newChecklistItem').focus();
+}
+
 function openCardModal({ boardId, columnId, cardId }) {
   const board = getBoard(boardId);
   if (!board) return;
@@ -912,7 +1071,11 @@ function openCardModal({ boardId, columnId, cardId }) {
   $('cardTitle').value = card.title || '';
   $('cardDescription').value = card.description || '';
   $('cardPriority').value = card.priority || 'medium';
-  $('cardLabels').value = card.labels || '';
+  $('cardDueDate').value = card.dueDate || '';
+  state.draftLabelIds = [...(card.labelIds || [])];
+  state.draftChecklist = (card.checklist || []).map(item => ({...item}));
+  renderLabelOptions();
+  renderChecklist();
   clearCardFormError();
   const meta = column.name + (card.updatedAt ? ' · updated ' + new Date(card.updatedAt).toLocaleDateString() : '');
   $('cardFormMeta').textContent = meta;
@@ -959,7 +1122,9 @@ function handleCardFormSubmit(e) {
   card.title = title;
   card.description = $('cardDescription').value.trim();
   card.priority = $('cardPriority').value;
-  card.labels = $('cardLabels').value.trim();
+  card.dueDate = $('cardDueDate').value;
+  card.labelIds = state.draftLabelIds.filter(id => board.labelDefs.some(label => label.id === id));
+  card.checklist = state.draftChecklist.filter(item => item.text.trim()).map(item => ({...item, text: item.text.trim()}));
   card.updatedAt = Date.now();
 
   saveState();

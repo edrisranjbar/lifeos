@@ -1,5 +1,31 @@
-const JALALI_MONTHS = ["Farvardin", "Ordibehesht", "Khordad", "Tir", "Mordad", "Shahrivar", "Mehr", "Aban", "Azar", "Dey", "Bahman", "Esfand"];
-const JALALI_MONTHS_FA = ["فروردین", "اردیبهشت", "خرداد", "تیر", "مرداد", "شهریور", "مهر", "آبان", "آذر", "دی", "بهمن", "اسفند"];
+const JALALI_MONTHS = [
+  "Farvardin",
+  "Ordibehesht",
+  "Khordad",
+  "Tir",
+  "Mordad",
+  "Shahrivar",
+  "Mehr",
+  "Aban",
+  "Azar",
+  "Dey",
+  "Bahman",
+  "Esfand",
+];
+const JALALI_MONTHS_FA = [
+  "فروردین",
+  "اردیبهشت",
+  "خرداد",
+  "تیر",
+  "مرداد",
+  "شهریور",
+  "مهر",
+  "آبان",
+  "آذر",
+  "دی",
+  "بهمن",
+  "اسفند",
+];
 const WEEKDAYS_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 const state = {
@@ -14,16 +40,29 @@ const state = {
 
 const $ = (id) => document.getElementById(id);
 
-function pad(num) { return String(num).padStart(2, "0"); }
-function toISODate(date) { return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`; }
-function div(a, b) { return Math.floor(a / b); }
+function pad(num) {
+  return String(num).padStart(2, "0");
+}
+function toISODate(date) {
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+function div(a, b) {
+  return Math.floor(a / b);
+}
 
 function g2j(gy, gm, gd) {
   const gdm = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
   let jy = gy <= 1600 ? 0 : 979;
   gy -= gy <= 1600 ? 621 : 1600;
   const gy2 = gm > 2 ? gy + 1 : gy;
-  let days = (365 * gy) + div(gy2 + 3, 4) - div(gy2 + 99, 100) + div(gy2 + 399, 400) - 80 + gd + gdm[gm - 1];
+  let days =
+    365 * gy +
+    div(gy2 + 3, 4) -
+    div(gy2 + 99, 100) +
+    div(gy2 + 399, 400) -
+    80 +
+    gd +
+    gdm[gm - 1];
   jy += 33 * div(days, 12053);
   days %= 12053;
   jy += 4 * div(days, 1461);
@@ -40,7 +79,13 @@ function g2j(gy, gm, gd) {
 function j2g(jy, jm, jd) {
   let gy = jy <= 979 ? 621 : 1600;
   jy -= jy <= 979 ? 0 : 979;
-  let days = (365 * jy) + (8 * div(jy, 33)) + div((jy % 33) + 3, 4) + 78 + jd + (jm < 7 ? (jm - 1) * 31 : ((jm - 7) * 30) + 186);
+  let days =
+    365 * jy +
+    8 * div(jy, 33) +
+    div((jy % 33) + 3, 4) +
+    78 +
+    jd +
+    (jm < 7 ? (jm - 1) * 31 : (jm - 7) * 30 + 186);
   gy += 400 * div(days, 146097);
   days %= 146097;
   if (days > 36524) {
@@ -55,7 +100,7 @@ function j2g(jy, jm, jd) {
     days = (days - 1) % 365;
   }
   let gd = days + 1;
-  const leap = (gy % 4 === 0 && gy % 100 !== 0) || (gy % 400 === 0);
+  const leap = (gy % 4 === 0 && gy % 100 !== 0) || gy % 400 === 0;
   const sal = [0, 31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
   let gm = 0;
   for (gm = 1; gm <= 12 && gd > sal[gm]; gm++) gd -= sal[gm];
@@ -81,8 +126,14 @@ function jalaliMonthLength(jy, jm) {
 }
 
 function normalizeMonth(jy, jm) {
-  while (jm < 1) { jm += 12; jy--; }
-  while (jm > 12) { jm -= 12; jy++; }
+  while (jm < 1) {
+    jm += 12;
+    jy--;
+  }
+  while (jm > 12) {
+    jm -= 12;
+    jy++;
+  }
   return { jy, jm };
 }
 
@@ -112,7 +163,10 @@ function showToast(message) {
   toast.textContent = message;
   toast.classList.add("show");
   window.clearTimeout(showToast.timer);
-  showToast.timer = window.setTimeout(() => toast.classList.remove("show"), 1800);
+  showToast.timer = window.setTimeout(
+    () => toast.classList.remove("show"),
+    1800,
+  );
 }
 
 async function loadHabits() {
@@ -137,7 +191,9 @@ async function loadActivity() {
   const days = getMonthDays(state.currentJ.jy, state.currentJ.jm);
   const start = days[0].date;
   const end = days[days.length - 1].date;
-  const data = await api(`/api/logs?start=${toISODate(start)}&end=${toISODate(end)}`);
+  const data = await api(
+    `/api/logs?start=${toISODate(start)}&end=${toISODate(end)}`,
+  );
   state.activityLogs = data.logs || {};
   state.activityRange = { start, end };
 }
@@ -152,15 +208,6 @@ function setDoneLocal(habitId, iso, done) {
   state.logs[iso] = Array.from(list);
 }
 
-function groupHabits() {
-  return state.habits.reduce((groups, habit) => {
-    const key = habit.category?.trim() || "Uncategorized";
-    if (!groups[key]) groups[key] = [];
-    groups[key].push(habit);
-    return groups;
-  }, {});
-}
-
 function renderHabitList() {
   $("habitCount").textContent = `${state.habits.length} active`;
   const list = $("habitList");
@@ -169,38 +216,31 @@ function renderHabitList() {
     return;
   }
 
-  const groups = groupHabits();
-  list.innerHTML = Object.entries(groups).map(([category, habits]) => `
-    <section class="category-group">
-      <div class="category-title">${escapeHtml(category)} · ${habits.length}</div>
-      <div class="habit-row-wrap">
-        ${habits.map(habit => `
-          <article class="habit-item">
-            <div>
-              <div class="habit-name">${escapeHtml(habit.name)}</div>
-              <div class="habit-meta">${escapeHtml(habit.category || "No category")}</div>
-            </div>
-            <div class="habit-actions">
-              <button class="icon-btn habit-edit" data-edit="${habit.id}" title="Edit habit" aria-label="Edit ${escapeHtml(habit.name)}">•••</button>
-            </div>
-          </article>
-        `).join("")}
-      </div>
-    </section>
+  list.innerHTML = state.habits.map((habit) => `
+    <article class="habit-item">
+      <div class="habit-name">${escapeHtml(habit.name)}</div>
+      <button class="icon-btn habit-edit" data-edit="${habit.id}" title="Edit habit" aria-label="Edit ${escapeHtml(habit.name)}">⋯</button>
+    </article>
   `).join("");
 
-  list.querySelectorAll("[data-edit]").forEach(button => {
-    button.addEventListener("click", () => openEditDialog(Number(button.dataset.edit)));
+  list.querySelectorAll("[data-edit]").forEach((button) => {
+    button.addEventListener("click", () =>
+      openEditDialog(Number(button.dataset.edit)),
+    );
   });
-
 }
 
 function renderCategorySelect(selectEl, selectedValue) {
   const options = [`<option value="">Uncategorized</option>`].concat(
-    state.categories.map(cat => `<option value="${escapeHtml(cat.name)}">${escapeHtml(cat.name)}</option>`)
+    state.categories.map(
+      (cat) =>
+        `<option value="${escapeHtml(cat.name)}">${escapeHtml(cat.name)}</option>`,
+    ),
   );
   selectEl.innerHTML = options.join("");
-  selectEl.value = state.categories.some(cat => cat.name === selectedValue) ? selectedValue : "";
+  selectEl.value = state.categories.some((cat) => cat.name === selectedValue)
+    ? selectedValue
+    : "";
 }
 
 function renderCategoryList() {
@@ -212,11 +252,14 @@ function renderCategoryList() {
   }
 
   const usage = {};
-  state.habits.forEach(habit => {
-    if (habit.category) usage[habit.category] = (usage[habit.category] || 0) + 1;
+  state.habits.forEach((habit) => {
+    if (habit.category)
+      usage[habit.category] = (usage[habit.category] || 0) + 1;
   });
 
-  list.innerHTML = state.categories.map(cat => `
+  list.innerHTML = state.categories
+    .map(
+      (cat) => `
     <div class="category-item">
       <div>
         <span class="category-name">${escapeHtml(cat.name)}</span>
@@ -227,25 +270,34 @@ function renderCategoryList() {
         <button class="ghost-btn danger-text" data-delete-cat="${cat.id}">Delete</button>
       </div>
     </div>
-  `).join("");
+  `,
+    )
+    .join("");
 
-  list.querySelectorAll("[data-rename-cat]").forEach(button => {
-    button.addEventListener("click", () => renameCategory(Number(button.dataset.renameCat)));
+  list.querySelectorAll("[data-rename-cat]").forEach((button) => {
+    button.addEventListener("click", () =>
+      renameCategory(Number(button.dataset.renameCat)),
+    );
   });
-  list.querySelectorAll("[data-delete-cat]").forEach(button => {
-    button.addEventListener("click", () => deleteCategory(Number(button.dataset.deleteCat)));
+  list.querySelectorAll("[data-delete-cat]").forEach((button) => {
+    button.addEventListener("click", () =>
+      deleteCategory(Number(button.dataset.deleteCat)),
+    );
   });
 }
 
 async function renameCategory(id) {
-  const category = state.categories.find(cat => cat.id === id);
+  const category = state.categories.find((cat) => cat.id === id);
   if (!category) return;
   const input = window.prompt("Rename category", category.name);
   if (input === null) return;
   const name = input.trim();
   if (!name || name === category.name) return;
   try {
-    await api(`/api/categories/${id}`, { method: "PUT", body: JSON.stringify({ name }) });
+    await api(`/api/categories/${id}`, {
+      method: "PUT",
+      body: JSON.stringify({ name }),
+    });
     await refresh();
     showToast("Category renamed");
   } catch (error) {
@@ -254,9 +306,14 @@ async function renameCategory(id) {
 }
 
 async function deleteCategory(id) {
-  const category = state.categories.find(cat => cat.id === id);
+  const category = state.categories.find((cat) => cat.id === id);
   if (!category) return;
-  if (!confirm(`Delete category “${category.name}”? Habits using it become uncategorized.`)) return;
+  if (
+    !confirm(
+      `Delete category “${category.name}”? Habits using it become uncategorized.`,
+    )
+  )
+    return;
   await api(`/api/categories/${id}`, { method: "DELETE" });
   await refresh();
   showToast("Category deleted");
@@ -274,7 +331,7 @@ function activityLevel(doneCount, totalHabits) {
 function renderActivityGrid() {
   if (!state.activityRange) return;
   const { start, end } = state.activityRange;
-  const activeIds = new Set(state.habits.map(h => h.id));
+  const activeIds = new Set(state.habits.map((h) => h.id));
   const totalHabits = state.habits.length;
   const leadingBlanks = start.getDay();
 
@@ -288,7 +345,9 @@ function renderActivityGrid() {
     const date = new Date(start);
     date.setDate(start.getDate() + i);
     const iso = toISODate(date);
-    const doneCount = (state.activityLogs[iso] || []).filter(id => activeIds.has(id)).length;
+    const doneCount = (state.activityLogs[iso] || []).filter((id) =>
+      activeIds.has(id),
+    ).length;
     const level = activityLevel(doneCount, totalHabits);
     const j = jalaliFromDate(date);
     const label = `${j.jd} ${JALALI_MONTHS[j.jm - 1]} ${j.jy} · ${doneCount}/${totalHabits} done`;
@@ -296,19 +355,22 @@ function renderActivityGrid() {
   }
 
   $("activityGrid").innerHTML = html;
-  $("activitySubtitle").textContent = `${JALALI_MONTHS[state.currentJ.jm - 1]} ${state.currentJ.jy} · ${toISODate(start)} → ${toISODate(end)}`;
+  $("activitySubtitle").textContent =
+    `${JALALI_MONTHS[state.currentJ.jm - 1]} ${state.currentJ.jy} · ${toISODate(start)} → ${toISODate(end)}`;
 }
 
 function renderHeader(days) {
   const { jy, jm } = state.currentJ;
   $("monthName").textContent = `${JALALI_MONTHS[jm - 1]} ${jy}`;
-  $("monthSubtitle").textContent = `${JALALI_MONTHS_FA[jm - 1]} ${jy} · ${days.length} days`;
+  const today = jalaliFromDate(new Date());
+  $("monthDateRange").textContent = `${today.jd} ${JALALI_MONTHS[today.jm - 1]} ${today.jy}`;
 }
 
 function renderTodayList() {
   const todayIso = toISODate(new Date());
   const todayJ = jalaliFromDate(new Date());
-  $("todayDateLabel").textContent = `${todayJ.jd} ${JALALI_MONTHS[todayJ.jm - 1]} ${todayJ.jy}`;
+  $("todayDateLabel").textContent =
+    `${todayJ.jd} ${JALALI_MONTHS[todayJ.jm - 1]} ${todayJ.jy}`;
 
   const list = $("todayList");
   if (!state.habits.length) {
@@ -316,25 +378,29 @@ function renderTodayList() {
     return;
   }
 
-  list.innerHTML = state.habits.map(habit => {
-    const done = isDone(habit.id, todayIso);
-    return `
+  list.innerHTML = state.habits
+    .map((habit) => {
+      const done = isDone(habit.id, todayIso);
+      return `
       <div class="today-item ${done ? "done" : ""}" data-today-habit="${habit.id}">
-        <button class="today-check ${done ? "done" : ""}" data-toggle-today="${habit.id}">✓</button>
+        <button class="today-check ${done ? "done" : ""}" data-toggle-today="${habit.id}" aria-label="${done ? "Uncheck" : "Complete"} ${escapeHtml(habit.name)} for today" aria-pressed="${done}">✓</button>
         <span class="today-name">${escapeHtml(habit.name)}</span>
         <span class="today-meta">${escapeHtml(habit.category || "")}</span>
       </div>
     `;
-  }).join("");
+    })
+    .join("");
 
-  list.querySelectorAll("[data-toggle-today]").forEach(button => {
-    button.addEventListener("click", () => toggleToday(Number(button.dataset.toggleToday)));
+  list.querySelectorAll("[data-toggle-today]").forEach((button) => {
+    button.addEventListener("click", () =>
+      toggleToday(Number(button.dataset.toggleToday)),
+    );
   });
 }
 
 async function toggleToday(habitId) {
   const todayIso = toISODate(new Date());
-  const habit = state.habits.find(item => item.id === habitId);
+  const habit = state.habits.find((item) => item.id === habitId);
   if (!habit) return;
   const data = await api("/api/logs/toggle", {
     method: "POST",
@@ -342,7 +408,10 @@ async function toggleToday(habitId) {
   });
   setDoneLocal(habitId, todayIso, data.done);
   renderTodayList();
-  if (state.currentJ.jy === jalaliFromDate(new Date()).jy && state.currentJ.jm === jalaliFromDate(new Date()).jm) {
+  if (
+    state.currentJ.jy === jalaliFromDate(new Date()).jy &&
+    state.currentJ.jm === jalaliFromDate(new Date()).jm
+  ) {
     renderTable();
   } else {
     renderStats(getMonthDays(state.currentJ.jy, state.currentJ.jm));
@@ -358,31 +427,38 @@ function renderTable() {
   renderTodayList();
 
   if (!state.habits.length) {
-    table.innerHTML = `<tbody><tr><td class="empty-state">Add habits to start tracking this month.</td></tr></tbody>`;
+    table.innerHTML = `<tbody><tr><td class="empty-state">No habits yet. Use “Add habit” above to start tracking.</td></tr></tbody>`;
     renderStats(days);
     return;
   }
 
   const todayIso = toISODate(new Date());
   const head = `
+    <caption class="sr-only">Habits and daily completion for ${JALALI_MONTHS[state.currentJ.jm - 1]} ${state.currentJ.jy}</caption>
     <thead>
       <tr>
-        <th>Habit</th>
-        ${days.map(day => `
-          <th class="${day.iso === todayIso ? "today-head" : ""}">
+        <th scope="col">Habit</th>
+        ${days
+          .map(
+            (day) => `
+          <th scope="col" class="${day.iso === todayIso ? "today-head" : ""}" aria-label="${day.jd} ${JALALI_MONTHS[day.jm - 1]} ${day.jy}, ${WEEKDAYS_SHORT[day.weekday]}">
             <div class="day-num">${day.jd}</div>
             <div class="day-name">${WEEKDAYS_SHORT[day.weekday]}</div>
           </th>
-        `).join("")}
+        `,
+          )
+          .join("")}
       </tr>
     </thead>
   `;
 
   const body = `
     <tbody>
-      ${state.habits.map(habit => `
+      ${state.habits
+        .map(
+          (habit) => `
         <tr>
-          <td class="habit-label-cell">
+          <th scope="row" class="habit-label-cell">
             <div class="habit-label">
               <span class="mini-dot"></span>
               <span class="table-label-text">
@@ -390,22 +466,26 @@ function renderTable() {
                 <small>${escapeHtml(habit.category || "Uncategorized")}</small>
               </span>
             </div>
-          </td>
-          ${days.map(day => {
-            const done = isDone(habit.id, day.iso);
-            return `
+          </th>
+          ${days
+            .map((day) => {
+              const done = isDone(habit.id, day.iso);
+              return `
               <td class="check-cell">
-                <button class="check-btn ${done ? "done" : ""}" data-habit="${habit.id}" data-date="${day.iso}" aria-pressed="${done}" title="${day.jd} ${JALALI_MONTHS_FA[day.jm - 1]} ${day.jy}"></button>
+                <button class="check-btn ${done ? "done" : ""}" data-habit="${habit.id}" data-date="${day.iso}" aria-label="${escapeHtml(habit.name)}, ${day.jd} ${JALALI_MONTHS[day.jm - 1]} ${day.jy}" aria-pressed="${done}" title="${day.jd} ${JALALI_MONTHS[day.jm - 1]} ${day.jy}"></button>
               </td>
             `;
-          }).join("")}
+            })
+            .join("")}
         </tr>
-      `).join("")}
+      `,
+        )
+        .join("")}
     </tbody>
   `;
 
   table.innerHTML = head + body;
-  table.querySelectorAll(".check-btn").forEach(button => {
+  table.querySelectorAll(".check-btn").forEach((button) => {
     button.addEventListener("click", () => toggleCell(button));
   });
   renderStats(days);
@@ -414,7 +494,7 @@ function renderTable() {
 async function toggleCell(button) {
   const habitId = Number(button.dataset.habit);
   const date = button.dataset.date;
-  const habit = state.habits.find(item => item.id === habitId);
+  const habit = state.habits.find((item) => item.id === habitId);
   const data = await api("/api/logs/toggle", {
     method: "POST",
     body: JSON.stringify({ habit_id: habitId, date }),
@@ -429,16 +509,32 @@ async function toggleCell(button) {
 }
 
 function renderStats(days) {
-  const activeIds = new Set(state.habits.map(h => h.id));
+  const activeIds = new Set(state.habits.map((h) => h.id));
   const total = state.habits.length * days.length;
-  const done = days.reduce((sum, day) => sum + (state.logs[day.iso] || []).filter(id => activeIds.has(id)).length, 0);
+  const done = days.reduce(
+    (sum, day) =>
+      sum +
+      (state.logs[day.iso] || []).filter((id) => activeIds.has(id)).length,
+    0,
+  );
   const percent = total ? Math.round((done / total) * 100) : 0;
 
   $("monthCompletionPill").textContent = `${percent}% complete`;
+  const today = toISODate(new Date());
+  const eligibleDays = days.filter((day) => day.iso <= today);
+  const activeDays = eligibleDays.filter((day) =>
+    (state.logs[day.iso] || []).some((id) => activeIds.has(id)),
+  ).length;
+  const consistency = activeIds.size && eligibleDays.length
+    ? Math.round((activeDays / eligibleDays.length) * 100)
+    : 0;
+  $("consistencyRate").textContent = eligibleDays.length
+    ? `Consistency ${consistency}% · ${activeDays}/${eligibleDays.length} days active`
+    : "Consistency — · Future month";
 }
 
 function openEditDialog(id) {
-  const habit = state.habits.find(item => item.id === id);
+  const habit = state.habits.find((item) => item.id === id);
   if (!habit) return;
   $("editHabitId").value = habit.id;
   $("editHabitName").value = habit.name;
@@ -468,9 +564,12 @@ async function saveEdit() {
 
 async function deleteCurrentHabit() {
   const id = Number($("editHabitId").value);
-  const habit = state.habits.find(item => item.id === id);
+  const habit = state.habits.find((item) => item.id === id);
   if (!habit) return;
-  if (!confirm(`Remove “${habit.name}”? This also deletes its check-in history.`)) return;
+  if (
+    !confirm(`Remove “${habit.name}”? This also deletes its check-in history.`)
+  )
+    return;
   await api(`/api/habits/${id}`, { method: "DELETE" });
   $("editDialog").close();
   await refresh();
@@ -478,10 +577,18 @@ async function deleteCurrentHabit() {
 }
 
 function escapeHtml(value) {
-  return String(value).replace(/[&<>'"]/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[char]));
+  return String(value).replace(
+    /[&<>'"]/g,
+    (char) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[
+        char
+      ],
+  );
 }
 
-function sanitizeColor() { return "#64748b"; }
+function sanitizeColor() {
+  return "#64748b";
+}
 
 async function refresh() {
   await Promise.all([loadHabits(), loadCategories()]);
@@ -494,12 +601,12 @@ async function refresh() {
 }
 
 function bindEvents() {
-  $("themeToggle").addEventListener("click", () => {
-    const nextTheme = document.documentElement.dataset.theme === "light" ? "dark" : "light";
-    document.documentElement.dataset.theme = nextTheme;
-    try { appStorage.setItem("habittify_theme", nextTheme); } catch (error) {}
-    showToast(`${nextTheme === "light" ? "Light" : "Dark"} theme enabled`);
-  });
+  const focusAddHabit = () => {
+    const input = $("habitName");
+    input.scrollIntoView({ behavior: "smooth", block: "center" });
+    input.focus({ preventScroll: true });
+  };
+  $("gridAddHabit").addEventListener("click", focusAddHabit);
 
   $("prevMonth").addEventListener("click", async () => {
     state.currentJ = normalizeMonth(state.currentJ.jy, state.currentJ.jm - 1);
@@ -533,7 +640,7 @@ function bindEvents() {
       body: JSON.stringify({
         name,
         category: $("habitCategory").value.trim(),
-      color: "#64748b",
+        color: "#64748b",
       }),
     });
     nameInput.value = "";
@@ -548,7 +655,10 @@ function bindEvents() {
     const name = input.value.trim();
     if (!name) return;
     try {
-      await api("/api/categories", { method: "POST", body: JSON.stringify({ name }) });
+      await api("/api/categories", {
+        method: "POST",
+        body: JSON.stringify({ name }),
+      });
       input.value = "";
       await refresh();
       showToast("Category added");
@@ -564,11 +674,6 @@ function bindEvents() {
 
   $("closeEdit").addEventListener("click", () => $("editDialog").close());
   $("deleteHabit").addEventListener("click", deleteCurrentHabit);
-
-  $("quickAdd").addEventListener("click", () => {
-    $("habitName").scrollIntoView({ behavior: "smooth", block: "center" });
-    window.setTimeout(() => $("habitName").focus(), 280);
-  });
 }
 
 async function boot() {
@@ -577,8 +682,10 @@ async function boot() {
   await refresh();
 }
 
-window.appStorageReady.then(() => {
-  const theme = appStorage.getItem('habittify_theme');
-  if (theme) document.documentElement.dataset.theme = theme;
-  return boot();
-}).catch(error => showToast(error.message));
+window.appStorageReady
+  .then(() => {
+    const theme = appStorage.getItem("edi_os_theme");
+    if (theme) document.documentElement.dataset.theme = theme;
+    return boot();
+  })
+  .catch((error) => showToast(error.message));
