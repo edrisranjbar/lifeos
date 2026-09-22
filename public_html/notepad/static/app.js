@@ -54,4 +54,54 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.querySelectorAll('[data-view]').forEach(item => item.setAttribute('aria-pressed', String(item === button)));
     if (button.dataset.view !== 'preview') input.focus();
   }));
+
+  const MD_FORMATS = {
+    bold: { wrap: ['**', '**'], ph: 'bold text' },
+    italic: { wrap: ['*', '*'], ph: 'italic text' },
+    strike: { wrap: ['~~', '~~'], ph: 'strikethrough' },
+    code: { wrap: ['`', '`'], ph: 'code' },
+    link: { wrap: ['[', '](https://)'], ph: 'link text' },
+    codeblock: { wrap: ['```\n', '\n```'], ph: 'code' },
+    heading: { prefix: '## ', ph: 'Heading' },
+    quote: { prefix: '> ', ph: 'Quote' },
+    ul: { prefix: '- ', ph: 'List item' },
+    ol: { prefix: '1. ', ph: 'List item' },
+  };
+
+  function applyMdFormat(kind) {
+    const format = MD_FORMATS[kind];
+    if (!format) return;
+    const start = input.selectionStart, end = input.selectionEnd;
+    const selected = input.value.slice(start, end);
+    let text, selA, selB;
+    if (format.prefix) {
+      text = (selected || format.ph).split('\n').map(line => format.prefix + line).join('\n');
+      selA = start; selB = start + text.length;
+    } else {
+      const inner = selected || format.ph;
+      text = format.wrap[0] + inner + format.wrap[1];
+      selA = start + format.wrap[0].length; selB = selA + inner.length;
+    }
+    input.focus();
+    input.setSelectionRange(start, end);
+    let applied = false;
+    try { applied = document.execCommand('insertText', false, text); } catch {}
+    if (!applied) {
+      input.setRangeText(text, start, end, 'end');
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    input.setSelectionRange(selA, selB);
+  }
+
+  document.querySelectorAll('[data-md]').forEach(button => {
+    button.addEventListener('mousedown', event => event.preventDefault());
+    button.addEventListener('click', () => applyMdFormat(button.dataset.md));
+  });
+
+  input.addEventListener('keydown', event => {
+    if ((event.ctrlKey || event.metaKey) && !event.altKey) {
+      const kind = { b: 'bold', i: 'italic' }[event.key.toLowerCase()];
+      if (kind) { event.preventDefault(); applyMdFormat(kind); }
+    }
+  });
 });

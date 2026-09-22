@@ -14,7 +14,7 @@
 <body>
   <main class="app">
     <header class="page-header">
-      <div><span class="eyebrow">Markdown workspace</span><h1>Notepad <small>.md</small></h1><p>A focused place for longer drafts and quick thinking.</p></div>
+      <div><span class="eyebrow">Markdown workspace</span><h1>Notepad <small>.md</small></h1></div>
       <div class="header-actions">
         <span class="save-status" id="saveStatus" role="status">Saved</span>
         <div class="view-switch" role="group" aria-label="Notepad layout">
@@ -25,7 +25,7 @@
       </div>
     </header>
     <section class="editor-shell" data-view="split" id="editorShell">
-      <div class="pane write-pane"><div class="pane-label">Markdown</div><textarea id="notepadInput" spellcheck="true" aria-label="Markdown notepad" placeholder="# Start writing…"></textarea></div>
+      <div class="pane write-pane"><div class="pane-label">Markdown</div><div class="md-toolbar" role="toolbar" aria-label="Format markdown"><button type="button" data-md="bold" title="Bold (Ctrl+B)" class="md-bold">B</button><button type="button" data-md="italic" title="Italic (Ctrl+I)" class="md-italic">I</button><button type="button" data-md="strike" title="Strikethrough" class="md-strike">S</button><button type="button" data-md="heading" title="Heading">H</button><button type="button" data-md="quote" title="Quote">❝</button><button type="button" data-md="ul" title="Bullet list">•</button><button type="button" data-md="ol" title="Numbered list">1.</button><button type="button" data-md="code" title="Inline code">`</button><button type="button" data-md="codeblock" title="Code block">{}</button><button type="button" data-md="link" title="Link">[]()</button></div><textarea id="notepadInput" spellcheck="true" aria-label="Markdown notepad" placeholder="# Start writing…"></textarea></div>
       <article class="pane preview-pane"><div class="pane-label">Preview</div><div class="markdown-preview" id="notepadPreview"></div></article>
     </section>
   </main>
