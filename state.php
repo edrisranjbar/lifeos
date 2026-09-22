@@ -19,7 +19,7 @@ try {
     $db = life_os_db();
     $allowed = [
         'edi_focus_v1', 'daramd_periods_v1', 'daramd_active_period_v1', 'daramd_v1',
-        'kanban_boards_v1', 'edi_goals_v1', 'edi_notes_v1',
+        'kanban_boards_v1', 'edi_goals_v1', 'edi_notes_v1', 'edi_notepad_v1',
         'edi_os_theme', 'edifinance_theme', 'habittify_theme',
         'edi_kanban_theme', 'edi_goals_theme', 'edi_notes_theme',
     ];

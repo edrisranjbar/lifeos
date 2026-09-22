@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
-      content="Markdown notes — quick notes stored locally in your browser."
+      content="Connected Markdown notes with per-note formatting and private previews."
     />
     <title>Notes · Edi Life OS</title>
     <script>
@@ -30,6 +30,7 @@
   <body>
     <header class="notes-toolbar">
       <div class="toolbar-left">
+        <span class="eyebrow">Markdown workspace</span>
         <h1>Notes</h1>
         <span class="small-note" id="notesCount">0 notes</span>
       </div>
@@ -51,6 +52,7 @@
     </header>
 
     <main class="canvas" id="canvas" aria-label="Sticky notes canvas">
+      <svg class="connections-layer" id="connectionsLayer" aria-label="Note connections"></svg>
       <p class="empty-state" id="emptyState" hidden>
         No notes yet. Press ＋ to add a note.
       </p>

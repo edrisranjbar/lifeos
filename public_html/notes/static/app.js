@@ -2,12 +2,19 @@ const $ = (id) => document.getElementById(id);
 
 const KEY = "edi_notes_v1";
 const COLORS = ["yellow", "pink", "blue", "green", "lavender", "peach"];
+const FONT_FACES = {
+  sans: 'Inter, system-ui, sans-serif',
+  serif: 'Georgia, "Times New Roman", serif',
+  mono: '"JetBrains Mono", ui-monospace, monospace'
+};
 const NOTE_W = 220;
 const NOTE_H = 200;
 const GRID = 32;
 
 const state = {
   notes: [],
+  connections: [],
+  connectFrom: null,
   zCounter: 1,
   search: ""
 };
@@ -17,6 +24,10 @@ function loadState() {
     const saved = JSON.parse(appStorage.getItem(KEY));
     if (saved && Array.isArray(saved.notes)) {
       state.notes = saved.notes.map(normalizeNote).filter(Boolean);
+      const ids = new Set(state.notes.map(note => note.id));
+      state.connections = Array.isArray(saved.connections)
+        ? saved.connections.filter(link => link && typeof link.a === "string" && typeof link.b === "string" && link.a !== link.b && ids.has(link.a) && ids.has(link.b))
+        : [];
     }
   } catch (e) {
     console.error("Failed to load notes:", e);
@@ -41,6 +52,9 @@ function normalizeNote(note) {
     title: typeof note.title === "string" ? note.title : "",
     body: typeof note.body === "string" ? note.body : "",
     color: COLORS.includes(note.color) ? note.color : "yellow",
+    fontFace: Object.hasOwn(FONT_FACES, note.fontFace) ? note.fontFace : "sans",
+    fontSize: Number.isInteger(note.fontSize) ? Math.min(28, Math.max(11, note.fontSize)) : 14,
+    secret: note.secret === true,
     x: typeof note.x === "number" ? note.x : 80,
     y: typeof note.y === "number" ? note.y : 80,
     w: typeof note.w === "number" ? note.w : NOTE_W,
@@ -56,6 +70,9 @@ function makeNote(title, body, pos) {
     title: title || "",
     body: body || "",
     color: COLORS[state.notes.length % COLORS.length],
+    fontFace: "sans",
+    fontSize: 14,
+    secret: false,
     x: pos?.x ?? 80,
     y: pos?.y ?? 80,
     w: NOTE_W,
@@ -72,7 +89,7 @@ function cryptoId() {
 
 function persist() {
   try {
-    appStorage.setItem(KEY, JSON.stringify({ notes: state.notes }));
+    appStorage.setItem(KEY, JSON.stringify({ notes: state.notes, connections: state.connections }));
   } catch (e) {
     showToast("Unable to save note.", "error");
   }
@@ -95,7 +112,7 @@ function renderInline(value) {
 }
 
 function renderMarkdown(source) {
-  if (!source.trim()) return '<p class="preview-empty">Double-click or press Edit to write Markdown.</p>';
+  if (!source.trim()) return '<p class="preview-empty">Double-click to write Markdown.</p>';
   const lines = source.replace(/\r\n?/g, "\n").split("\n");
   const output = [];
   let list = "", code = false, codeLines = [];
@@ -146,7 +163,7 @@ function snap(value) {
 function getFiltered() {
   const q = state.search.trim().toLowerCase();
   if (!q) return state.notes;
-  return state.notes.filter((n) => n.body.toLowerCase().includes(q) || n.title.toLowerCase().includes(q));
+  return state.notes.filter((n) => !n.secret && (n.body.toLowerCase().includes(q) || n.title.toLowerCase().includes(q)));
 }
 
 function renderAll() {
@@ -163,11 +180,95 @@ function renderAll() {
     el.classList.toggle("dimmed", !filteredIds.has(note.id) && state.search.trim() !== "");
     canvas.append(el);
   }
+  renderConnections();
+  syncConnectMode();
+}
+
+function syncConnectMode() {
+  for (const el of document.querySelectorAll(".sticky")) {
+    const selected = el.dataset.id === state.connectFrom;
+    el.classList.toggle("connect-source", selected);
+    el.querySelector(".connect-note")?.setAttribute("aria-pressed", String(selected));
+  }
+  $("canvas").classList.toggle("connecting", !!state.connectFrom);
+}
+
+function connectNotes(a, b) {
+  if (!a || !b || a === b) return;
+  if (!state.connections.some(link => (link.a === a && link.b === b) || (link.a === b && link.b === a))) {
+    state.connections.push({a, b});
+    persist();
+    renderConnections();
+    showToast("Notes connected");
+  } else {
+    showToast("These notes are already connected");
+  }
+  state.connectFrom = null;
+  syncConnectMode();
+}
+
+function renderConnections() {
+  const svg = $("connectionsLayer");
+  const canvas = $("canvas");
+  if (!svg || !canvas) return;
+  const width = Math.max(canvas.clientWidth, ...state.notes.map(note => note.x + note.w + 40), 1);
+  const height = Math.max(canvas.clientHeight, ...state.notes.map(note => note.y + note.h + 40), 1);
+  svg.style.width = `${width}px`;
+  svg.style.height = `${height}px`;
+  svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+  svg.replaceChildren();
+  const notes = new Map(state.notes.map(note => [note.id, note]));
+  for (const link of state.connections) {
+    const a = notes.get(link.a), b = notes.get(link.b);
+    if (!a || !b) continue;
+    const ax = a.x + a.w / 2, ay = a.y + a.h / 2;
+    const bx = b.x + b.w / 2, by = b.y + b.h / 2;
+    let path;
+    if (Math.abs(bx - ax) >= Math.abs(by - ay)) {
+      const sign = bx >= ax ? 1 : -1;
+      const x1 = ax + sign * a.w / 2, x2 = bx - sign * b.w / 2;
+      path = `M ${x1} ${ay} C ${x1 + sign * 56} ${ay}, ${x2 - sign * 56} ${by}, ${x2} ${by}`;
+    } else {
+      const sign = by >= ay ? 1 : -1;
+      const y1 = ay + sign * a.h / 2, y2 = by - sign * b.h / 2;
+      path = `M ${ax} ${y1} C ${ax} ${y1 + sign * 56}, ${bx} ${y2 - sign * 56}, ${bx} ${y2}`;
+    }
+    const line = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    line.setAttribute("d", path);
+    line.setAttribute("class", "connection-line");
+    const hit = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    hit.setAttribute("d", path);
+    hit.setAttribute("class", "connection-hit");
+    hit.setAttribute("role", "button");
+    hit.setAttribute("tabindex", "0");
+    hit.setAttribute("aria-label", "Remove connection between notes");
+    const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
+    title.textContent = "Click to remove connection";
+    hit.append(title);
+    const remove = () => {
+      if (!confirm("Remove this connection?")) return;
+      state.connections = state.connections.filter(other => other !== link);
+      persist();
+      renderConnections();
+      showToast("Connection removed");
+    };
+    hit.addEventListener("click", remove);
+    hit.addEventListener("mouseenter", () => line.classList.add("connection-hover"));
+    hit.addEventListener("mouseleave", () => line.classList.remove("connection-hover"));
+    hit.addEventListener("focus", () => line.classList.add("connection-hover"));
+    hit.addEventListener("blur", () => line.classList.remove("connection-hover"));
+    hit.addEventListener("keydown", event => {
+      if (event.key === "Enter" || event.key === " ") { event.preventDefault(); remove(); }
+    });
+    svg.append(line, hit);
+  }
 }
 
 function renderSticky(note) {
   const el = document.createElement("article");
   el.className = "sticky";
+  el.tabIndex = 0;
+  el.title = "Double-click to edit note";
   el.dataset.id = note.id;
   el.dataset.color = note.color;
   el.style.left = note.x + "px";
@@ -175,6 +276,40 @@ function renderSticky(note) {
   el.style.width = note.w + "px";
   el.style.height = note.h + "px";
   el.style.zIndex = note.z;
+  el.style.setProperty("--note-font", FONT_FACES[note.fontFace]);
+  el.style.setProperty("--note-size", `${note.fontSize}px`);
+
+  const format = document.createElement("div");
+  format.className = "note-format";
+  const face = document.createElement("select");
+  face.setAttribute("aria-label", "Note font face");
+  for (const [value, label] of [["sans", "Sans"], ["serif", "Serif"], ["mono", "Mono"]]) {
+    const option = document.createElement("option");
+    option.value = value; option.textContent = label;
+    face.append(option);
+  }
+  face.value = note.fontFace;
+  face.addEventListener("change", () => {
+    note.fontFace = face.value;
+    el.style.setProperty("--note-font", FONT_FACES[note.fontFace]);
+    note.updated = Date.now();
+    persist();
+  });
+  const size = document.createElement("select");
+  size.setAttribute("aria-label", "Note font size");
+  for (const value of [11, 12, 14, 16, 18, 20, 24, 28]) {
+    const option = document.createElement("option");
+    option.value = String(value); option.textContent = `${value}px`;
+    size.append(option);
+  }
+  size.value = String(note.fontSize);
+  size.addEventListener("change", () => {
+    note.fontSize = Number(size.value);
+    el.style.setProperty("--note-size", `${note.fontSize}px`);
+    note.updated = Date.now();
+    persist();
+  });
+  format.append(face, size);
 
   const body = document.createElement("textarea");
   body.className = "sticky-body";
@@ -186,10 +321,44 @@ function renderSticky(note) {
   preview.className = "markdown-preview";
   preview.innerHTML = renderMarkdown(body.value);
   body.hidden = true;
-  const editBtn = document.createElement("button");
-  editBtn.type = "button";
-  editBtn.textContent = "Edit";
-  editBtn.setAttribute("aria-label", "Edit Markdown");
+  const revealBtn = document.createElement("button");
+  revealBtn.type = "button";
+  revealBtn.className = "reveal-note";
+  revealBtn.textContent = "🔒 Reveal note";
+  const privacyBtn = document.createElement("button");
+  privacyBtn.type = "button";
+  privacyBtn.title = "Toggle secret note";
+  const hideBtn = document.createElement("button");
+  hideBtn.type = "button";
+  hideBtn.textContent = "Hide";
+  hideBtn.setAttribute("aria-label", "Hide secret note");
+  let revealed = false;
+  const updatePrivacy = () => {
+    const locked = note.secret && !revealed;
+    el.classList.toggle("secret-locked", locked);
+    el.setAttribute("aria-label", locked ? "Secret note, content hidden" : "Note, double-click or press Enter to edit");
+    preview.setAttribute("aria-hidden", String(locked));
+    preview.inert = locked;
+    revealBtn.hidden = !locked;
+    hideBtn.hidden = !note.secret || locked;
+    privacyBtn.textContent = note.secret ? "🔒" : "🔓";
+    privacyBtn.setAttribute("aria-label", note.secret ? "Turn off secret mode" : "Make note secret");
+    privacyBtn.setAttribute("aria-pressed", String(note.secret));
+  };
+  revealBtn.onclick = () => { revealed = true; updatePrivacy(); };
+  hideBtn.onclick = () => {
+    el._exitEdit?.();
+    revealed = false;
+    updatePrivacy();
+  };
+  privacyBtn.onclick = () => {
+    el._exitEdit?.();
+    note.secret = !note.secret;
+    revealed = false;
+    note.updated = Date.now();
+    persist();
+    updatePrivacy();
+  };
   const swatch = document.createElement("div");
   swatch.className = "swatch";
   for (const color of COLORS) {
@@ -210,6 +379,19 @@ function renderSticky(note) {
 
   const actions = document.createElement("div");
   actions.className = "actions";
+  const connectBtn = document.createElement("button");
+  connectBtn.type = "button";
+  connectBtn.className = "connect-note";
+  connectBtn.textContent = "↗";
+  connectBtn.title = "Connect this note to another";
+  connectBtn.setAttribute("aria-label", "Connect this note to another");
+  connectBtn.setAttribute("aria-pressed", "false");
+  connectBtn.onclick = () => {
+    document.querySelectorAll(".sticky.editing").forEach(card => card._exitEdit?.());
+    state.connectFrom = state.connectFrom === note.id ? null : note.id;
+    syncConnectMode();
+    if (state.connectFrom) showToast("Select another note to connect · Esc to cancel");
+  };
   const delBtn = document.createElement("button");
   delBtn.type = "button";
   delBtn.title = "Delete note";
@@ -219,17 +401,22 @@ function renderSticky(note) {
     e.stopPropagation();
     deleteNote(note.id);
   };
-  actions.append(editBtn, delBtn);
+  actions.append(connectBtn, privacyBtn, hideBtn, delBtn);
 
   const resize = document.createElement("div");
   resize.className = "resize-handle";
   resize.setAttribute("aria-label", "Resize note");
   resize.title = "Resize";
 
-  el.append(preview, body, swatch, actions, resize);
+  el.append(format, preview, body, revealBtn, swatch, actions, resize);
   bindDrag(el, note);
   bindResize(el, note, resize);
-  bindEdit(el, note, body, preview, editBtn);
+  bindEdit(el, note, body, preview, format);
+  el.addEventListener("click", event => {
+    if (!state.connectFrom || event.target.closest("button, a, select, textarea, .note-format, .swatch, .resize-handle")) return;
+    connectNotes(state.connectFrom, note.id);
+  });
+  updatePrivacy();
 
   return el;
 }
@@ -239,6 +426,8 @@ function deleteNote(id) {
   if (idx === -1) return;
   if (!confirm("Delete this note?")) return;
   state.notes.splice(idx, 1);
+  state.connections = state.connections.filter(link => link.a !== id && link.b !== id);
+  if (state.connectFrom === id) state.connectFrom = null;
   persist();
   renderAll();
 }
@@ -255,10 +444,7 @@ function createNote() {
   persist();
   renderAll();
   // Focus the new note for immediate editing
-  const el = document.querySelector(`.sticky[data-id="${note.id}"] .sticky-body`);
-  if (el) {
-    el.closest(".sticky").querySelector('[aria-label="Edit Markdown"]').click();
-  }
+  document.querySelector(`.sticky[data-id="${note.id}"]`)?._enterEdit?.();
 }
 
 function bindDrag(el, note) {
@@ -267,7 +453,8 @@ function bindDrag(el, note) {
 
   const onDown = (e) => {
     // Only drag when not editing, and ignore clicks on the action/swatch/resize areas
-    if (e.target.closest("button, a, textarea, .swatch, .resize-handle")) return;
+    if (e.target.closest("button, a, textarea, select, .note-format, .swatch, .resize-handle")) return;
+    if (state.connectFrom) return;
     if (el.classList.contains("editing")) return;
     e.preventDefault();
     pointerId = e.pointerId;
@@ -289,6 +476,7 @@ function bindDrag(el, note) {
     note.y = Math.max(60, originY + dy);
     el.style.left = note.x + "px";
     el.style.top = note.y + "px";
+    renderConnections();
   };
 
   const onUp = (e) => {
@@ -299,6 +487,7 @@ function bindDrag(el, note) {
     note.y = Math.max(60, snap(note.y));
     el.style.left = note.x + "px";
     el.style.top = note.y + "px";
+    renderConnections();
     note.updated = Date.now();
     persist();
   };
@@ -335,6 +524,7 @@ function bindResize(el, note, handle) {
     note.h = Math.max(80, originH + dy);
     el.style.width = note.w + "px";
     el.style.height = note.h + "px";
+    renderConnections();
   };
 
   const onUp = () => {
@@ -345,6 +535,7 @@ function bindResize(el, note, handle) {
     note.h = Math.max(80, snap(note.h));
     el.style.width = note.w + "px";
     el.style.height = note.h + "px";
+    renderConnections();
     note.updated = Date.now();
     persist();
   };
@@ -355,28 +546,44 @@ function bindResize(el, note, handle) {
   handle.addEventListener("pointercancel", onUp);
 }
 
-function bindEdit(el, note, body, preview, editBtn) {
+function bindEdit(el, note, body, preview, format) {
   const enter = () => {
+    if (el.classList.contains("secret-locked")) return;
+    document.querySelectorAll(".sticky.editing").forEach(other => {
+      if (other !== el) other._exitEdit?.();
+    });
     el.classList.add("editing");
-    editBtn.textContent = "Done";
-    editBtn.setAttribute("aria-label", "Finish editing Markdown");
     body.hidden = false;
     preview.hidden = true;
     body.focus();
     body.setSelectionRange(body.value.length, body.value.length);
   };
   const exit = () => {
+    if (!el.classList.contains("editing")) return;
+    if (note.body !== body.value) {
+      note.body = body.value;
+      note.updated = Date.now();
+      persist();
+    }
     el.classList.remove("editing");
-    editBtn.textContent = "Edit";
-    editBtn.setAttribute("aria-label", "Edit Markdown");
     preview.innerHTML = renderMarkdown(body.value);
     body.hidden = true;
     preview.hidden = false;
   };
-  editBtn.onclick = () => el.classList.contains("editing") ? body.blur() : enter();
+  el._enterEdit = enter;
+  el._exitEdit = exit;
+
+  el.addEventListener("keydown", (e) => {
+    if (e.target === el && (e.key === "Enter" || e.key === "F2")) {
+      e.preventDefault();
+      if (state.connectFrom) connectNotes(state.connectFrom, note.id);
+      else enter();
+    }
+  });
 
   el.addEventListener("dblclick", (e) => {
-    if (e.target.closest(".actions, .swatch, a")) return;
+    if (state.connectFrom) return;
+    if (e.target.closest(".actions, .swatch, .note-format, .reveal-note, a")) return;
     if (!el.classList.contains("editing")) enter();
   });
 
@@ -387,11 +594,15 @@ function bindEdit(el, note, body, preview, editBtn) {
     persist();
   });
 
-  body.addEventListener("blur", () => {
+  body.addEventListener("blur", (e) => {
     note.body = body.value;
     note.updated = Date.now();
     persist();
-    exit();
+    if (!format.contains(e.relatedTarget)) exit();
+  });
+
+  format.addEventListener("focusout", (e) => {
+    if (!format.contains(e.relatedTarget) && e.relatedTarget !== body) exit();
   });
 
   body.addEventListener("keydown", (e) => {
@@ -424,6 +635,12 @@ function bindEvents() {
   });
 
   document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && state.connectFrom) {
+      state.connectFrom = null;
+      syncConnectMode();
+      showToast("Connection canceled");
+      return;
+    }
     if (e.target.matches("input, textarea, [contenteditable='true']")) return;
     const meta = e.metaKey || e.ctrlKey;
     if (meta && e.key.toLowerCase() === "n") {
@@ -436,7 +653,7 @@ function bindEvents() {
   });
 
   window.addEventListener("resize", () => {
-    // No-op for now; positions are absolute pixels so they survive resize.
+    renderConnections();
   });
 }
 

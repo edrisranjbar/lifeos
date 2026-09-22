@@ -49,6 +49,7 @@ $extensions = [
     'mjs' => 'application/javascript', 'svg' => 'image/svg+xml', 'png' => 'image/png',
     'jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'ico' => 'image/x-icon',
     'woff' => 'font/woff', 'woff2' => 'font/woff2', 'ttf' => 'font/ttf',
+    'mp3' => 'audio/mpeg', 'm4a' => 'audio/mp4', 'ogg' => 'audio/ogg', 'wav' => 'audio/wav',
 ];
 $extension = strtolower(pathinfo($resolved, PATHINFO_EXTENSION));
 if (!isset($extensions[$extension]) || str_contains($resolved, DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR)) {

@@ -157,10 +157,10 @@ function renderStats() {
   })();
 
   row.innerHTML = `
-    <div class="stat-card"><div class="label">Total goals</div><div class="value">${total}</div></div>
-    <div class="stat-card"><div class="label">Active</div><div class="value accent">${active}</div></div>
-    <div class="stat-card"><div class="label">Completed</div><div class="value">${completed}</div></div>
-    <div class="stat-card"><div class="label">Avg progress</div><div class="value ${avgProgress >= 75 ? "accent" : avgProgress < 25 ? "warn" : ""}">${avgProgress}%</div></div>
+    <div class="stat-card stat-total"><span class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="m15 9 5-5m0 0v4m0-4h-4"/></svg></span><div><div class="label">Total goals</div><div class="value">${total}</div></div></div>
+    <div class="stat-card stat-active"><span class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M13 2 4.5 13h7L11 22l8.5-12h-7L13 2Z"/></svg></span><div><div class="label">Active</div><div class="value accent">${active}</div></div></div>
+    <div class="stat-card stat-completed"><span class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></span><div><div class="label">Completed</div><div class="value">${completed}</div></div></div>
+    <div class="stat-card stat-progress"><span class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 19V9m6 10V5m6 14v-7m4 7H2"/></svg></span><div><div class="label">Avg progress</div><div class="value ${avgProgress >= 75 ? "accent" : avgProgress < 25 ? "warn" : ""}">${avgProgress}%</div></div></div>
   `;
 }
 
@@ -187,7 +187,7 @@ function renderGoals() {
   }
 
   main.innerHTML = list
-    .map((g) => goalCardHTML(g))
+    .map((g, index) => goalCardHTML(g, index))
     .join("");
 
   // bind clicks
@@ -196,12 +196,12 @@ function renderGoals() {
   });
 }
 
-function goalCardHTML(g) {
+function goalCardHTML(g, index = 0) {
   const status = effectiveStatus(g);
   const progress = calcProgress(g);
   const completedCount = g.tasks.filter((t) => t.done).length;
   return `
-    <article class="goal-card ${status}" data-id="${g.id}">
+    <article class="goal-card ${status}" data-id="${g.id}" style="--card-delay:${Math.min(index, 6) * 45}ms">
       <div class="top-row">
         ${g.category ? `<span class="category-pill">${escapeHtml(g.category)}</span>` : `<span></span>`}
         <div style="display:flex;gap:8px;align-items:center;">
@@ -322,11 +322,15 @@ function addWizardTask() {
 }
 
 function showWizardStep(step) {
+  const previousStep = state.wizard.step;
   state.wizard.step = step;
   $$(".wizard-panel").forEach((p) => {
     p.hidden = p.dataset.panel !== SMART_STEPS[step];
+    p.classList.toggle("step-forward", step >= previousStep && !p.hidden);
+    p.classList.toggle("step-back", step < previousStep && !p.hidden);
   });
-  $$(".wizard-steps li").forEach((li) => {
+  $$(".wizard-steps li").forEach((li, index) => {
+    li.classList.toggle("is-complete", index < step);
     if (li.dataset.step === SMART_STEPS[step]) {
       li.setAttribute("aria-current", "step");
     } else {

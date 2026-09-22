@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <script src="/assets/storage.js"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A focused Markdown notepad with live preview.">
+  <title>Notepad · Edi Life OS</title>
+  <script>
+    try { document.documentElement.dataset.theme = appStorage.getItem('edi_os_theme') || 'dark'; } catch { document.documentElement.dataset.theme = 'dark'; }
+  </script>
+  <link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+  <main class="app">
+    <header class="page-header">
+      <div><span class="eyebrow">Markdown workspace</span><h1>Notepad <small>.md</small></h1><p>A focused place for longer drafts and quick thinking.</p></div>
+      <div class="header-actions">
+        <span class="save-status" id="saveStatus" role="status">Saved</span>
+        <div class="view-switch" role="group" aria-label="Notepad layout">
+          <button type="button" data-view="write" aria-pressed="false">Write</button>
+          <button type="button" data-view="split" aria-pressed="true">Split</button>
+          <button type="button" data-view="preview" aria-pressed="false">Preview</button>
+        </div>
+      </div>
+    </header>
+    <section class="editor-shell" data-view="split" id="editorShell">
+      <div class="pane write-pane"><div class="pane-label">Markdown</div><textarea id="notepadInput" spellcheck="true" aria-label="Markdown notepad" placeholder="# Start writing…"></textarea></div>
+      <article class="pane preview-pane"><div class="pane-label">Preview</div><div class="markdown-preview" id="notepadPreview"></div></article>
+    </section>
+  </main>
+  <script src="static/app.js" defer></script>
+</body>
+</html>
