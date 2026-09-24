@@ -2,6 +2,8 @@
 
 A private dashboard for focus, finance, habits, kanban, goals, and Markdown notes. Requires PHP 8.1+, PDO MySQL, and MySQL 8+. App data is stored in MySQL. Existing browser data is imported once; conflicting older copies are archived in the `app_state` table as `legacy_backup_*` rows.
 
+![Edi Life OS preview](intro-preview.gif)
+
 ## Setup
 
 1. Edit `config.php` with your MySQL host, database name, database account, and app login. The committed values are fake test placeholders; **never commit real credentials**.

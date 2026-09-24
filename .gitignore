@@ -2,3 +2,4 @@
 .npm-cache/
 public_html/habittify/storage/*.db*
 edi-life-os-shared-host.zip
+/intro.gif
