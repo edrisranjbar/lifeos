@@ -10,7 +10,10 @@
 
 <br>
 
-<img src="docs/media/dashboard.webp" alt="Edi Life OS overview: a daily productivity score with focus, habit, goal and work progress, and six life dimensions" width="100%">
+<picture>
+  <source media="(prefers-color-scheme: light)" srcset="docs/media/dashboard-light.webp">
+  <img src="docs/media/dashboard.webp" alt="Edi Life OS overview: a daily productivity score with focus, habit, goal and work progress, and six life dimensions" width="100%">
+</picture>
 
 </div>
 
@@ -28,21 +31,33 @@ Most of us run our lives across a to-do app, a habit tracker, a budgeting spread
 <table>
 <tr>
 <td width="50%" valign="top">
-<img src="docs/media/growth.webp" alt="Growth workspace with six life dimensions and SMART progress">
+<picture>
+  <source media="(prefers-color-scheme: light)" srcset="docs/media/growth-light.webp">
+  <img src="docs/media/growth.webp" alt="Growth workspace with six life dimensions and SMART progress">
+</picture>
 <p><b>Growth</b> — Six life dimensions, each linked to long-term goals, SMART goals, habits and tasks. Guided weekly, monthly and quarterly reviews.</p>
 </td>
 <td width="50%" valign="top">
-<img src="docs/media/focus.webp" alt="Focus timer over an illustrated landscape with a soundtrack panel">
+<picture>
+  <source media="(prefers-color-scheme: light)" srcset="docs/media/focus-light.webp">
+  <img src="docs/media/focus.webp" alt="Focus timer over an illustrated landscape with a soundtrack panel">
+</picture>
 <p><b>Focus</b> — Pomodoro sessions with breaks, a built-in focus soundtrack and a landscape that follows the time of day.</p>
 </td>
 </tr>
 <tr>
 <td width="50%" valign="top">
-<img src="docs/media/habittify.webp" alt="Habit checklist with a seven-day completion chart">
+<picture>
+  <source media="(prefers-color-scheme: light)" srcset="docs/media/habittify-light.webp">
+  <img src="docs/media/habittify.webp" alt="Habit checklist with a seven-day completion chart">
+</picture>
 <p><b>Habittify</b> — Small daily habits, streaks and a seven-day picture of your consistency.</p>
 </td>
 <td width="50%" valign="top">
-<img src="docs/media/kanban.webp" alt="Kanban board with backlog, in progress, review and done columns">
+<picture>
+  <source media="(prefers-color-scheme: light)" srcset="docs/media/kanban-light.webp">
+  <img src="docs/media/kanban.webp" alt="Kanban board with backlog, in progress, review and done columns">
+</picture>
 <p><b>Kanban</b> — Boards with labels, priorities, due dates, checklists, comments and attachments.</p>
 </td>
 </tr>
