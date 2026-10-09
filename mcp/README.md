@@ -25,7 +25,24 @@ npm start loads .env from mcp. Clients that launch node src/index.js directly mu
 
 ## Client configuration
 
-Desktop clients supporting mcpServers JSON configuration:
+The server is published on npm as [`lifeos-mcp`](https://www.npmjs.com/package/lifeos-mcp) and listed in the [MCP Registry](https://registry.modelcontextprotocol.io) as `io.github.edrisranjbar/lifeos`, so clients can run it without cloning the repo:
+
+```json
+{
+  "mcpServers": {
+    "lifeos": {
+      "command": "npx",
+      "args": ["-y", "lifeos-mcp"],
+      "env": {
+        "LIFEOS_BASE_URL": "https://lifeos.example.com",
+        "LIFEOS_API_TOKEN": "replace-with-your-dedicated-random-token"
+      }
+    }
+  }
+}
+```
+
+To run your own checkout instead, point the client at `src/index.js`:
 
 ```json
 {
