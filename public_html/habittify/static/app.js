@@ -447,7 +447,7 @@ async function toggleToday(habitId) {
   let data;
   try { data = await api("/api/logs/toggle", {
     method: "POST",
-    body: JSON.stringify({ habit_id: habitId, date: todayIso }),
+    body: JSON.stringify({ habit_id: habitId, date: todayIso, done: !isDone(habitId, todayIso) }),
   }); } catch (error) { showToast(error.message); if (button) button.disabled = false; return; }
   setDoneLocal(habitId, todayIso, data.done);
   renderTodayList();
@@ -543,7 +543,7 @@ async function toggleCell(button) {
   let data;
   try { data = await api("/api/logs/toggle", {
     method: "POST",
-    body: JSON.stringify({ habit_id: habitId, date }),
+    body: JSON.stringify({ habit_id: habitId, date, done: !isDone(habitId, date) }),
   }); } catch (error) { showToast(error.message); button.disabled = false; return; }
   button.disabled = false;
   setDoneLocal(habitId, date, data.done);

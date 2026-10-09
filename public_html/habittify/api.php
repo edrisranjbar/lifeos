@@ -140,20 +140,18 @@ try {
         $validDate = DateTimeImmutable::createFromFormat('!Y-m-d', $date);
         if (!$habitId) respond(['error' => 'Valid habit_id is required.'], 400);
         if (!$validDate || $validDate->format('Y-m-d') !== $date) respond(['error' => 'date must be YYYY-MM-DD.'], 400);
-        $stmt = $db->prepare('SELECT id FROM habits WHERE id = ? AND archived = 0');
-        $stmt->execute([$habitId]);
-        if (!$stmt->fetch()) respond(['error' => 'Habit not found.'], 404);
-        $stmt = $db->prepare('SELECT id FROM habit_logs WHERE habit_id = ? AND log_date = ?');
-        $stmt->execute([$habitId, $date]);
-        $logId = $stmt->fetchColumn();
-        if ($logId) {
-            $stmt = $db->prepare('DELETE FROM habit_logs WHERE id = ?');
-            $stmt->execute([$logId]);
-            $done = false;
-        } else {
-            $stmt = $db->prepare('INSERT INTO habit_logs(habit_id, log_date, done, created_at) VALUES (?, ?, 1, ?)');
-            $stmt->execute([$habitId, $date, utc_now()]);
-            $done = true;
+        // An explicit done makes the request idempotent; without it, flip the stored state.
+        $done = $payload['done'] ?? null;
+        if ($done !== null && !is_bool($done)) respond(['error' => 'done must be true or false.'], 400);
+        if ($done === null) {
+            $stmt = $db->prepare('SELECT 1 FROM habit_logs WHERE habit_id = ? AND log_date = ? AND done = 1');
+            $stmt->execute([$habitId, $date]);
+            $done = $stmt->fetchColumn() === false;
+        }
+        try {
+            habits_set_completion($db, $habitId, $date, $done);
+        } catch (ApiException $e) {
+            respond(['error' => 'Habit not found.'], $e->status);
         }
         respond(['done' => $done, 'habit_id' => $habitId, 'date' => $date]);
     }
