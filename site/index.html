@@ -1,0 +1,547 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Edi Life OS: your whole life, in one self-hosted dashboard</title>
+<meta name="description" content="Habits, goals, focus, projects and money in one open-source, self-hosted app, with an MCP server so Claude can work with your real data.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Edi Life OS">
+<meta property="og:description" content="Your whole life, in one self-hosted dashboard. Open source, MIT licensed, with an MCP server for AI.">
+<meta property="og:url" content="https://edrisranjbar.github.io/lifeos/">
+<meta property="og:image" content="https://edrisranjbar.github.io/lifeos/assets/og.jpg">
+<link rel="canonical" href="https://edrisranjbar.github.io/lifeos/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#05070a">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #05070a;
+    --bg-2: #0a0f17;
+    --surface: #0f1621;
+    --surface-2: #141c29;
+    --line: #1e2838;
+    --line-strong: #2c3a50;
+    --text: #fffaf0;
+    --muted: #b8c2d1;
+    --subtle: #8b97aa;
+    --mint: #39e6ad;
+    --mint-soft: rgba(57, 230, 173, 0.12);
+    --brass: #f3c969;
+    --violet: #b69ce0;
+    --coral: #e9918c;
+    --blue: #7da5ee;
+    --radius: 20px;
+    --max: 1180px;
+    --serif: 'Instrument Serif', Georgia, serif;
+    --sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 17px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  img { display: block; max-width: 100%; }
+  a { color: inherit; }
+  :focus-visible { outline: 2px solid var(--mint); outline-offset: 3px; border-radius: 6px; }
+  .wrap { width: min(var(--max), 100% - 48px); margin-inline: auto; }
+  .eyebrow { font-size: 13px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--mint); }
+  h1, h2, h3 { margin: 0; font-weight: 400; }
+  h2 { font-family: var(--serif); font-size: clamp(40px, 5.2vw, 64px); line-height: 1.04; letter-spacing: -0.6px; text-wrap: balance; }
+  h3 { font-size: 20px; font-weight: 600; letter-spacing: -0.2px; }
+  p { margin: 0; }
+  .lead { font-size: clamp(17px, 1.5vw, 19px); line-height: 1.65; color: var(--muted); max-width: 600px; text-wrap: pretty; }
+  section { padding: clamp(112px, 13vw, 176px) 0; position: relative; scroll-margin-top: 72px; }
+  .section-head { display: grid; gap: 22px; margin-bottom: clamp(56px, 7vw, 88px); max-width: 760px; }
+  .stack-sm > * + * { margin-top: 20px; }
+  .stack > * + * { margin-top: 24px; }
+  .skip { position: absolute; left: 16px; top: -60px; z-index: 50; background: var(--mint); color: #04150f; padding: 10px 16px; border-radius: 10px; font-weight: 600; text-decoration: none; }
+  .skip:focus { top: 12px; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  /* Nav */
+  .nav { position: sticky; top: 0; z-index: 20; backdrop-filter: blur(14px) saturate(1.3); -webkit-backdrop-filter: blur(14px) saturate(1.3); background: rgba(5, 7, 10, 0.72); border-bottom: 1px solid transparent; transition: border-color .2s; }
+  .nav.scrolled { border-bottom-color: var(--line); }
+  .nav .wrap { display: flex; align-items: center; gap: 32px; height: 68px; }
+  .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 600; letter-spacing: -0.2px; }
+  .brand svg { width: 28px; height: 28px; }
+  .nav-links { display: flex; gap: 28px; margin-left: auto; }
+  .nav-links a { text-decoration: none; color: var(--muted); font-size: 15px; transition: color .15s; }
+  .nav-links a:hover { color: var(--text); }
+  .gh-btn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border: 1px solid var(--line-strong); border-radius: 999px; text-decoration: none; font-size: 14px; font-weight: 500; transition: border-color .15s, background .15s; }
+  .gh-btn:hover { border-color: var(--subtle); background: var(--surface); }
+  .gh-btn svg { width: 17px; height: 17px; }
+  .gh-stars { display: inline-flex; align-items: center; gap: 4px; padding-left: 10px; margin-left: 2px; border-left: 1px solid var(--line-strong); color: var(--muted); font-variant-numeric: tabular-nums; }
+  .gh-stars[hidden] { display: none; }
+
+  /* Buttons */
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; padding: 14px 24px; border-radius: 12px; font-weight: 600; font-size: 16px; text-decoration: none; transition: transform .15s, box-shadow .2s, background .15s, border-color .15s; }
+  .btn-primary { background: var(--mint); color: #04150f; box-shadow: 0 10px 30px rgba(57, 230, 173, 0.25); }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 14px 38px rgba(57, 230, 173, 0.35); }
+  .btn-ghost { border: 1px solid var(--line-strong); color: var(--text); }
+  .btn-ghost:hover { border-color: var(--subtle); background: var(--surface); }
+
+  /* Hero */
+  .hero { padding: clamp(96px, 12vw, 168px) 0 clamp(72px, 9vw, 120px); overflow: hidden; }
+  .hero::before { content: ""; position: absolute; inset: -20% -10% auto; height: 820px; background: radial-gradient(ellipse 60% 50% at 50% 0%, rgba(57, 230, 173, 0.16), transparent 70%), radial-gradient(ellipse 40% 40% at 85% 20%, rgba(125, 165, 238, 0.10), transparent 70%); pointer-events: none; }
+  .hero::after { content: ""; position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px); background-size: 56px 56px; mask-image: radial-gradient(ellipse 70% 55% at 50% 20%, #000 30%, transparent 75%); -webkit-mask-image: radial-gradient(ellipse 70% 55% at 50% 20%, #000 30%, transparent 75%); pointer-events: none; }
+  .hero .wrap { position: relative; z-index: 1; text-align: center; display: grid; justify-items: center; }
+  .hero h1 { font-family: var(--serif); font-size: clamp(54px, 9vw, 120px); line-height: 0.95; letter-spacing: -2px; max-width: 900px; text-wrap: balance; }
+  .hero h1 em { font-style: italic; color: var(--mint); }
+  .hero-lead { margin-top: clamp(22px, 2.6vw, 32px); max-width: 26ch; font-family: 'Geist', var(--sans); font-weight: 300; font-size: clamp(20px, 2.1vw, 26px); line-height: 1.45; letter-spacing: -0.02em; color: #aeb8c7; text-wrap: balance; }
+  .hero-lead strong { color: var(--text); font-weight: 400; }
+  .hero .hero-ctas { margin-top: clamp(36px, 4vw, 48px); }
+  .hero-ctas { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; }
+  .stage { position: relative; margin-top: clamp(64px, 8vw, 104px); width: min(1120px, 100%); perspective: 1600px; --p: 1; --mx: 0; --my: 0; }
+  .stage::before { content: ""; position: absolute; inset: 8% 10% -6%; background: radial-gradient(ellipse at 50% 40%, rgba(57, 230, 173, 0.22), transparent 65%); filter: blur(60px); opacity: calc(0.5 + 0.5 * var(--p)); pointer-events: none; }
+  .tilt { transform-style: preserve-3d; transform: rotateX(calc((1 - var(--p)) * 24deg + var(--my) * -3deg)) rotateY(calc(var(--mx) * 4deg)) scale(calc(0.9 + 0.1 * var(--p))) translateY(calc((1 - var(--p)) * -24px)); transform-origin: 50% 0%; will-change: transform; }
+  .frame { position: relative; width: 100%; border-radius: 18px; padding: 10px; background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02)); border: 1px solid var(--line-strong); box-shadow: 0 40px 120px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255,255,255,0.02), 0 0 120px rgba(57, 230, 173, 0.08); }
+  .frame-bar { display: flex; gap: 7px; padding: 6px 8px 14px; }
+  .frame-bar i { width: 11px; height: 11px; border-radius: 50%; background: var(--line-strong); }
+  .frame img { border-radius: 10px; width: 100%; height: auto; aspect-ratio: 16 / 10; object-fit: cover; }
+  .frame::after { content: ""; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(115deg, transparent 35%, rgba(255,255,255,0.07) 48%, transparent 60%); background-size: 250% 100%; background-position: calc(100% - var(--p) * 100%) 0; pointer-events: none; }
+  .float { position: absolute; z-index: 2; display: flex; align-items: center; gap: 12px; padding: 12px 16px 12px 12px; border-radius: 14px; background: rgba(15, 22, 33, 0.78); border: 1px solid var(--line-strong); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55); text-align: left; font-size: 13px; color: var(--muted); white-space: nowrap; transform: translate3d(calc(var(--mx) * var(--d) * 14px), calc((1 - var(--p)) * var(--d) * 120px + var(--my) * var(--d) * 10px), 0); }
+  .float b { display: block; color: var(--text); font-weight: 600; font-size: 14px; }
+  .float .ico { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 10px; background: var(--mint-soft); color: var(--mint); flex: none; }
+  .float .ring { width: 36px; height: 36px; border-radius: 50%; background: conic-gradient(var(--mint) 0 68%, rgba(255,255,255,0.08) 68% 100%); display: grid; place-items: center; flex: none; }
+  .float .ring::after { content: ""; width: 26px; height: 26px; border-radius: 50%; background: var(--surface); }
+  .float code { font-family: var(--mono, 'JetBrains Mono', monospace); color: var(--mint); font-size: 12px; }
+  .float-habit { left: -56px; top: 30%; --d: 1.4; }
+  .float-focus { right: -48px; top: 12%; --d: 0.8; }
+  .float-ai { right: 6%; bottom: -34px; --d: 1.8; }
+  @keyframes bob { 50% { translate: 0 -8px; } }
+  .float-habit { animation: bob 7s ease-in-out infinite; }
+  .float-focus { animation: bob 6s ease-in-out -2s infinite; }
+  .float-ai { animation: bob 8s ease-in-out -4s infinite; }
+  @media (prefers-reduced-motion: reduce) { .float { animation: none; } }
+
+  /* Workspace strip */
+  .strip { padding: 8px 0 0; }
+  .strip-row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+  .chip { display: inline-flex; align-items: center; gap: 9px; padding: 9px 16px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); font-size: 15px; color: var(--muted); }
+  .chip i { width: 8px; height: 8px; border-radius: 50%; background: var(--c, var(--mint)); }
+
+  /* Problem → answer */
+  .problem { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(48px, 7vw, 104px); align-items: center; }
+  .scatter { position: relative; height: 360px; }
+  .scatter span { position: absolute; padding: 14px 20px; border-radius: 14px; background: var(--surface); border: 1px dashed var(--line-strong); color: var(--subtle); font-size: 16px; white-space: nowrap; }
+  .scatter span:nth-child(1) { left: 4%; top: 6%; transform: rotate(-5deg); }
+  .scatter span:nth-child(2) { right: 6%; top: 12%; transform: rotate(4deg); }
+  .scatter span:nth-child(3) { left: 22%; top: 42%; transform: rotate(2deg); }
+  .scatter span:nth-child(4) { right: 2%; top: 58%; transform: rotate(-3deg); }
+  .scatter span:nth-child(5) { left: 8%; bottom: 4%; transform: rotate(3deg); }
+  .problem blockquote { margin: 0; margin-top: 32px; padding-left: 20px; border-left: 2px solid var(--mint); font-family: var(--serif); font-style: italic; font-size: 30px; line-height: 1.25; color: var(--text); }
+
+  /* Bento */
+  .flush-top { padding-top: 0; }
+  .bento { display: grid; grid-template-columns: repeat(6, 1fr); gap: 24px; }
+  .card { position: relative; overflow: hidden; border-radius: var(--radius); background: linear-gradient(180deg, var(--surface-2), var(--surface)); border: 1px solid var(--line); padding: clamp(28px, 3vw, 40px); display: flex; flex-direction: column; gap: 12px; transition: border-color .25s, transform .25s; }
+  .card:hover { border-color: var(--line-strong); }
+  .card p { color: var(--muted); font-size: 16px; line-height: 1.65; max-width: 58ch; }
+  .card h3 + p { margin-bottom: 20px; }
+  .card .tag { font-size: 12px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--c, var(--mint)); }
+  .card .shot { margin-top: auto; padding-top: 0; border-radius: 12px; border: 1px solid var(--line-strong); aspect-ratio: 16 / 10; object-fit: cover; object-position: top left; width: 100%; height: auto; }
+  .span-2 .shot { flex: 1 1 auto; min-height: 240px; aspect-ratio: auto; height: 0; }
+  .span-4 { grid-column: span 4; }
+  .span-3 { grid-column: span 3; }
+  .span-2 { grid-column: span 2; }
+  .card.mini { justify-content: flex-start; }
+  .card.mini .icon { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; background: color-mix(in srgb, var(--c, var(--mint)) 14%, transparent); color: var(--c, var(--mint)); margin-bottom: 6px; }
+  .card.mini .icon svg { width: 22px; height: 22px; }
+
+  /* AI section */
+  .ai { background: radial-gradient(ellipse 60% 60% at 80% 40%, rgba(57, 230, 173, 0.08), transparent 70%), var(--bg-2); border-block: 1px solid var(--line); }
+  .ai-grid { display: grid; grid-template-columns: 1fr 1.05fr; gap: clamp(48px, 7vw, 96px); align-items: center; }
+  .checks { list-style: none; padding: 0; margin: 40px 0 0 !important; display: grid; gap: 20px; }
+  .checks li { display: grid; grid-template-columns: 26px 1fr; gap: 12px; color: var(--muted); }
+  .checks li b { color: var(--text); font-weight: 600; }
+  .checks svg { width: 20px; height: 20px; color: var(--mint); margin-top: 3px; }
+  .chat { border-radius: var(--radius); border: 1px solid var(--line-strong); background: #070b11; box-shadow: 0 30px 90px rgba(0,0,0,0.5); overflow: hidden; }
+  .chat-top { display: flex; align-items: center; gap: 10px; padding: 14px 18px; border-bottom: 1px solid var(--line); font-size: 13px; color: var(--subtle); }
+  .chat-top .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--mint); box-shadow: 0 0 10px var(--mint); }
+  .chat-top .label { margin-left: auto; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; border: 1px solid var(--line-strong); border-radius: 999px; padding: 2px 9px; }
+  .chat-body { padding: 22px; display: grid; gap: 14px; font-size: 15px; }
+  .msg { max-width: 88%; padding: 12px 16px; border-radius: 14px; line-height: 1.5; }
+  .msg.me { justify-self: end; background: var(--mint); color: #04150f; border-bottom-right-radius: 4px; font-weight: 500; }
+  .msg.ai { background: var(--surface-2); border: 1px solid var(--line); color: var(--muted); border-bottom-left-radius: 4px; }
+  .msg.ai b { color: var(--text); }
+  .tool { justify-self: start; font-family: var(--mono); font-size: 12.5px; color: var(--subtle); display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border: 1px dashed var(--line-strong); border-radius: 8px; }
+  .tool b { color: var(--mint); font-weight: 500; }
+
+  /* Self-host */
+  .install { display: grid; grid-template-columns: 1.15fr 1fr; gap: clamp(40px, 5vw, 64px); align-items: start; }
+  .code { border-radius: var(--radius); border: 1px solid var(--line-strong); background: #070b11; overflow: hidden; }
+  .code-top { display: flex; align-items: center; justify-content: space-between; padding: 12px 18px; border-bottom: 1px solid var(--line); font-size: 13px; color: var(--subtle); }
+  .copy { background: transparent; border: 1px solid var(--line-strong); color: var(--muted); border-radius: 8px; padding: 5px 12px; font: 500 13px var(--sans); cursor: pointer; transition: border-color .15s, color .15s; }
+  .copy:hover { color: var(--text); border-color: var(--subtle); }
+  pre { margin: 0; padding: 22px; font-family: var(--mono); font-size: 14.5px; line-height: 1.9; overflow-x: auto; color: var(--text); }
+  pre .c { color: var(--subtle); }
+  pre .p { color: var(--mint); user-select: none; }
+  .ways { display: grid; gap: 16px; }
+  .way { display: grid; grid-template-columns: 44px 1fr; gap: 18px; padding: 26px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); }
+  .way .icon { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; background: var(--mint-soft); color: var(--mint); }
+  .way .icon svg { width: 22px; height: 22px; }
+  .way p { color: var(--muted); font-size: 15px; margin-top: 4px; }
+
+  /* Principles */
+  .principles { display: grid; grid-template-columns: repeat(4, 1fr); gap: clamp(24px, 3vw, 40px); }
+  .principle { padding: 32px 0 0; border-top: 1px solid var(--line-strong); }
+  .principle .num { font-family: var(--serif); font-size: 44px; line-height: 1; color: var(--mint); }
+  .principle h3 { margin: 20px 0 10px; }
+  .principle p { color: var(--muted); font-size: 15px; }
+
+  /* CTA */
+  .cta { text-align: center; padding: clamp(72px, 8vw, 112px) 0 clamp(128px, 15vw, 192px); overflow: hidden; }
+  .cta::before { content: ""; position: absolute; inset: auto -10% -40%; height: 600px; background: radial-gradient(ellipse 50% 60% at 50% 100%, rgba(57, 230, 173, 0.18), transparent 70%); pointer-events: none; }
+  .cta .wrap { position: relative; display: grid; justify-items: center; gap: 28px; }
+  .cta h2 { font-size: clamp(46px, 7vw, 96px); max-width: 900px; }
+  .cta h2 em { color: var(--mint); }
+
+  footer { border-top: 1px solid var(--line); padding: 44px 0; color: var(--subtle); font-size: 14px; }
+  footer .wrap { display: flex; flex-wrap: wrap; gap: 20px; align-items: center; justify-content: space-between; }
+  footer nav { display: flex; gap: 22px; flex-wrap: wrap; }
+  footer a { text-decoration: none; }
+  footer a:hover { color: var(--text); }
+
+  /* Reveal on scroll */
+  .reveal { opacity: 0; transform: translateY(18px); transition: opacity .7s ease, transform .7s ease; }
+  .reveal.in { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .reveal { opacity: 1; transform: none; transition: none; }
+    .btn, .card { transition: none; }
+  }
+
+  @media (max-width: 960px) {
+    section { padding: 88px 0; }
+    .nav-links { display: none; }
+    .gh-btn { margin-left: auto; }
+    .problem, .ai-grid, .install { grid-template-columns: 1fr; gap: 56px; }
+    .problem-text { order: -1; }
+    .scatter { height: 300px; }
+    .bento { grid-template-columns: 1fr 1fr; }
+    .span-4, .span-3 { grid-column: span 2; }
+    .span-2 { grid-column: span 1; }
+    .principles { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 600px) {
+    .wrap { width: calc(100% - 32px); }
+    .hero { padding-top: 64px; }
+    .bento { grid-template-columns: 1fr; }
+    .span-4, .span-3, .span-2 { grid-column: span 1; }
+    .principles { grid-template-columns: 1fr; }
+    .scatter { height: 260px; }
+    .scatter span { font-size: 14px; padding: 10px 14px; }
+    .frame { padding: 6px; border-radius: 12px; }
+    .float-habit, .float-focus { display: none; }
+    .float-ai { right: 50%; bottom: -26px; margin-right: -130px; }
+    .frame-bar { display: none; }
+    .msg { max-width: 100%; }
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#features">Skip to content</a>
+
+<header class="nav" id="nav">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="Edi Life OS home">
+      <svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#39e6ad"/><path d="M9 11h12M9 16h9M9 21h12M9 11v10" stroke="#05070a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="24" cy="21" r="1.5" fill="#05070a"/></svg>
+      Edi Life OS
+    </a>
+    <nav class="nav-links" aria-label="Sections">
+      <a href="#features">Features</a>
+      <a href="#ai">AI</a>
+      <a href="#install">Self-host</a>
+    </nav>
+    <a class="gh-btn" href="https://github.com/edrisranjbar/lifeos">
+      <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+      GitHub
+      <span class="gh-stars" id="stars" hidden aria-label="GitHub stars">★ <span id="starCount"></span></span>
+    </a>
+  </div>
+</header>
+
+<main id="top">
+
+  <section class="hero">
+    <div class="wrap">
+      <h1 class="reveal">Your life, <em>in one place.</em></h1>
+      <p class="hero-lead reveal">Habits, goals, focus and money.<br><strong>One calm app, on your own server.</strong></p>
+      <div class="hero-ctas reveal">
+        <a class="btn btn-primary" href="#install">Get started
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+        <a class="btn btn-ghost" href="https://github.com/edrisranjbar/lifeos">View on GitHub</a>
+      </div>
+      <div class="stage reveal" id="stage">
+        <div class="tilt">
+          <div class="frame">
+            <div class="frame-bar" aria-hidden="true"><i></i><i></i><i></i></div>
+            <img src="assets/dashboard.webp" width="1600" height="1000" fetchpriority="high" alt="Edi Life OS Overview: a daily productivity score built from focus, habits, goals and work, with six life dimensions">
+          </div>
+        </div>
+        <div class="float float-habit" aria-hidden="true">
+          <span class="ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+          <span><b>Morning reflection</b>12-day streak</span>
+        </div>
+        <div class="float float-focus" aria-hidden="true">
+          <span class="ring"></span>
+          <span><b>17:12 left</b>Deep work · session 2</span>
+        </div>
+        <div class="float float-ai" aria-hidden="true">
+          <span class="ico">✦</span>
+          <span><b>Claude logged an expense</b><code>lifeos_log_expense</code></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="strip">
+    <div class="wrap strip-row reveal" aria-label="Workspaces">
+      <span class="chip" style="--c:#39e6ad"><i></i>Overview</span>
+      <span class="chip" style="--c:#b69ce0"><i></i>Growth</span>
+      <span class="chip" style="--c:#f3c969"><i></i>Goals</span>
+      <span class="chip" style="--c:#39e6ad"><i></i>Habittify</span>
+      <span class="chip" style="--c:#c49bff"><i></i>Focus</span>
+      <span class="chip" style="--c:#f3c969"><i></i>Finance</span>
+      <span class="chip" style="--c:#7da5ee"><i></i>Kanban</span>
+      <span class="chip" style="--c:#6bc6ce"><i></i>Calendar</span>
+      <span class="chip" style="--c:#b79cff"><i></i>Notepad</span>
+      <span class="chip" style="--c:#ff9ec4"><i></i>Notes</span>
+    </div>
+  </div>
+
+  <section>
+    <div class="wrap problem">
+      <div class="scatter reveal" aria-hidden="true">
+        <span>To-do list</span><span>Habit tracker</span><span>Budget spreadsheet</span><span>Pomodoro timer</span><span>Notes app</span>
+      </div>
+      <div class="reveal problem-text stack-sm">
+        <p class="eyebrow">Why it exists</p>
+        <h2>Five apps. None of them talk to each other.</h2>
+        <p class="lead">Each tool is fine on its own. Together they can't answer the only question that matters:</p>
+        <blockquote>“Am I moving toward the life I want?”</blockquote>
+      </div>
+    </div>
+  </section>
+
+  <section id="features" class="flush-top">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <p class="eyebrow">One place, connected</p>
+        <h2>Ten workspaces. One design. One database.</h2>
+        <p class="lead">A habit can drive a goal's progress, cards land in your calendar, and the Overview turns it all into one score for the day.</p>
+      </div>
+      <div class="bento">
+        <article class="card span-4 reveal" style="--c:#b69ce0">
+          <span class="tag">Growth</span>
+          <h3>Six areas of life, one direction</h3>
+          <p>Spirituality, health, family, money, learning and rest, each linked to long-term goals and the habits behind them. A guided weekly review asks for one honest note and one next step.</p>
+          <img class="shot" src="assets/growth.webp" loading="lazy" width="1600" height="1000" alt="Growth page with six life dimensions and their SMART progress">
+        </article>
+        <article class="card span-2 reveal">
+          <span class="tag">Habittify</span>
+          <h3>Small steps, every day</h3>
+          <p>Habits small enough for a busy day, with streaks and a seven-day picture.</p>
+          <img class="shot" src="assets/habittify.webp" loading="lazy" width="1600" height="1000" alt="Daily habit checklist with a seven-day completion chart">
+        </article>
+        <article class="card span-3 reveal" style="--c:#c49bff">
+          <span class="tag">Focus</span>
+          <h3>Deep work, beautifully</h3>
+          <p>A Pomodoro timer with a soundtrack and a sky that follows the time of day.</p>
+          <img class="shot" src="assets/focus.webp" loading="lazy" width="1600" height="1000" alt="Focus timer over an illustrated landscape">
+        </article>
+        <article class="card span-3 reveal" style="--c:#7da5ee">
+          <span class="tag">Kanban</span>
+          <h3>Projects that move</h3>
+          <p>Boards with labels, priorities, due dates, checklists, comments and attachments.</p>
+          <img class="shot" src="assets/kanban.webp" loading="lazy" width="1600" height="1000" alt="Kanban board with backlog, in progress, review and done columns">
+        </article>
+        <article class="card mini span-2 reveal" style="--c:#f3c969">
+          <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></span>
+          <h3>Finance that adds up</h3>
+          <p>Expenses and budgets, plus debts and credits, one-time or recurring, recorded straight into your ledger.</p>
+        </article>
+        <article class="card mini span-2 reveal" style="--c:#f3c969">
+          <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg></span>
+          <h3>Goals you can measure</h3>
+          <p>SMART goals driven by checklists, measures, or a habit's attendance.</p>
+        </article>
+        <article class="card mini span-2 reveal" style="--c:#6bc6ce">
+          <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 11h18"/></svg></span>
+          <h3>One calendar</h3>
+          <p>Card due dates and money dues together, with overdue items flagged.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="ai" id="ai">
+    <div class="wrap ai-grid">
+      <div class="reveal stack-sm">
+        <p class="eyebrow">AI-ready</p>
+        <h2>Ask Claude about your real life.</h2>
+        <p class="lead">A built-in MCP server gives Claude and other assistants 26 tools across your dashboard, goals, tasks, habits, finances and notes.</p>
+        <ul class="checks">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg><span><b>API only.</b> It talks to a token-protected HTTP API, never your database.</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg><span><b>Asks before deleting.</b> Destructive tools are marked, so your client confirms first.</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg><span><b>Private stays private.</b> Secret notes are hidden unless you allow them.</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg><span><b>No silent overwrites.</b> Revision checks protect your edits and the AI's alike.</span></li>
+        </ul>
+      </div>
+      <div class="chat reveal" role="img" aria-label="Example conversation: asking Claude to mark a habit complete and log an expense">
+        <div class="chat-top"><span class="dot"></span>Claude · LifeOS MCP<span class="label">Example</span></div>
+        <div class="chat-body">
+          <div class="msg me">Mark Reading complete for today.</div>
+          <div class="tool">⚙ <b>lifeos_complete_habit</b> · Reading · today</div>
+          <div class="msg ai">Done. <b>Reading</b> is checked off for today.</div>
+          <div class="msg me">Log a 450,000 Toman food expense.</div>
+          <div class="tool">⚙ <b>lifeos_log_expense</b> · 450,000 · Food</div>
+          <div class="msg ai">Logged <b>450,000 Toman</b> under Food in your current period.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="install">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <p class="eyebrow">Self-host in minutes</p>
+        <h2>Yours to run. Anywhere.</h2>
+        <p class="lead">Plain PHP, MySQL and vanilla JavaScript: no framework, no build step, nothing that breaks on upgrade.</p>
+      </div>
+      <div class="install">
+        <div class="code reveal">
+          <div class="code-top"><span>Terminal</span><span class="sr-only" id="copyStatus" role="status" aria-live="polite"></span><button class="copy" type="button" aria-describedby="copyStatus" data-copy="git clone https://github.com/edrisranjbar/lifeos.git && cd lifeos
+cp .env.example .env
+docker compose up -d">Copy</button></div>
+<pre><code><span class="c"># Get the code</span>
+<span class="p">$ </span>git clone https://github.com/edrisranjbar/lifeos.git && cd lifeos
+<span class="c"># Set your sign-in and passwords</span>
+<span class="p">$ </span>cp .env.example .env
+<span class="c"># Start the app and MySQL</span>
+<span class="p">$ </span>docker compose up -d
+<span class="c"># Open http://localhost:8080</span></code></pre>
+        </div>
+        <div class="ways">
+          <div class="way reveal">
+            <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg></span>
+            <div><h3>Docker Compose</h3><p>App and MySQL with volumes for your data and attachments. Upgrades are one rebuild.</p></div>
+          </div>
+          <div class="way reveal">
+            <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><path d="M3.3 7L12 12l8.7-5M12 22V12"/></svg></span>
+            <div><h3>Shared hosting</h3><p>Download the release zip, extract it into your home folder, add your MySQL details. Done.</p></div>
+          </div>
+          <div class="way reveal">
+            <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg></span>
+            <div><h3>Plain PHP</h3><p>Any PHP 8.1+ host with MySQL 8 or MariaDB. Run it locally with PHP's built-in server.</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="flush-top">
+    <div class="wrap principles">
+      <div class="principle reveal"><span class="num">01</span><h3>Your data stays yours</h3><p>Everything lives in your own MySQL database. No subscription, no telemetry.</p></div>
+      <div class="principle reveal"><span class="num">02</span><h3>Open source</h3><p>MIT licensed. Read it, fork it, change it, make it yours.</p></div>
+      <div class="principle reveal"><span class="num">03</span><h3>Calm by design</h3><p>Dark and light themes, built for focus, and layouts that work on a phone.</p></div>
+      <div class="principle reveal"><span class="num">04</span><h3>Built in public</h3><p>Issues are open, and first-time contributors are welcome.</p></div>
+    </div>
+  </section>
+
+  <section class="cta">
+    <div class="wrap">
+      <p class="eyebrow reveal">Start today</p>
+      <h2 class="reveal">Grow in <em>every</em> direction.</h2>
+      <p class="lead reveal">Free, open source, and running on your own server in minutes.</p>
+      <div class="hero-ctas reveal">
+        <a class="btn btn-primary" href="https://github.com/edrisranjbar/lifeos">Star on GitHub</a>
+        <a class="btn btn-ghost" href="https://github.com/edrisranjbar/lifeos/releases/latest">Download v1.0</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>© 2026 Edris Ranjbar · MIT License</span>
+    <nav aria-label="Footer">
+      <a href="https://github.com/edrisranjbar/lifeos">GitHub</a>
+      <a href="https://github.com/edrisranjbar/lifeos/blob/main/CONTRIBUTING.md">Contribute</a>
+      <a href="https://github.com/edrisranjbar/lifeos/blob/main/docs/deployment.md">Docs</a>
+      <a href="https://github.com/edrisranjbar/lifeos/issues">Issues</a>
+    </nav>
+  </div>
+</footer>
+
+<script>
+  // Sticky nav border once the page scrolls.
+  const nav = document.getElementById('nav');
+  addEventListener('scroll', () => nav.classList.toggle('scrolled', scrollY > 8), { passive: true });
+
+  // Fade sections in as they enter the viewport.
+  const items = document.querySelectorAll('.reveal');
+  if ('IntersectionObserver' in window && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const io = new IntersectionObserver(entries => {
+      for (const entry of entries) if (entry.isIntersecting) { entry.target.classList.add('in'); io.unobserve(entry.target); }
+    }, { rootMargin: '0px 0px -8% 0px' });
+    items.forEach(el => io.observe(el));
+  } else {
+    items.forEach(el => el.classList.add('in'));
+  }
+
+  // Hero screenshot: tilted back at first, flattens as you scroll; follows the pointer a little.
+  const stage = document.getElementById('stage');
+  if (stage && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    let ticking = false, mx = 0, my = 0;
+    const update = () => {
+      ticking = false;
+      const top = stage.getBoundingClientRect().top;
+      const p = Math.min(1, Math.max(0, 1 - (top - innerHeight * 0.25) / (innerHeight * 0.6)));
+      stage.style.setProperty('--p', p.toFixed(3));
+      stage.style.setProperty('--mx', mx.toFixed(3));
+      stage.style.setProperty('--my', my.toFixed(3));
+    };
+    const queue = () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } };
+    addEventListener('scroll', queue, { passive: true });
+    addEventListener('resize', queue);
+    if (matchMedia('(pointer: fine)').matches) {
+      addEventListener('pointermove', e => { mx = e.clientX / innerWidth - 0.5; my = e.clientY / innerHeight - 0.5; queue(); }, { passive: true });
+    }
+    update();
+  }
+
+  // Copy the install commands.
+  document.querySelectorAll('[data-copy]').forEach(button => button.addEventListener('click', async () => {
+    const status = document.getElementById('copyStatus');
+    try { await navigator.clipboard.writeText(button.dataset.copy); button.textContent = 'Copied'; status.textContent = 'Install commands copied to the clipboard.'; }
+    catch { button.textContent = 'Select and copy'; status.textContent = 'Copy failed. Select the commands and copy them manually.'; }
+    setTimeout(() => { button.textContent = 'Copy'; status.textContent = ''; }, 1600);
+  }));
+
+  // Live star count from GitHub; the button works without it.
+  fetch('https://api.github.com/repos/edrisranjbar/lifeos', { headers: { Accept: 'application/vnd.github+json' } })
+    .then(r => r.ok ? r.json() : null)
+    .then(repo => {
+      if (!repo || typeof repo.stargazers_count !== 'number') return;
+      document.getElementById('starCount').textContent = new Intl.NumberFormat('en-US', { notation: 'compact' }).format(repo.stargazers_count);
+      document.getElementById('stars').hidden = false;
+    })
+    .catch(() => {});
+</script>
+</body>
+</html>
