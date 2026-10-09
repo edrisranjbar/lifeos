@@ -17,6 +17,7 @@ services:
       LIFEOS_USERNAME: ${LIFEOS_USERNAME:?}
       LIFEOS_PASSWORD: ${LIFEOS_PASSWORD:?}
       LIFEOS_API_TOKEN: ${LIFEOS_API_TOKEN:-}
+      LIFEOS_TRUST_PROXY: ${LIFEOS_TRUST_PROXY:-false}
       TZ: Asia/Tehran
     volumes:
       - attachments:/data/attachments

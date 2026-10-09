@@ -4,6 +4,14 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/auth.php';
 
+// Every request passes through here, so set browser security headers once.
+// The dashboard embeds each app in a same-origin iframe, hence 'self' framing.
+// 'unsafe-inline' stays until inline <script> blocks and on* handlers move to files.
+header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; frame-src 'self'; frame-ancestors 'self'; object-src 'none'; base-uri 'self'; form-action 'self'");
+header('X-Frame-Options: SAMEORIGIN');
+header('Referrer-Policy: strict-origin-when-cross-origin');
+header('X-Content-Type-Options: nosniff');
+
 $requestPath = parse_url((string) ($_SERVER['REQUEST_URI'] ?? '/'), PHP_URL_PATH) ?: '/';
 $relativePath = ltrim(rawurldecode($requestPath), '/');
 

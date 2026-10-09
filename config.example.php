@@ -11,4 +11,6 @@ return [
     'password' => 'your_app_password',
     'api_token' => 'replace-with-a-long-random-token',
     'api_allow_secret_notes' => false,
+    // true only behind a TLS-terminating reverse proxy you control.
+    'trust_proxy' => false,
 ];

@@ -66,6 +66,8 @@
 
   window.appStorage = {
     getItem(key) { return cache.has(key) ? cache.get(key) : null; },
+    // Session CSRF token for apps that write to their own endpoints.
+    async csrfToken() { await window.appStorageReady; return csrf; },
     setItem(key, value) {
       if (!keys.includes(key)) throw new Error('Unknown storage key');
       const text = String(value);

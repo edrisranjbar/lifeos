@@ -21,6 +21,10 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             exit;
         }
         $error = 'Incorrect username or password.';
+    } catch (LifeOsLoginThrottled $throttled) {
+        http_response_code(429);
+        header('Retry-After: ' . $throttled->retryAfter);
+        $error = 'Too many sign-in attempts. Try again in ' . max(1, (int) ceil($throttled->retryAfter / 60)) . ' minute(s).';
     } catch (Throwable $exception) {
         error_log($exception->__toString());
         life_os_logout();

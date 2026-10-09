@@ -58,6 +58,11 @@ function life_os_initialize_tables(PDO $db): void
         password_hash VARCHAR(255) NOT NULL,
         updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci');
+    $db->exec('CREATE TABLE IF NOT EXISTS login_throttle (
+        throttle_key CHAR(64) PRIMARY KEY,
+        failures INT UNSIGNED NOT NULL,
+        first_failure_at INT UNSIGNED NOT NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci');
     if ($db->query('SELECT 1 FROM app_credentials WHERE credential_id = 1')->fetchColumn() === false) {
         $config = life_os_config();
         $seedCredentials = $db->prepare('INSERT IGNORE INTO app_credentials (credential_id, username, password_hash) VALUES (1, ?, ?)');
