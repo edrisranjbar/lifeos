@@ -70,6 +70,10 @@ Cross-project card moves also require the Kanban browser changes, `kanban.php`, 
 
 After initial setup, manage the browser username and password through **Settings → Sign-in credentials**. Editing the seed credentials in the configuration does not replace an existing database login.
 
+## Database schema
+
+The schema is versioned in `lib/schema.php` and recorded in the `schema_migrations` table. Each request reads only that version number; table changes run once, under a lock, when the code is newer than the database. To apply them during a deploy instead of on the first request, run `php migrate.php`. The database account needs `CREATE`/`ALTER` rights only while a migration runs.
+
 ## Backups and recovery
 
 Back up these resources together:

@@ -30,15 +30,6 @@ function attachment_public(array $row): array {
 
 try {
     $db = life_os_db();
-    $db->exec('CREATE TABLE IF NOT EXISTS card_attachments (
-        attachment_id CHAR(32) PRIMARY KEY,
-        board_id VARCHAR(100) NOT NULL,
-        card_id VARCHAR(100) NOT NULL,
-        filename VARCHAR(255) NOT NULL,
-        byte_size BIGINT UNSIGNED NOT NULL,
-        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        INDEX idx_attachment_card (board_id, card_id)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci');
     $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
     $limit = min(8 * 1024 * 1024, attachment_ini_bytes((string) ini_get('upload_max_filesize')), max(1, attachment_ini_bytes((string) ini_get('post_max_size')) - 65536));
     if ($method === 'GET' && isset($_GET['id'])) {
