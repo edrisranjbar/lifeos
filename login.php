@@ -6,7 +6,9 @@ require_once __DIR__ . '/auth.php';
 life_os_start_session();
 
 $redirect = (string) ($_GET['redirect'] ?? $_POST['redirect'] ?? '/');
-if ($redirect === '' || !str_starts_with($redirect, '/') || str_starts_with($redirect, '//')) {
+// Only same-origin paths. Browsers read "/\" as "//" and drop tabs/newlines, so
+// reject backslashes, whitespace and control characters, not just a leading "//".
+if (!preg_match('~^/(?![/\\\\])[^\\\\\x00-\x20\x7F]*$~D', $redirect)) {
     $redirect = '/';
 }
 
