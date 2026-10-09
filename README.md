@@ -11,6 +11,7 @@
 <br>
 
 <picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/media/dashboard.webp">
   <source media="(prefers-color-scheme: light)" srcset="docs/media/dashboard-light.webp">
   <img src="docs/media/dashboard.webp" alt="Edi Life OS overview: a daily productivity score with focus, habit, goal and work progress, and six life dimensions" width="100%">
 </picture>
@@ -32,6 +33,7 @@ Most of us run our lives across a to-do app, a habit tracker, a budgeting spread
 <tr>
 <td width="50%" valign="top">
 <picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/media/growth.webp">
   <source media="(prefers-color-scheme: light)" srcset="docs/media/growth-light.webp">
   <img src="docs/media/growth.webp" alt="Growth workspace with six life dimensions and SMART progress">
 </picture>
@@ -39,6 +41,7 @@ Most of us run our lives across a to-do app, a habit tracker, a budgeting spread
 </td>
 <td width="50%" valign="top">
 <picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/media/focus.webp">
   <source media="(prefers-color-scheme: light)" srcset="docs/media/focus-light.webp">
   <img src="docs/media/focus.webp" alt="Focus timer over an illustrated landscape with a soundtrack panel">
 </picture>
@@ -48,6 +51,7 @@ Most of us run our lives across a to-do app, a habit tracker, a budgeting spread
 <tr>
 <td width="50%" valign="top">
 <picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/media/habittify.webp">
   <source media="(prefers-color-scheme: light)" srcset="docs/media/habittify-light.webp">
   <img src="docs/media/habittify.webp" alt="Habit checklist with a seven-day completion chart">
 </picture>
@@ -55,6 +59,7 @@ Most of us run our lives across a to-do app, a habit tracker, a budgeting spread
 </td>
 <td width="50%" valign="top">
 <picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/media/kanban.webp">
   <source media="(prefers-color-scheme: light)" srcset="docs/media/kanban-light.webp">
   <img src="docs/media/kanban.webp" alt="Kanban board with backlog, in progress, review and done columns">
 </picture>
