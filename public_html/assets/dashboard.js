@@ -8,6 +8,8 @@ const readJson = (key) => {
 };
 const number = (value) => new Intl.NumberFormat('en-US').format(Number(value) || 0);
 const $ = (id) => document.getElementById(id);
+// Escape stored text before it goes into innerHTML templates.
+const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const set = (id, value) => { const node = $(id); if (node) node.textContent = value; };
 const isArray = (value) => Array.isArray(value);
 const safeArray = (value) => isArray(value) ? value : [];
@@ -520,7 +522,7 @@ function renderInsights(today, focusByDay, habitsOk, todayDone, totalHabits, his
   }
 
   list.innerHTML = insights.slice(0, 4).map((item, i) =>
-    `<div class="insight-item rise" style="animation-delay:${i * 60}ms"><span class="insight-dot" aria-hidden="true">${item.icon}</span><div><strong>${item.title}</strong><span>${item.text}</span></div></div>`
+    `<div class="insight-item rise" style="animation-delay:${i * 60}ms"><span class="insight-dot" aria-hidden="true">${item.icon}</span><div><strong>${esc(item.title)}</strong><span>${esc(item.text)}</span></div></div>`
   ).join('');
 }
 
@@ -549,9 +551,9 @@ function renderGoalList(goalProgress, today) {
       else chip = `<span class="chip ok">${days}d left</span>`;
     }
     return `<div class="goal-row">
-      <div class="goal-head"><span class="goal-name">${goal.title}<span class="goal-cat">${goal.category || 'General'}${total ? ` · ${done ?? "—"}/${total} ${goal.progressSource === "habit" ? "days" : "tasks"}` : ''}</span></span><span class="goal-pct">${pct===null?"—":number(Math.round(pct))+"%"}</span></div>
+      <div class="goal-head"><span class="goal-name">${esc(goal.title)}<span class="goal-cat">${esc(goal.category || 'General')}${total ? ` · ${done ?? "—"}/${total} ${goal.progressSource === "habit" ? "days" : "tasks"}` : ''}</span></span><span class="goal-pct">${pct===null?"—":number(Math.round(pct))+"%"}</span></div>
       <span class="goal-track"><span class="goal-fill" data-w="${clamp(pct)}"></span></span>
-      <span class="goal-meta"><span>${goal.metric || ''}</span>${chip}</span>
+      <span class="goal-meta"><span>${esc(goal.metric)}</span>${chip}</span>
     </div>`;
   }).join('');
   requestAnimationFrame(() => wrap.querySelectorAll('.goal-fill').forEach(el => { el.style.width = `${el.dataset.w}%`; }));
@@ -616,7 +618,7 @@ function renderFinance() {
       const pct = category.target > 0 ? clamp(amount / category.target * 100) : 100;
       const over = category.target > 0 && amount > category.target;
       return `<div class="fin-cat">
-        <div class="fin-cat-head"><span>${category.label}${over ? ' · over' : ''}</span><b>${pct===null?"—":number(Math.round(pct))+"%"} of budget</b></div>
+        <div class="fin-cat-head"><span>${esc(category.label)}${over ? ' · over' : ''}</span><b>${pct===null?"—":number(Math.round(pct))+"%"} of budget</b></div>
         <span class="fin-cat-track"><span class="fin-cat-fill" data-w="${pct}" style="${over ? 'background:var(--danger)' : ''}"></span></span>
       </div>`;
     }).join('')}</div>`;
