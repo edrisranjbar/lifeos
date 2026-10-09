@@ -62,8 +62,8 @@ test('disposable MySQL app: API CRUD, browser persistence and real MCP', { skip:
   const mcp = new Client({ name: 'local-api-test', version: '1.0' });
   try {
     await mcp.connect(new StdioClientTransport({ command: process.execPath, args: [fileURLToPath(new URL('../src/index.js', import.meta.url))], env: { ...process.env, LIFEOS_BASE_URL: base, LIFEOS_API_TOKEN: context.token }, stderr: 'pipe' }));
-    assert.equal((await mcp.listTools()).tools.length, 26);
-    const dashboard = await mcp.callTool({ name: 'lifeos_dashboard', arguments: {} });
+    assert.equal((await mcp.listTools()).tools.length, 15);
+    const dashboard = await mcp.callTool({ name: 'lifeos_query', arguments: { type: 'dashboard' } });
     assert.equal(dashboard.structuredContent.data.finance.balance, expectedBalance);
     const created = await mcp.callTool({ name: 'lifeos_create_goal', arguments: { title: 'MCP Studio', deadline: '2027-01-07' } });
     assert.equal(created.isError, undefined);

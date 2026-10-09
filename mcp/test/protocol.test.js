@@ -17,10 +17,13 @@ test('real SDK stdio initialization, tool schemas, invocation and errors', async
   try {
     await client.connect(transport);
     const { tools } = await client.listTools();
-    assert.equal(tools.length, 26);
+    assert.equal(tools.length, 15);
     for (const tool of tools) assert.equal(tool.inputSchema.type, 'object', tool.name);
     assert.ok(tools.find(t => t.name === 'lifeos_create_task').inputSchema.properties.source);
-    const result = await client.callTool({ name: 'lifeos_dashboard', arguments: {} });
+    const query = tools.find(t => t.name === 'lifeos_query');
+    assert.equal(query.annotations.readOnlyHint, true);
+    assert.ok(query.inputSchema.properties.type.enum.includes('today_habits'));
+    const result = await client.callTool({ name: 'lifeos_query', arguments: { type: 'dashboard' } });
     assert.deepEqual(result.structuredContent, { data: { today: '2026-10-07' } });
     const error = await client.callTool({ name: 'lifeos_create_note', arguments: { title: 'Test' } });
     assert.equal(error.isError, true);
