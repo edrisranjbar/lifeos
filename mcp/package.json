@@ -1,7 +1,7 @@
 {
   "name": "lifeos-mcp",
   "license": "MIT",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
   "type": "module",
   "engines": { "node": ">=22.9" },
