@@ -29,6 +29,9 @@ jobs:
 
       - name: Run timer tests
         run: node --test tests/timer.test.mjs
+      
+      - name: Run growth model tests
+        run: node --test tests/growth-model.test.mjs
 
       - name: Run API tests
         run: php tests/api_test.php
