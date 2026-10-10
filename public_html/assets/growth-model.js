@@ -59,6 +59,8 @@ export function summary(plans, source, habit) {
 }
 export const cadenceDays={weekly:7,monthly:30,quarterly:90};
 export function nextReview(doc, cadence) {
+  const days = cadenceDays[cadence];
+  if (!days) return null;
   const last=doc.reviews.filter(r=>r.cadence===cadence).sort((a,b)=>String(b.date).localeCompare(String(a.date)))[0];
-  return last ? addDays(last.date,cadenceDays[cadence]) : today();
+  return last ? addDays(last.date,days) : today();
 }
