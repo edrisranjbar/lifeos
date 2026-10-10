@@ -45,3 +45,12 @@ textarea::selection{background:var(--accent-soft)}
 .editor-status button:hover{color:var(--accent);background:var(--accent-soft)}
 button:focus-visible,select:focus-visible,.write-pane textarea:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
 @media(max-width:760px){.markdown-preview{padding:18px}.write-pane textarea{padding:18px 18px 50px;font-size:13px}.md-toolbar{padding:7px;gap:2px}.md-toolbar button{min-width:27px;height:28px}.editor-status{gap:8px}}
+/* Content direction is independent of the English app navigation and toolbar. */
+.write-pane textarea,.markdown-preview,.note-title-input{text-align:start}
+.write-pane textarea{unicode-bidi:normal}
+.write-pane textarea[dir="rtl"],.markdown-preview[dir="rtl"]{font-family:Tahoma,"Segoe UI",sans-serif}
+.note-tab-name,.note-tab-preview{width:100%;text-align:start;unicode-bidi:isolate}
+.markdown-preview code{direction:ltr;unicode-bidi:isolate;display:inline-block;text-align:left}
+.markdown-preview pre code{display:block}
+.markdown-preview blockquote{padding-inline-start:16px;padding-inline-end:16px}
+.markdown-preview blockquote[dir="rtl"]{border-radius:7px 0 0 7px}
