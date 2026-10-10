@@ -42,25 +42,25 @@ function markdown(source) {
       closeList();
       const headers = cells(line), separators = cells(lines[++index]);
       const align = column => separators[column]?.startsWith(':') && separators[column]?.endsWith(':') ? 'center' : separators[column]?.endsWith(':') ? 'right' : separators[column]?.startsWith(':') ? 'left' : 'start';
-      out.push(`<div class="md-table-wrap"><table><thead><tr>${headers.map((cell, column) => `<th dir="auto" style="text-align:${align(column)}">${inline(cell)}</th>`).join('')}</tr></thead><tbody>`);
+      out.push(`<div class="md-table-wrap"><table><thead><tr>${headers.map((cell, column) => `<th dir="${noteDirection(cell)}" style="text-align:${align(column)}">${inline(cell)}</th>`).join('')}</tr></thead><tbody>`);
       while (lines[index + 1]?.trim() && lines[index + 1].includes('|')) {
         const row = cells(lines[++index]);
-        out.push(`<tr>${headers.map((_, column) => `<td dir="auto" style="text-align:${align(column)}">${inline(row[column] || '')}</td>`).join('')}</tr>`);
+        out.push(`<tr>${headers.map((_, column) => `<td dir="${noteDirection(row[column] || '')}" style="text-align:${align(column)}">${inline(row[column] || '')}</td>`).join('')}</tr>`);
       }
       out.push('</tbody></table></div>');
       continue;
     }
     const heading = line.match(/^(#{1,6})\s+(.+)$/);
-    if (heading) { closeList(); const level = heading[1].length; out.push(`<h${level} dir="auto">${inline(heading[2])}</h${level}>`); continue; }
+    if (heading) { closeList(); const level = heading[1].length; out.push(`<h${level} dir="${noteDirection(heading[2])}">${inline(heading[2])}</h${level}>`); continue; }
     const bullet = line.match(/^\s*[-*+]\s+(.+)$/), numbered = line.match(/^\s*\d+[.)]\s+(.+)$/);
     if (bullet || numbered) {
       const next = bullet ? 'ul' : 'ol';
       if (list !== next) { closeList(); out.push(`<${next}>`); list = next; }
       const body = (bullet || numbered)[1], task = bullet && body.match(/^\[([ xX])\]\s*(.*)$/);
-      out.push(task ? `<li class="md-task" dir="auto"><input type="checkbox" data-task-line="${index}" aria-label="${escapeHtml(task[2])}" ${task[1] !== ' ' ? 'checked' : ''}><span>${inline(task[2])}</span></li>` : `<li dir="auto">${inline(body)}</li>`);
+      out.push(task ? `<li class="md-task" dir="${noteDirection(task[2])}"><input type="checkbox" data-task-line="${index}" aria-label="${escapeHtml(task[2])}" ${task[1] !== ' ' ? 'checked' : ''}><span>${inline(task[2])}</span></li>` : `<li dir="${noteDirection(body)}">${inline(body)}</li>`);
       continue;
     }
-    closeList(); const quote = line.match(/^>\s?(.*)$/); out.push(quote ? `<blockquote dir="auto">${inline(quote[1])}</blockquote>` : `<p dir="auto">${inline(line)}</p>`);
+    closeList(); const quote = line.match(/^>\s?(.*)$/); out.push(quote ? `<blockquote dir="${noteDirection(quote[1])}">${inline(quote[1])}</blockquote>` : `<p dir="${noteDirection(line)}">${inline(line)}</p>`);
   }
   closeList(); if (code) out.push(`<pre><code>${escapeHtml(codeLines.join('\n'))}</code></pre>`);
   return out.join('');
@@ -135,7 +135,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     tabs.innerHTML = orderedNotes().map((note, index, notes) => `
       <li class="note-tab ${note.id === data.activeId ? 'active' : ''}" data-note-id="${escapeHtml(note.id)}" draggable="${data.sort === 'manual'}">
         <button type="button" class="note-tab-open" data-open-note="${escapeHtml(note.id)}" aria-current="${note.id === data.activeId ? 'page' : 'false'}" title="${escapeHtml(displayTitle(note))}">
-          <span class="note-tab-name" dir="auto">${escapeHtml(displayTitle(note))}</span><span class="note-tab-preview" dir="${noteDirection(note.body)}">${escapeHtml(note.body.split(/\r?\n/).find(line => line.trim()) || 'Empty note')}</span>
+          <span class="note-tab-name" dir="${noteDirection(displayTitle(note))}">${escapeHtml(displayTitle(note))}</span><span class="note-tab-preview" dir="${noteDirection(note.body)}">${escapeHtml(note.body.split(/\r?\n/).find(line => line.trim()) || 'Empty note')}</span>
         </button>
         <span class="note-tab-actions">
           <button type="button" data-move-note="up" data-note-id="${escapeHtml(note.id)}" aria-label="Move ${escapeHtml(displayTitle(note))} up" ${data.sort !== 'manual' || index === 0 ? 'disabled' : ''}>↑</button>
