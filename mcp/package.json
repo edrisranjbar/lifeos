@@ -1,10 +1,37 @@
 {
-  "name": "lifeos-mcp",
-  "license": "MIT",
+  "name": "@edicodes/lifeos-mcp",
   "version": "2.0.0",
-  "private": true,
+  "description": "MCP server for Edi Life OS: your self-hosted habits, goals, tasks, finances and notes, over its token-protected API.",
+  "mcpName": "io.github.edrisranjbar/lifeos",
+  "license": "MIT",
+  "author": "Edris Ranjbar",
+  "homepage": "https://github.com/edrisranjbar/lifeos/tree/main/mcp#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/edrisranjbar/lifeos.git",
+    "directory": "mcp"
+  },
+  "bugs": "https://github.com/edrisranjbar/lifeos/issues",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "claude",
+    "productivity",
+    "habits",
+    "goals",
+    "self-hosted"
+  ],
   "type": "module",
-  "engines": { "node": ">=22.9" },
+  "bin": {
+    "lifeos-mcp": "src/index.js"
+  },
+  "files": [
+    "src",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=22.9"
+  },
   "scripts": {
     "start": "node --env-file-if-exists=.env src/index.js",
     "test": "node --test test/*.test.js"

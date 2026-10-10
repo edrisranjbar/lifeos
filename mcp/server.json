@@ -1,0 +1,41 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.edrisranjbar/lifeos",
+  "description": "Self-hosted life OS: habits, goals, tasks, finances and notes over a token-protected API.",
+  "repository": {
+    "url": "https://github.com/edrisranjbar/lifeos",
+    "source": "github",
+    "subfolder": "mcp"
+  },
+  "version": "2.0.0",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "@edicodes/lifeos-mcp",
+      "version": "2.0.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "LIFEOS_BASE_URL",
+          "description": "URL of your Edi Life OS install (HTTPS, or http://localhost for development)",
+          "isRequired": true,
+          "isSecret": false
+        },
+        {
+          "name": "LIFEOS_API_TOKEN",
+          "description": "The dedicated API token configured on your Edi Life OS server",
+          "isRequired": true,
+          "isSecret": true
+        },
+        {
+          "name": "LIFEOS_MCP_TIMEOUT_MS",
+          "description": "Request timeout in milliseconds (100-120000, default 10000)",
+          "isRequired": false,
+          "isSecret": false
+        }
+      ]
+    }
+  ]
+}
