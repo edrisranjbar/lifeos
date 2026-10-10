@@ -78,7 +78,7 @@ Most of us run our lives across a to-do app, a habit tracker, a budgeting spread
 | **Overview** | A live productivity score, focus and habit trends, goals, finances and a seven-day weather forecast. |
 | **Growth** | Connect six life dimensions to long-term goals, SMART goals, habits and tasks. Run weekly, monthly or quarterly reviews. [Guide](docs/growth.md) |
 | **Focus** | Timed sessions with short and long breaks, session history and a focus soundtrack. |
-| **Finance** | Expenses, income and budgets in Toman. Debts you owe and credits owed to you, one-time or recurring, recorded straight into the ledger. [Guide](docs/financial-commitments.md) |
+| **Finance** | Expenses, income and budgets in the currency you choose in Settings (Toman by default). Debts you owe and credits owed to you, one-time or recurring, recorded straight into the ledger. [Guide](docs/financial-commitments.md) |
 | **Habittify** | Daily habits with completion, streaks and monthly progress. |
 | **Kanban** | Draggable cards and lists with priorities, labels, dates, checklists, comments and file attachments. |
 | **Calendar** | Due cards and financial dues across all boards in Month or Schedule view. |

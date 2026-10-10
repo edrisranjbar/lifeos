@@ -31,6 +31,10 @@ function __t(str, vars) {
 let periods = {};
 let activePeriod = "Current";
 
+// Unit label from the currency chosen in Settings (amounts are never converted).
+const currencyUnit = () => window.lifeOsCurrency?.unit() ?? "Toman";
+let renderedUnit = currencyUnit();
+
 const PERIODS_STORAGE_KEY = "daramd_periods_v1";
 const ACTIVE_PERIOD_KEY = "daramd_active_period_v1";
 
@@ -670,8 +674,8 @@ function openAddIncomeModal() {
     <p class="modal-copy">${esc("Log a new source of income, or update an existing one by reusing its name.")}</p>
     <label class="field-label" for="incomeName">${esc("Stream name")}</label>
     <input type="text" id="incomeName" placeholder="${esc("e.g. Salary")}" class="mb-3">
-    <label class="field-label" for="incomeAmount">${esc("Amount in Toman")}</label>
-    <input type="number" id="incomeAmount" placeholder="${esc("Amount in Toman")}" min="1" step="1" class="mb-5">
+    <label class="field-label" for="incomeAmount">${esc(`Amount in ${currencyUnit()}`)}</label>
+    <input type="number" id="incomeAmount" placeholder="${esc(`Amount in ${currencyUnit()}`)}" min="1" step="1" class="mb-5">
     <div class="modal-actions">
       <button class="btn-ghost" onclick="closeModal()">${esc("Cancel")}</button>
       <button class="btn-primary" onclick="saveNewIncome()">${esc("Save Income")}</button>
@@ -719,8 +723,8 @@ function openAddExpenseModal() {
     </select>
     <label class="field-label" for="expenseDesc">${esc("Description")}</label>
     <input type="text" id="expenseDesc" placeholder="${esc("Description (optional)")}" class="mb-3">
-    <label class="field-label" for="expenseAmount">${esc("Amount in Toman")}</label>
-    <input type="number" id="expenseAmount" placeholder="${esc("Amount in Toman")}" min="1" step="1" class="mb-5">
+    <label class="field-label" for="expenseAmount">${esc(`Amount in ${currencyUnit()}`)}</label>
+    <input type="number" id="expenseAmount" placeholder="${esc(`Amount in ${currencyUnit()}`)}" min="1" step="1" class="mb-5">
     <div class="modal-actions">
       <button class="btn-ghost" onclick="closeModal()">${esc("Cancel")}</button>
       <button class="btn-primary" onclick="saveNewExpense()">${esc("Log Expense")}</button>
@@ -783,15 +787,16 @@ function exportToExcel() {
   const totalSpent = state.expenses.reduce((sum, item) => sum + item.amount, 0);
   const categoryName = (id) =>
     state.categories.find((category) => category.id === id)?.label || id;
+  const unit = currencyUnit();
   const budgetRows = state.categories.map((category) => {
     const spent = state.expenses
       .filter((expense) => expense.categoryId === category.id)
       .reduce((sum, expense) => sum + expense.amount, 0);
     return {
       Category: category.label,
-      "Budget (Toman)": category.target,
-      "Spent (Toman)": spent,
-      "Remaining (Toman)": category.target - spent,
+      [`Budget (${unit})`]: category.target,
+      [`Spent (${unit})`]: spent,
+      [`Remaining (${unit})`]: category.target - spent,
       "Used (%)": category.target > 0 ? Math.round((spent / category.target) * 100) : 0,
     };
   });
@@ -799,18 +804,18 @@ function exportToExcel() {
     Date: expense.date || "",
     Category: categoryName(expense.categoryId),
     Description: expense.desc || "",
-    "Amount (Toman)": expense.amount,
+    [`Amount (${unit})`]: expense.amount,
   }));
   const incomeRows = state.incomes.map((income) => ({
     Source: income.name,
-    "Amount (Toman)": income.amount,
+    [`Amount (${unit})`]: income.amount,
   }));
   const summaryRows = [
-    { Metric: "Income", "Amount (Toman)": totalIncome },
-    { Metric: "Allocated budget", "Amount (Toman)": totalBudget },
-    { Metric: "Spent", "Amount (Toman)": totalSpent },
-    { Metric: "Balance", "Amount (Toman)": totalIncome - totalSpent },
-    { Metric: "Budget available", "Amount (Toman)": totalBudget - totalSpent },
+    { Metric: "Income", [`Amount (${unit})`]: totalIncome },
+    { Metric: "Allocated budget", [`Amount (${unit})`]: totalBudget },
+    { Metric: "Spent", [`Amount (${unit})`]: totalSpent },
+    { Metric: "Balance", [`Amount (${unit})`]: totalIncome - totalSpent },
+    { Metric: "Budget available", [`Amount (${unit})`]: totalBudget - totalSpent },
   ];
 
   const workbook = XLSX.utils.book_new();
@@ -843,7 +848,7 @@ function printLedger() {
       month: "short",
       day: "numeric",
     });
-    meta.textContent = __t("{period} financial report · {date} · Values in Toman", { period: activePeriod, date });
+    meta.textContent = __t("{period} financial report · {date} · Values in {unit}", { period: activePeriod, date, unit: currencyUnit() });
   }
   window.print();
 }
@@ -1047,7 +1052,7 @@ function enhanceCategorySelect(select) {
       const name = document.createElement('strong');
       name.textContent = parts.name;
       const detail = document.createElement('small');
-      detail.textContent = category.target > 0 ? `${fmt(category.target - spent)} ${fa ? 'تومان' : 'Toman'} · ${words.remaining}` : words.noBudget;
+      detail.textContent = category.target > 0 ? `${fmt(category.target - spent)} ${currencyUnit()} · ${words.remaining}` : words.noBudget;
       detail.classList.toggle('is-over', category.target > 0 && spent > category.target);
       copy.append(name, detail);
       const check = document.createElement('span');
@@ -1135,7 +1140,7 @@ function openAddBudgetModal() {
     <div class="section-label" style="margin-bottom:18px;">${esc("Add Budget Category")}</div>
     <input type="text" id="newCatEmoji" placeholder="${esc("Emoji (optional, e.g. 🎮)")}" class="mb-3" maxlength="4">
     <input type="text" id="newCatName" placeholder="${esc("Category name (e.g. Entertainment)")}" class="mb-3">
-    <input type="number" id="newCatTarget" placeholder="${esc("Monthly budget in Toman")}" class="mb-5">
+    <input type="number" id="newCatTarget" placeholder="${esc(`Monthly budget in ${currencyUnit()}`)}" class="mb-5">
     <div style="display:flex;gap:10px;">
       <button class="btn-ghost" style="flex:1;padding:13px;" onclick="closeModal()">${esc("Cancel")}</button>
       <button class="btn-primary" style="flex:1;" onclick="saveNewBudget()">${esc("Add Category")}</button>
@@ -1155,8 +1160,8 @@ function openEditBudgetModal(id) {
     <input type="text" id="editCatEmoji" value="${esc(parts.emoji)}" placeholder="${esc("Optional emoji")}" class="mb-3" maxlength="8">
     <label class="field-label" for="editCatName">${esc("Category name")}</label>
     <input type="text" id="editCatName" value="${esc(parts.name)}" placeholder="${esc("Category name")}" class="mb-3">
-    <label class="field-label" for="editCatTarget">${esc("Monthly limit in Toman")}</label>
-    <input type="number" id="editCatTarget" value="${category.target}" min="1" step="1" class="mb-5" placeholder="${esc("Monthly budget in Toman")}">
+    <label class="field-label" for="editCatTarget">${esc(`Monthly limit in ${currencyUnit()}`)}</label>
+    <input type="number" id="editCatTarget" value="${category.target}" min="1" step="1" class="mb-5" placeholder="${esc(`Monthly budget in ${currencyUnit()}`)}">
     <div class="modal-actions triple">
       <button type="button" class="btn-ghost btn-danger-ghost" onclick="deleteCategory('${id}')">${esc("🗑️ Delete")}</button>
       <button type="button" class="btn-ghost" onclick="closeModal()">${esc("Cancel")}</button>
@@ -1173,7 +1178,7 @@ function openEditIncomeModal(id) {
   openModal(`
     <div class="section-label" style="margin-bottom:18px;">${esc("Edit Income")}</div>
     <input type="text" id="editIncomeName" value="${esc(inc.name)}" class="mb-3" placeholder="${esc("Stream name")}">
-    <input type="number" id="editIncomeAmount" value="${inc.amount}" class="mb-5" placeholder="${esc("Amount in Toman")}">
+    <input type="number" id="editIncomeAmount" value="${inc.amount}" class="mb-5" placeholder="${esc(`Amount in ${currencyUnit()}`)}">
     <div class="modal-actions triple">
       <button type="button" class="btn-ghost btn-danger-ghost" onclick="deleteIncome('${id}')">${esc("🗑️ Delete")}</button>
       <button type="button" class="btn-ghost" onclick="closeModal()">${esc("Cancel")}</button>
@@ -1196,7 +1201,7 @@ function openEditExpenseModal(id) {
     <div class="section-label" style="margin-bottom:18px;">${esc("Edit Expense")}</div>
     <select id="editExpenseCategory" class="mb-3">${catOptions}</select>
     <input type="text" id="editExpenseDesc" value="${esc(exp.desc || "")}" class="mb-3" placeholder="${esc("Description (optional)")}">
-    <input type="number" id="editExpenseAmount" value="${exp.amount}" class="mb-5" placeholder="${esc("Amount in Toman")}">
+    <input type="number" id="editExpenseAmount" value="${exp.amount}" class="mb-5" placeholder="${esc(`Amount in ${currencyUnit()}`)}">
     <div class="modal-actions triple">
       <button type="button" class="btn-ghost btn-danger-ghost" onclick="deleteExpense('${id}')">${esc("🗑️ Delete")}</button>
       <button type="button" class="btn-ghost" onclick="closeModal()">${esc("Cancel")}</button>
@@ -1437,7 +1442,7 @@ function renderCharts(totalIncome) {
             bodyFont: { family: "JetBrains Mono" },
             callbacks: {
               label: (ctx) =>
-                ` ${ctx.label}: ${ctx.raw.toLocaleString()} Toman`,
+                ` ${ctx.label}: ${ctx.raw.toLocaleString()} ${currencyUnit()}`,
             },
           },
         },
@@ -1521,7 +1526,7 @@ function renderCharts(totalIncome) {
             bodyFont: { family: "JetBrains Mono" },
             callbacks: {
               label: (ctx) =>
-                ` ${ctx.dataset.label}: ${ctx.raw.toLocaleString()} Toman`,
+                ` ${ctx.dataset.label}: ${ctx.raw.toLocaleString()} ${currencyUnit()}`,
             },
           },
         },
@@ -1560,7 +1565,8 @@ addEventListener('app-storage-change', () => {
     const incoming = JSON.parse(appStorage.getItem(PERIODS_STORAGE_KEY) || 'null');
     if (!incoming || !Object.keys(incoming).length) return;
     const selected = appStorage.getItem(ACTIVE_PERIOD_KEY) || activePeriod;
-    if (JSON.stringify(incoming) === JSON.stringify(periods) && selected === activePeriod) return;
+    if (JSON.stringify(incoming) === JSON.stringify(periods) && selected === activePeriod && currencyUnit() === renderedUnit) return;
+    renderedUnit = currencyUnit();
     periods = incoming;
     activePeriod = periods[selected] ? selected : Object.keys(periods)[0];
     state = cloneState(normalizeState(periods[activePeriod]));

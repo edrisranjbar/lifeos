@@ -612,7 +612,7 @@ function renderFinance() {
     return;
   }
   wrap.innerHTML = `
-    <div class="fin-row"><strong class="fin-balance">${number(balance)}<span>Toman</span></strong></div>
+    <div class="fin-row"><strong class="fin-balance">${number(balance)}<span>${esc(window.lifeOsCurrency?.unit() ?? 'Toman')}</span></strong></div>
     <div class="fin-sub"><span class="fin-pill in">+${number(income)} in</span><span class="fin-pill out">−${number(spent)} out</span></div>
     <div class="fin-cats">${top.map(({ category, amount }) => {
       const pct = category.target > 0 ? clamp(amount / category.target * 100) : 100;
