@@ -6,7 +6,9 @@ require_once __DIR__ . '/auth.php';
 life_os_start_session();
 
 $redirect = (string) ($_GET['redirect'] ?? $_POST['redirect'] ?? '/');
-if ($redirect === '' || !str_starts_with($redirect, '/') || str_starts_with($redirect, '//')) {
+// Only same-origin paths. Browsers read "/\" as "//" and drop tabs/newlines, so
+// reject backslashes, whitespace and control characters, not just a leading "//".
+if (!preg_match('~^/(?![/\\\\])[^\\\\\x00-\x20\x7F]*$~D', $redirect)) {
     $redirect = '/';
 }
 
@@ -19,6 +21,10 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             exit;
         }
         $error = 'Incorrect username or password.';
+    } catch (LifeOsLoginThrottled $throttled) {
+        http_response_code(429);
+        header('Retry-After: ' . $throttled->retryAfter);
+        $error = 'Too many sign-in attempts. Try again in ' . max(1, (int) ceil($throttled->retryAfter / 60)) . ' minute(s).';
     } catch (Throwable $exception) {
         error_log($exception->__toString());
         life_os_logout();

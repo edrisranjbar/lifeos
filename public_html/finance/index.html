@@ -1,12 +1,13 @@
 <!doctype html>
 <html lang="en" dir="ltr">
   <head>
-    <script src="/assets/storage.js"></script>
+    <script src="/assets/storage.js?v=currency-1"></script>
+    <script src="/assets/currency.js?v=currency-1"></script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="EdiFinance — a private personal ledger with budgets, expenses, recurring payments, installments and debts in Toman, saved in MySQL."
+      content="EdiFinance — a private personal ledger with budgets, expenses, recurring payments, installments and debts in your chosen currency, saved in MySQL."
     />
     <title>EdiFinance - My personal Ledger</title>
     <script>
@@ -124,7 +125,7 @@
           </div>
           <div class="metric-rule"></div>
           <div style="font-size: 11px; color: var(--muted-2)" data-i18n="mIncomeSub">
-            Toman logged this period
+            <span data-currency-unit>Toman</span> logged this period
           </div>
         </div>
         <div class="metric-card p-7" style="background: var(--ink-card)">
@@ -138,7 +139,7 @@
           </div>
           <div class="metric-rule"></div>
           <div style="font-size: 11px; color: var(--muted-2)" data-i18n="mAllocatedSub">
-            Toman across all categories
+            <span data-currency-unit>Toman</span> across all categories
           </div>
         </div>
         <div class="metric-card p-7" style="background: var(--ink-card)">
@@ -152,7 +153,7 @@
           </div>
           <div class="metric-rule"></div>
           <div style="font-size: 11px; color: var(--muted-2)" data-i18n="mSpentSub">
-            Toman actually paid out
+            <span data-currency-unit>Toman</span> actually paid out
           </div>
         </div>
         <div class="metric-card p-7" style="background: var(--ink-card)">
@@ -166,7 +167,7 @@
           </div>
           <div class="metric-rule"></div>
           <div style="font-size: 11px; color: var(--muted-2)" data-i18n="mBalanceSub">
-            Toman remaining net
+            <span data-currency-unit>Toman</span> remaining net
           </div>
         </div>
       </div>
@@ -242,7 +243,7 @@
                       font-weight: 700;
                     "
                   >
-                    <span data-i18n="thToman">Toman</span>
+                    <span data-i18n="thToman" data-currency-unit>Toman</span>
                   </th>
                   <th></th>
                 </tr>
@@ -339,10 +340,10 @@
     <script>
       window.appStorageReady.then(() => {
         const script = document.createElement('script');
-        script.src = 'assets/scripts/script.js?v=credits-1';
+        script.src = 'assets/scripts/script.js?v=currency-1';
         document.body.append(script);
       });
     </script>
-    <script type="module" src="assets/scripts/obligations.js?v=credits-1"></script>
+    <script type="module" src="assets/scripts/obligations.js?v=currency-1"></script>
   </body>
 </html>

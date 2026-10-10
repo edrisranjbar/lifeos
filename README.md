@@ -2,47 +2,75 @@
 
 # Edi Life OS
 
-**One self-hosted home for your focus, habits, goals, money and projects — with an MCP server so your AI assistant can work alongside you.**
+**Your habits, goals, focus, money and projects in one self-hosted dashboard that your AI assistant can use too.**
 
-[![PHP 8.1+](https://img.shields.io/badge/PHP-8.1%2B-777bb4?logo=php&logoColor=white)](#requirements) [![MySQL 8](https://img.shields.io/badge/MySQL-8-4479a1?logo=mysql&logoColor=white)](#requirements) [![MCP server](https://img.shields.io/badge/MCP-26_tools-39e6ad)](#talk-to-your-life-os-with-ai) [![Docker](https://img.shields.io/badge/docker-compose_up-2496ed?logo=docker&logoColor=white)](#with-docker-recommended) [![Self-hosted](https://img.shields.io/badge/data-self--hosted-e9918c)](#your-data-stays-yours) [![MIT license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![Latest release](https://img.shields.io/github/v/release/edrisranjbar/lifeos?color=39e6ad)](https://github.com/edrisranjbar/lifeos/releases) [![GitHub stars](https://img.shields.io/github/stars/edrisranjbar/lifeos?style=flat&color=f3c969)](https://github.com/edrisranjbar/lifeos/stargazers) [![MIT license](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![Docker](https://img.shields.io/badge/docker-compose_up-2496ed?logo=docker&logoColor=white)](#with-docker-recommended) [![MCP server](https://img.shields.io/badge/MCP-15_tools-39e6ad)](#talk-to-your-life-os-with-ai) [![PHP 8.1+](https://img.shields.io/badge/PHP-8.1%2B-777bb4?logo=php&logoColor=white)](#requirements)
 
-[Quick start](#quick-start) · [Tour](#a-quick-tour) · [AI / MCP](#talk-to-your-life-os-with-ai) · [Deploy](docs/deployment.md) · [API](docs/api.md)
+**[Website](https://edrisranjbar.github.io/lifeos/)** · [Quick start](#quick-start) · [Tour](#a-quick-tour) · [AI / MCP](#talk-to-your-life-os-with-ai) · [Deploy](docs/deployment.md) · [API](docs/api.md)
 
 <br>
 
-<img src="docs/media/dashboard.webp" alt="Edi Life OS overview: a daily productivity score with focus, habit, goal and work progress, and six life dimensions" width="100%">
+<img src="docs/media/demo.gif" alt="Demo: ticking a habit in Habittify, asking Claude to log a $46 lunch expense through the MCP server, and the new expense appearing in Finance" width="100%">
+
+<sub>Tick a habit, ask Claude to log an expense, and see it land in Finance. The expense is written through the real API with sample data.</sub>
 
 </div>
 
 <br>
 
-Most of us run our lives across a to-do app, a habit tracker, a budgeting spreadsheet, a Pomodoro timer and a notes app — and none of them know about each other. **Edi Life OS puts all of it in one calm, private dashboard** and connects the small things you do today to the direction you want your life to take.
+Most of us run our lives across a to-do app, a habit tracker, a budgeting spreadsheet, a Pomodoro timer and a notes app, and none of them know about each other. **Edi Life OS puts all of it in one calm, private dashboard** and connects the small things you do today to the direction you want your life to take.
 
 - **Everything in one place.** Ten workspaces share one design, one sign-in and one database.
 - **Connected, not just collected.** Habits drive goal progress, Kanban cards show up in the calendar, and the Overview turns it all into one daily score.
 - **Yours.** Runs on any PHP + MySQL host, even cheap shared hosting. No subscription, no tracking, no vendor lock-in.
 - **AI-ready.** A built-in MCP server lets Claude and other assistants read your dashboard, plan goals, log habits and track expenses for you.
 
+> [!TIP]
+> If Edi Life OS is useful to you, a ⭐ on GitHub helps other people find it.
+
 ## A quick tour
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/media/dashboard.webp">
+  <source media="(prefers-color-scheme: light)" srcset="docs/media/dashboard-light.webp">
+  <img src="docs/media/dashboard.webp" alt="Edi Life OS overview: a daily productivity score with focus, habit, goal and work progress, and six life dimensions" width="100%">
+</picture>
+<p><b>Overview</b> — One daily score built from focus, habits, goals and work, plus your six life dimensions at a glance.</p>
 
 <table>
 <tr>
 <td width="50%" valign="top">
-<img src="docs/media/growth.webp" alt="Growth workspace with six life dimensions and SMART progress">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/media/growth.webp">
+  <source media="(prefers-color-scheme: light)" srcset="docs/media/growth-light.webp">
+  <img src="docs/media/growth.webp" alt="Growth workspace with six life dimensions and SMART progress">
+</picture>
 <p><b>Growth</b> — Six life dimensions, each linked to long-term goals, SMART goals, habits and tasks. Guided weekly, monthly and quarterly reviews.</p>
 </td>
 <td width="50%" valign="top">
-<img src="docs/media/focus.webp" alt="Focus timer over an illustrated landscape with a soundtrack panel">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/media/focus.webp">
+  <source media="(prefers-color-scheme: light)" srcset="docs/media/focus-light.webp">
+  <img src="docs/media/focus.webp" alt="Focus timer over an illustrated landscape with a soundtrack panel">
+</picture>
 <p><b>Focus</b> — Pomodoro sessions with breaks, a built-in focus soundtrack and a landscape that follows the time of day.</p>
 </td>
 </tr>
 <tr>
 <td width="50%" valign="top">
-<img src="docs/media/habittify.webp" alt="Habit checklist with a seven-day completion chart">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/media/habittify.webp">
+  <source media="(prefers-color-scheme: light)" srcset="docs/media/habittify-light.webp">
+  <img src="docs/media/habittify.webp" alt="Habit checklist with a seven-day completion chart">
+</picture>
 <p><b>Habittify</b> — Small daily habits, streaks and a seven-day picture of your consistency.</p>
 </td>
 <td width="50%" valign="top">
-<img src="docs/media/kanban.webp" alt="Kanban board with backlog, in progress, review and done columns">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/media/kanban.webp">
+  <source media="(prefers-color-scheme: light)" srcset="docs/media/kanban-light.webp">
+  <img src="docs/media/kanban.webp" alt="Kanban board with backlog, in progress, review and done columns">
+</picture>
 <p><b>Kanban</b> — Boards with labels, priorities, due dates, checklists, comments and attachments.</p>
 </td>
 </tr>
@@ -58,12 +86,12 @@ Most of us run our lives across a to-do app, a habit tracker, a budgeting spread
 | **Overview** | A live productivity score, focus and habit trends, goals, finances and a seven-day weather forecast. |
 | **Growth** | Connect six life dimensions to long-term goals, SMART goals, habits and tasks. Run weekly, monthly or quarterly reviews. [Guide](docs/growth.md) |
 | **Focus** | Timed sessions with short and long breaks, session history and a focus soundtrack. |
-| **Finance** | Expenses, income and budgets in Toman. Debts you owe and credits owed to you, one-time or recurring, recorded straight into the ledger. [Guide](docs/financial-commitments.md) |
+| **Finance** | Expenses, income and budgets in the currency you choose in Settings (Toman by default). Debts you owe and credits owed to you, one-time or recurring, recorded straight into the ledger. [Guide](docs/financial-commitments.md) |
 | **Habittify** | Daily habits with completion, streaks and monthly progress. |
 | **Kanban** | Draggable cards and lists with priorities, labels, dates, checklists, comments and file attachments. |
 | **Calendar** | Due cards and financial dues across all boards in Month or Schedule view. |
 | **Goals** | SMART goals with measures, deadlines, priorities, checklists — or progress driven by a habit. |
-| **Notepad** | Markdown notes with preview and export. |
+| **Notepad** | Markdown notes with preview and export. Persian/Arabic and Hebrew notes automatically use RTL writing; mixed-language preview blocks detect their own direction, while code stays LTR. |
 | **Notes** | Sticky notes with colors, fonts and connections. |
 
 Dates follow **Asia/Tehran**. The weather card shows Qeshm Island via Open-Meteo; its tide figure is a modeled estimate, not for navigation.
@@ -72,7 +100,7 @@ Dates follow **Asia/Tehran**. The weather card shows Qeshm Island via Open-Meteo
 
 ## Talk to your Life OS with AI
 
-Edi Life OS ships with an optional [MCP](https://modelcontextprotocol.io) server that exposes **26 tools** across your dashboard, goals, tasks, habits, finances and notes. Connect it to Claude Desktop, Claude Code or any MCP client and ask in plain language:
+Edi Life OS ships with an optional [MCP](https://modelcontextprotocol.io) server that exposes **15 tools** across your dashboard, goals, tasks, habits, finances and notes. Connect it to Claude Desktop, Claude Code or any MCP client and ask in plain language:
 
 > *"Show me my LifeOS dashboard."*
 >

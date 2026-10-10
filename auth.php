@@ -4,6 +4,46 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/db.php';
 
+const LIFE_OS_LOGIN_MAX_FAILURES = 5;
+const LIFE_OS_LOGIN_WINDOW_SECONDS = 900;
+
+final class LifeOsLoginThrottled extends RuntimeException
+{
+    public function __construct(public int $retryAfter)
+    {
+        parent::__construct('Too many sign-in attempts.');
+    }
+}
+
+/** True when the app sits behind a TLS-terminating proxy the operator trusts. */
+function life_os_trust_proxy(): bool
+{
+    $environment = getenv('LIFEOS_TRUST_PROXY');
+    if ($environment !== false) return $environment === 'true';
+    try {
+        return (life_os_config()['trust_proxy'] ?? false) === true;
+    } catch (Throwable) {
+        return false;
+    }
+}
+
+function life_os_is_https(): bool
+{
+    if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') return true;
+    return life_os_trust_proxy() && strtolower((string) ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '')) === 'https';
+}
+
+function life_os_client_ip(): string
+{
+    if (life_os_trust_proxy()) {
+        // The trusted proxy appends the real client address as the last entry.
+        $forwarded = array_map('trim', explode(',', (string) ($_SERVER['HTTP_X_FORWARDED_FOR'] ?? '')));
+        $last = end($forwarded);
+        if (is_string($last) && filter_var($last, FILTER_VALIDATE_IP)) return $last;
+    }
+    return (string) ($_SERVER['REMOTE_ADDR'] ?? '');
+}
+
 function life_os_start_session(): void
 {
     if (session_status() === PHP_SESSION_NONE) {
@@ -11,9 +51,21 @@ function life_os_start_session(): void
         session_set_cookie_params([
             'httponly' => true,
             'samesite' => 'Lax',
-            'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+            'secure' => life_os_is_https(),
         ]);
         session_start();
+    }
+}
+
+/** Reject state-changing requests that lack this session's CSRF token. */
+function life_os_require_csrf(): void
+{
+    life_os_start_session();
+    if (empty($_SESSION['state_csrf']) || !hash_equals((string) $_SESSION['state_csrf'], (string) ($_SERVER['HTTP_X_CSRF_TOKEN'] ?? ''))) {
+        http_response_code(403);
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['error' => 'Invalid request token. Reload the page.'], JSON_UNESCAPED_UNICODE);
+        exit;
     }
 }
 
@@ -79,14 +131,42 @@ function life_os_require_auth(): void
     }
 }
 
+/** Seconds until this client may try again, or 0 when it is not locked out. */
+function life_os_login_retry_after(PDO $db, string $throttleKey): int
+{
+    $query = $db->prepare('SELECT failures, first_failure_at FROM login_throttle WHERE throttle_key = ?');
+    $query->execute([$throttleKey]);
+    $row = $query->fetch();
+    if (!$row || (int) $row['failures'] < LIFE_OS_LOGIN_MAX_FAILURES) return 0;
+    return max(0, (int) $row['first_failure_at'] + LIFE_OS_LOGIN_WINDOW_SECONDS - time());
+}
+
+function life_os_record_login_failure(PDO $db, string $throttleKey): void
+{
+    // A failure after the window has passed starts a new window.
+    $now = time();
+    $record = $db->prepare('INSERT INTO login_throttle (throttle_key, failures, first_failure_at) VALUES (?, 1, ?)
+        ON DUPLICATE KEY UPDATE
+            failures = IF(? - first_failure_at >= ?, 1, failures + 1),
+            first_failure_at = IF(? - first_failure_at >= ?, ?, first_failure_at)');
+    $record->execute([$throttleKey, $now, $now, LIFE_OS_LOGIN_WINDOW_SECONDS, $now, LIFE_OS_LOGIN_WINDOW_SECONDS, $now]);
+}
+
 function life_os_login(string $username, string $password): bool
 {
     life_os_start_session();
+    $db = life_os_db();
+    $throttleKey = hash('sha256', life_os_client_ip());
+    $retryAfter = life_os_login_retry_after($db, $throttleKey);
+    if ($retryAfter > 0) throw new LifeOsLoginThrottled($retryAfter);
+
     $credentials = life_os_credentials();
     if (!hash_equals((string) $credentials['username'], $username) || !password_verify($password, (string) $credentials['password_hash'])) {
+        life_os_record_login_failure($db, $throttleKey);
         return false;
     }
 
+    $db->prepare('DELETE FROM login_throttle WHERE throttle_key = ?')->execute([$throttleKey]);
     session_regenerate_id(true);
     $_SESSION['life_os_authenticated'] = true;
     $_SESSION['life_os_username'] = $username;

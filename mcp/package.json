@@ -1,6 +1,6 @@
 {
   "name": "lifeos-mcp",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "MCP server for Edi Life OS: your self-hosted habits, goals, tasks, finances and notes, over its token-protected API.",
   "mcpName": "io.github.edrisranjbar/lifeos",
   "license": "MIT",

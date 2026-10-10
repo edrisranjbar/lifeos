@@ -4,6 +4,8 @@ const KEY='edi_obligations_v1', PERIODS='daramd_periods_v1', LEGACY='daramd_v1';
 const $=id=>document.getElementById(id);
 const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money=value=>new Intl.NumberFormat('en-US').format(value||0);
+// Unit label from the currency chosen in Settings (amounts are never converted).
+const unit=()=>window.lifeOsCurrency?.unit()??'Toman';
 const today=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Tehran',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
 const fmt=(date,options)=>new Intl.DateTimeFormat('en-GB',{timeZone:'UTC',...options}).format(new Date(date+'T12:00:00Z'));
 const longDate=date=>fmt(date,{day:'numeric',month:'short',year:'numeric'});
@@ -48,7 +50,7 @@ const planDialog=dialog('obPlanDialog',`<form id="obPlanForm"><header class="ob-
   <label>Name<input name="title" id="obTitle" required maxlength="180" dir="auto"></label>
   <label><span id="obPartyLabel">Pay to</span><input name="payee" id="obParty" maxlength="180" dir="auto"></label>
   <fieldset id="obRecurringMode" class="ob-tabs ob-tabs-sub" hidden><legend class="sr-only">Amount type</legend><label><input type="radio" name="mode" value="fixed" checked><span>Same amount each time</span></label><label><input type="radio" name="mode" value="split"><span>Split a total</span></label></fieldset>
-  <div class="ob-fields"><label><span id="obAmountLabel">Amount · Toman</span><input name="amount" id="obAmount" type="number" inputmode="numeric" min="1" max="1000000000000" step="1" required></label><label><span id="obStartLabel">Due date</span><input name="startDate" id="obStart" type="date" min="2000-01-01" required></label></div>
+  <div class="ob-fields"><label><span id="obAmountLabel">Amount · <span data-currency-unit>Toman</span></span><input name="amount" id="obAmount" type="number" inputmode="numeric" min="1" max="1000000000000" step="1" required></label><label><span id="obStartLabel">Due date</span><input name="startDate" id="obStart" type="date" min="2000-01-01" required></label></div>
   <div id="obRepeat" hidden>
     <div class="ob-fields"><label>Repeats every<span class="ob-inline"><input name="interval" id="obInterval" type="number" min="1" max="12" step="1" value="1" required><select name="frequency" id="obFrequency"><option value="monthly">month</option><option value="weekly">week</option><option value="yearly">year</option><option value="daily">day</option></select></span></label>
     <label id="obEndsLabel">Ends<select id="obEnds"><option value="never">Never</option><option value="count">After a number of payments</option><option value="date">On a date</option></select></label></div>
@@ -86,7 +88,7 @@ function render(){
     const t=totalsFor(dir),w=WORDS[dir],tab=$('obTab-'+dir);
     tab.setAttribute('aria-selected',String(dir===direction));tab.tabIndex=dir===direction?0:-1;
     const due=t.remaining+t.carryOver;
-    tab.innerHTML=`<span class="ob-side-label">${w.tab}</span><strong>${money(due)} <small>Toman</small></strong><span class="ob-side-meta">${t.overdue+t.carryOver?`<em>${money(t.overdue+t.carryOver)} overdue</em>`:`${w.left.toLowerCase()} by month end`}</span>`;
+    tab.innerHTML=`<span class="ob-side-label">${w.tab}</span><strong>${money(due)} <small>${esc(unit())}</small></strong><span class="ob-side-meta">${t.overdue+t.carryOver?`<em>${money(t.overdue+t.carryOver)} overdue</em>`:`${w.left.toLowerCase()} by month end`}</span>`;
   }
   const t=totalsFor(direction),w=WORDS[direction];
   $('obStats').innerHTML=[[`Due in ${fmt(month+'-15',{month:'long'})}`,t.committed,''],[w.paid,t.paid,'good'],[w.left,t.remaining,t.remaining?'warn':''],...(t.carryOver?[['From earlier months',t.carryOver,'bad']]:[])].map(([label,value,tone])=>`<div class="ob-stat ${tone}"><span>${label}</span><strong>${money(value)}</strong></div>`).join('');
@@ -156,7 +158,7 @@ function planFields(){
   $('obPlanHeading').textContent=dir==='credit'?'Money owed to me':'Money I owe';
   $('obTitle').placeholder=w.name;$('obPartyLabel').textContent=w.party;$('obParty').placeholder=w.partyHint;
   $('obRecurringMode').hidden=!recurring;$('obRepeat').hidden=!recurring;
-  $('obAmountLabel').textContent=split?'Total amount · Toman':recurring?'Amount each time · Toman':'Amount · Toman';
+  $('obAmountLabel').textContent=split?`Total amount · ${unit()}`:recurring?`Amount each time · ${unit()}`:`Amount · ${unit()}`;
   $('obStartLabel').textContent=recurring?'First due date':'Due date';
   // A split total always needs a payment count; a fixed amount can run forever.
   $('obEndsLabel').hidden=split;
@@ -166,9 +168,9 @@ function planFields(){
   const amount=Number($('obAmount').value),count=Number($('obCount').value),start=$('obStart').value,every=repeatLabel($('obFrequency').value,Number($('obInterval').value)||1).toLowerCase();
   let text='';
   if(!amount||!start)text='';
-  else if(!recurring)text=`${money(amount)} Toman ${dir==='credit'?'to receive':'to pay'} on ${longDate(start)}.`;
-  else if(split)text=count>0&&amount>=count?`${count} payments of ${money(Math.floor(amount/count))} Toman, ${every}, starting ${longDate(start)}${amount%count?` (last one ${money(Math.floor(amount/count)+amount%count)})`:''}.`:'Enter how many payments to split the total into.';
-  else text=`${money(amount)} Toman ${every}, starting ${longDate(start)}${ends==='count'&&count?`, ${count} times`:ends==='date'&&$('obEnd').value?`, until ${longDate($('obEnd').value)}`:', with no end date'}.`;
+  else if(!recurring)text=`${money(amount)} ${unit()} ${dir==='credit'?'to receive':'to pay'} on ${longDate(start)}.`;
+  else if(split)text=count>0&&amount>=count?`${count} payments of ${money(Math.floor(amount/count))} ${unit()}, ${every}, starting ${longDate(start)}${amount%count?` (last one ${money(Math.floor(amount/count)+amount%count)})`:''}.`:'Enter how many payments to split the total into.';
+  else text=`${money(amount)} ${unit()} ${every}, starting ${longDate(start)}${ends==='count'&&count?`, ${count} times`:ends==='date'&&$('obEnd').value?`, until ${longDate($('obEnd').value)}`:', with no end date'}.`;
   $('obPreview').textContent=text;
 }
 function openNew(){
@@ -213,7 +215,7 @@ function openPay(id){
   payment=view.occurrences.find(o=>o.id===id);if(!payment)return;
   const credit=payment.direction==='credit',w=WORDS[payment.direction];
   $('obPayHeading').textContent=w.record;
-  $('obPaySummary').innerHTML=`<strong>${money(payment.amount)} <small>Toman</small></strong><span dir="auto">${esc(payment.title)}${payment.payee?' · '+esc(payment.payee):''}</span><span>Due ${esc(longDate(payment.date))}</span>`;
+  $('obPaySummary').innerHTML=`<strong>${money(payment.amount)} <small>${esc(unit())}</small></strong><span dir="auto">${esc(payment.title)}${payment.payee?' · '+esc(payment.payee):''}</span><span>Due ${esc(longDate(payment.date))}</span>`;
   $('obPayCreate').textContent=credit?'Add it as new income':'Add a new expense';
   $('obPayLink').textContent=credit?'Link an income already in the ledger':'Link an expense already in the ledger';
   $('obEntryText').textContent=credit?'Income with the same amount':'Expense with the same amount';

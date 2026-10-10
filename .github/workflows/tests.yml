@@ -1,0 +1,43 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pdo_sqlite, mbstring
+          coverage: none
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: mcp/package-lock.json
+
+      - name: Run timer tests
+        run: node --test tests/timer.test.mjs
+
+      - name: Run API tests
+        run: php tests/api_test.php
+
+      - name: Run obligations tests
+        run: php tests/obligations_test.php
+
+      - name: Install MCP dependencies
+        run: npm ci --prefix mcp
+
+      - name: Run MCP tests
+        run: npm test --prefix mcp

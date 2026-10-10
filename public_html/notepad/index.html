@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <script src="/assets/storage.js"></script>
+  <script src="/assets/storage.js?v=currency-1"></script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="A focused Markdown notepad with live preview.">
@@ -9,7 +9,7 @@
   <script>
     try { document.documentElement.dataset.theme = appStorage.getItem('edi_os_theme') || 'dark'; } catch { document.documentElement.dataset.theme = 'dark'; }
   </script>
-  <link rel="stylesheet" href="static/style.css?v=editor-2">
+  <link rel="stylesheet" href="static/style.css?v=rtl-2">
 </head>
 <body>
   <main class="app">
@@ -37,7 +37,7 @@
       <div class="note-work-area">
         <div class="note-title-row" hidden>
           <label class="sr-only" for="noteTitle">Note name</label>
-          <input id="noteTitle" class="note-title-input" maxlength="100" placeholder="Name this note" autocomplete="off">
+          <input id="noteTitle" class="note-title-input" dir="auto" maxlength="100" placeholder="Name this note" autocomplete="off">
         </div>
         <section class="editor-shell" data-view="split" id="editorShell">
           <div class="pane write-pane"><div class="pane-label">Markdown</div><div class="md-toolbar" role="toolbar" aria-label="Format markdown"><button type="button" data-md="bold" title="Bold (Ctrl+B)" class="md-bold">B</button><button type="button" data-md="italic" title="Italic (Ctrl+I)" class="md-italic">I</button><button type="button" data-md="strike" title="Strikethrough" class="md-strike">S</button><button type="button" data-md="heading" title="Heading">H</button><button type="button" data-md="quote" title="Quote">❝</button><button type="button" data-md="ul" title="Bullet list">•</button><button type="button" data-md="ol" title="Numbered list">1.</button><button type="button" data-md="code" title="Inline code">`</button><button type="button" data-md="codeblock" title="Code block">{}</button><button type="button" data-md="link" title="Link">[]()</button></div><textarea id="notepadInput" spellcheck="true" aria-label="Markdown notepad" placeholder="# Start writing…"></textarea></div>
@@ -48,6 +48,6 @@
     </section>
   </main>
   <script src="../assets/voice-input.js" defer></script>
-  <script src="static/app.js?v=editor-2" defer></script>
+  <script src="static/app.js?v=rtl-2" defer></script>
 </body>
 </html>

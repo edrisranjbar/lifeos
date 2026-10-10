@@ -6,6 +6,7 @@ require_once dirname(__DIR__, 2) . '/auth.php';
 require_once dirname(__DIR__, 2) . '/lib/api_response.php';
 require_once dirname(__DIR__, 2) . '/lib/habits.php';
 life_os_require_auth();
+if (strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'GET') life_os_require_csrf();
 
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');

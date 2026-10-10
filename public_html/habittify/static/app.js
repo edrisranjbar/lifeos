@@ -150,10 +150,11 @@ function getMonthDays(jy, jm) {
 async function api(path, options = {}) {
   const [routePath, query = ""] = path.replace(/^\/api\/?/, "").split("?");
   const endpoint = `api.php?route=${encodeURIComponent(routePath)}${query ? `&${query}` : ""}`;
-  const response = await fetch(endpoint, {
-    headers: { "Content-Type": "application/json" },
-    ...options,
-  });
+  const headers = { "Content-Type": "application/json" };
+  if ((options.method || "GET").toUpperCase() !== "GET") {
+    headers["X-CSRF-Token"] = await appStorage.csrfToken();
+  }
+  const response = await fetch(endpoint, { ...options, headers });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(data.error || "Request failed");
   return data;

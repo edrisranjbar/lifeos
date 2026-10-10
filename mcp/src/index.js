@@ -6,7 +6,7 @@ import { createClient } from './client.js';
 import { toolDefinitions, executeTool } from './tools.js';
 
 try {
-  const server = new McpServer({ name: 'lifeos', version: '1.0.0' });
+  const server = new McpServer({ name: 'lifeos', version: '2.0.0' });
   for (const definition of toolDefinitions(createClient())) {
     // Advertise object properties; executeTool also checks cross-field refinements.
     const jsonSchema = z.object({ data: z.unknown() });
