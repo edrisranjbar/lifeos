@@ -197,7 +197,7 @@ async function refresh() {
       if(token!==refreshToken)return;
       financialPlans=finance.plans.length>0;
       // Credits (money owed to you) read as "Receive" and use green; debts read as "Pay".
-      financialEvents=finance.occurrences.filter(o=>!o.skipped).map(o=>{const credit=o.direction==='credit';return {id:o.id,source:'finance',boardId:financeBoardId,boardName:'Finance',columnName:o.paymentIssue?'Needs reconciliation':o.status==='rejected'?(credit?'Late':'Deferred'):o.status==='paid'?(credit?'Received':'Paid'):(credit?'To receive':'To pay'),title:`${credit?'Receive':'Pay'} · ${o.title}${o.count>1?' · '+(o.index+1)+'/'+o.count:''} · ${new Intl.NumberFormat('en-US').format(o.amount)} Toman`,date:o.date,time:'',completed:o.status==='paid',color:credit?'#39e6ad':'#f3c969'};});
+      financialEvents=finance.occurrences.filter(o=>!o.skipped).map(o=>{const credit=o.direction==='credit';return {id:o.id,source:'finance',boardId:financeBoardId,boardName:'Finance',columnName:o.paymentIssue?'Needs reconciliation':o.status==='rejected'?(credit?'Late':'Deferred'):o.status==='paid'?(credit?'Received':'Paid'):(credit?'To receive':'To pay'),title:`${credit?'Receive':'Pay'} · ${o.title}${o.count>1?' · '+(o.index+1)+'/'+o.count:''} · ${new Intl.NumberFormat('en-US').format(o.amount)} ${window.lifeOsCurrency?.unit()??'Toman'}`,date:o.date,time:'',completed:o.status==='paid',color:credit?'#39e6ad':'#f3c969'};});
       financialError='';
     }catch(error){if(token!==refreshToken)return;financialEvents=[];financialPlans=false;financialError=error.message;}
     const payload = await response.json();if(token!==refreshToken)return;lastStorageRaw = appStorage.getItem(KEY); readBoards(payload.data[KEY]); render();

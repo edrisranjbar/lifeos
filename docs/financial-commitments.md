@@ -1,6 +1,6 @@
 # Debts and credits
 
-Finance has a **Debts & credits** workspace alongside its expenses, income streams and budgets. It uses Toman and Tehran dates. Existing ledger periods and categories are preserved; no SQL schema migration is required.
+Finance has a **Debts & credits** workspace alongside its expenses, income streams and budgets. It uses Tehran dates and shows amounts in the currency chosen in **Settings** (Toman by default; amounts are never converted). Existing ledger periods and categories are preserved; no SQL schema migration is required.
 
 ## Two directions
 
@@ -15,7 +15,7 @@ Both directions support the same schedules:
 
 - **One-time:** a single amount on one due date.
 - **Recurring, same amount each time:** daily, weekly, monthly or yearly, every 1–12 periods. It can run with no end, for a number of payments, or until a date. A recurring payment you owe can be marked as an optional subscription so single periods can be skipped.
-- **Recurring, split a total:** a total (including any agreed charges) divided into a fixed number of payments. Amounts are whole Toman; the rounding remainder goes into the last payment.
+- **Recurring, split a total:** a total (including any agreed charges) divided into a fixed number of payments. Amounts are whole units of the chosen currency; the rounding remainder goes into the last payment.
 
 Amounts and dates are fixed after creation, so changing a plan cannot rewrite past dues. You can still:
 

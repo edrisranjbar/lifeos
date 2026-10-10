@@ -17,7 +17,7 @@ Data lives in two named volumes: `mysql` (the database) and `attachments` (Kanba
 
 The `app` service has a healthcheck that requests `/login.php`, so `docker compose ps` reports `healthy`/`unhealthy` once Apache and PHP are actually serving pages, and `docker compose up --wait` (used in CI) waits for that instead of just the container starting.
 
-Put a TLS-terminating reverse proxy (Caddy, Traefik, nginx) in front of the container before exposing it to the internet.
+Put a TLS-terminating reverse proxy (Caddy, Traefik, nginx) in front of the container before exposing it to the internet, and set `LIFEOS_TRUST_PROXY=true`. The app then marks the session cookie `Secure` based on `X-Forwarded-Proto` and rate-limits sign-in per client using the last `X-Forwarded-For` address. Leave it `false` when the container is reachable directly, because those headers could otherwise be spoofed.
 
 ## Shared hosting release zip
 

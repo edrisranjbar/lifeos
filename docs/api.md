@@ -31,7 +31,7 @@ Success is `{ "data": ... }`; errors are `{ "error": { "code": "...", "message":
 | Goals | `GET/POST /goals`, `GET/PATCH/DELETE /goals/{id}` | SMART goals with nested tasks/measures |
 | Tasks | `GET/POST /tasks`, `GET/PATCH/DELETE /tasks/{id}`, `POST /tasks/{id}/complete` | Goal checklists and Kanban cards |
 | Habits | `GET /habits`, `GET /habits/today`, `POST/DELETE /habits/{id}/complete` | Existing SQL tables, idempotent completion |
-| Finance | `GET /finance`, `GET/POST /finance/expenses`, `GET/POST /finance/incomes` | Existing period map, Toman amounts |
+| Finance | `GET /finance`, `GET/POST /finance/expenses`, `GET/POST /finance/incomes` | Existing period map, amounts in the display currency (default Toman, set in Settings) |
 | Notes | `GET/POST /notes`, `GET/PATCH/DELETE /notes/{id}` | Sticky notes and connection cleanup |
 
 Unsupported request fields are rejected; existing unknown fields are preserved. PATCH merges supported fields; supplied `tasks`/`measures` lists replace their lists, preserving extra fields on entries with matching IDs. Missing IDs are UUIDs. Goal status follows the UI: all tasks done means completed; editable status is active or archived. Numeric measure values can be null. Dates must be real ISO dates; startDate cannot follow deadline.
