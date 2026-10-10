@@ -4,6 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Settings · Edi Life OS</title>
+  <script src="/assets/storage.js?v=currency-1"></script>
+  <script src="/assets/currency.js?v=currency-1"></script>
   <link rel="stylesheet" href="../assets/base.css">
   <style>
     main{max-width:680px;margin:0 auto;padding:48px 22px 80px}
@@ -13,14 +15,14 @@
     .card{margin-top:32px;padding:28px;background:var(--surface);border:1px solid var(--border);border-radius:4px;box-shadow:var(--shadow-card)}
     h2{font-size:19px;font-weight:600;margin:0 0 22px}
     label{display:block;margin-top:18px;color:var(--text-secondary);font-size:13px;font-weight:600}
-    input{display:block;width:100%;margin-top:8px;padding:12px 14px;background:var(--surface-2);border:1px solid var(--border-strong);border-radius:4px;color:var(--text);font:inherit}
-    input:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+    input,select{display:block;width:100%;margin-top:8px;padding:12px 14px;background:var(--surface-2);border:1px solid var(--border-strong);border-radius:4px;color:var(--text);font:inherit}
+    input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
     .hint{font-size:12px;margin:8px 0 0}
     .divider{border-top:1px solid var(--border);margin:26px 0 0}
     button{margin-top:24px;padding:12px 20px;background:var(--accent);color:var(--bg);border:0;border-radius:4px;font:600 14px Inter,system-ui,sans-serif;cursor:pointer}
     button:disabled{opacity:.6;cursor:wait}
-    #message{min-height:24px;margin-top:18px;font-size:13px}
-    #message.error{color:var(--danger)}#message.success{color:var(--good)}
+    #message,#currencyMessage{min-height:24px;margin-top:18px;font-size:13px}
+    #message.error,#currencyMessage.error{color:var(--danger)}#message.success,#currencyMessage.success{color:var(--good)}
     @media(max-width:600px){main{padding:28px 16px 56px}.card{padding:20px}}
   </style>
 </head>
@@ -28,7 +30,14 @@
   <main>
     <div class="eyebrow">Edi Life OS</div>
     <h1>Settings</h1>
-    <p>Update the username and password you use to sign in.</p>
+    <p>Choose your currency and update the username and password you use to sign in.</p>
+    <section class="card" aria-labelledby="currency-title">
+      <h2 id="currency-title">Currency</h2>
+      <label for="currency">Display currency</label>
+      <select id="currency" disabled></select>
+      <p class="hint">Changes the currency label in Finance, the dashboard and the calendar. Existing amounts keep their numbers; nothing is converted.</p>
+      <p id="currencyMessage" role="status" aria-live="polite"></p>
+    </section>
     <section class="card" aria-labelledby="sign-in-title">
       <h2 id="sign-in-title">Sign-in credentials</h2>
       <form id="credentialsForm">
@@ -93,6 +102,22 @@
       finally { save.disabled = false; }
     });
     load();
+
+    const currencySelect = document.getElementById('currency');
+    const currencyMessage = document.getElementById('currencyMessage');
+    for (const currency of lifeOsCurrency.list) currencySelect.append(new Option(`${currency.name} (${currency.unit})`, currency.code));
+    window.appStorageReady.then(() => {
+      currencySelect.value = lifeOsCurrency.current().code;
+      currencySelect.disabled = false;
+    }).catch(() => {
+      currencyMessage.textContent = 'Unable to load your settings. Reload to try again.';
+      currencyMessage.className = 'error';
+    });
+    currencySelect.addEventListener('change', () => {
+      appStorage.setItem(lifeOsCurrency.KEY, currencySelect.value);
+      currencyMessage.textContent = `Currency set to ${lifeOsCurrency.current().name}.`;
+      currencyMessage.className = 'success';
+    });
   </script>
 </body>
 </html>

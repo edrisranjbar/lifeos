@@ -1,6 +1,6 @@
 import { mountFocusAudio } from './focus-audio.js?v=playlist-1';
 import { remainingSeconds, nextMode } from './timer.mjs';
-import { mountDashboard, refreshDashboard } from './dashboard.js?v=goals-habits-2';
+import { mountDashboard, refreshDashboard } from './dashboard.js?v=currency-1';
 import { mountMobileNavigation } from './mobile-nav.js?v=growth-1';
 await window.appStorageReady;
 mountDashboard();
