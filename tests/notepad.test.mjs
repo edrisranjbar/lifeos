@@ -1,0 +1,21 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import vm from 'node:vm';
+
+const context = vm.createContext({ document: { addEventListener() {} } });
+vm.runInContext(readFileSync(new URL('../public_html/notepad/static/app.js', import.meta.url), 'utf8'), context);
+const direction = source => context.noteDirection(source);
+assert.equal(direction('# TechUp\nسلام، مهم‌ترین خبرهای هوش مصنوعی را مرور می‌کنیم.'), 'rtl');
+assert.equal(direction('سلام\n[منبع](https://example.com/a-very-long-english-url)\n```js\nconst englishCode = true;\n```'), 'rtl');
+assert.equal(direction('## English note\nA normal English paragraph.'), 'ltr');
+assert.equal(direction('שלום עולם'), 'rtl');
+assert.equal(direction('۱۲۳ — **'), 'ltr');
+const html = context.markdown('# عنوان\nسلام با `GPT-6`\n\nEnglish paragraph.\n- فهرست\n- [ ] بررسی\n> نقل قول\n\n| نام | Value |\n| --- | ---: |\n| فارسی | 42 |\n\n```js\nconst value = 42;\n```');
+assert.match(html, /<p dir="auto">English paragraph\.<\/p>/);
+assert.match(html, /<li class="md-task" dir="auto">/);
+assert.match(html, /<blockquote dir="auto">/);
+assert.match(html, /<th dir="auto" style="text-align:start">نام/);
+assert.match(html, /<th dir="auto" style="text-align:right">Value/);
+assert.match(html, /<pre><code>const value = 42;<\/code><\/pre>/);
+assert.ok(!context.markdown('<script>alert(1)</script>').includes('<script>'));
+console.log('Notepad direction and mixed Markdown checks passed.');

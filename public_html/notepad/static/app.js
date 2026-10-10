@@ -5,6 +5,15 @@ function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 }
 
+// Ignore code and link destinations when choosing the note's main writing direction.
+function noteDirection(source) {
+  const prose = source.replace(/```[\s\S]*?(?:```|$)/g, '')
+    .replace(/`[^`]*`/g, '').replace(/\]\(https?:\/\/[^\s)]+\)/g, ']');
+  const letters = prose.match(/\p{L}/gu) || [];
+  const rtl = letters.filter(letter => /[\p{Script=Arabic}\p{Script=Hebrew}]/u.test(letter)).length;
+  return rtl > letters.length / 2 ? 'rtl' : 'ltr';
+}
+
 function inline(value) {
   const tokens = [];
   const protect = html => `\u0000${tokens.push(html) - 1}\u0000`;
@@ -32,26 +41,26 @@ function markdown(source) {
     if (line.includes('|') && lines[index + 1] && cells(lines[index + 1]).every(cell => /^:?-{3,}:?$/.test(cell))) {
       closeList();
       const headers = cells(line), separators = cells(lines[++index]);
-      const align = column => separators[column]?.startsWith(':') && separators[column]?.endsWith(':') ? 'center' : separators[column]?.endsWith(':') ? 'right' : 'left';
-      out.push(`<div class="md-table-wrap"><table><thead><tr>${headers.map((cell, column) => `<th style="text-align:${align(column)}">${inline(cell)}</th>`).join('')}</tr></thead><tbody>`);
+      const align = column => separators[column]?.startsWith(':') && separators[column]?.endsWith(':') ? 'center' : separators[column]?.endsWith(':') ? 'right' : separators[column]?.startsWith(':') ? 'left' : 'start';
+      out.push(`<div class="md-table-wrap"><table><thead><tr>${headers.map((cell, column) => `<th dir="auto" style="text-align:${align(column)}">${inline(cell)}</th>`).join('')}</tr></thead><tbody>`);
       while (lines[index + 1]?.trim() && lines[index + 1].includes('|')) {
         const row = cells(lines[++index]);
-        out.push(`<tr>${headers.map((_, column) => `<td style="text-align:${align(column)}">${inline(row[column] || '')}</td>`).join('')}</tr>`);
+        out.push(`<tr>${headers.map((_, column) => `<td dir="auto" style="text-align:${align(column)}">${inline(row[column] || '')}</td>`).join('')}</tr>`);
       }
       out.push('</tbody></table></div>');
       continue;
     }
     const heading = line.match(/^(#{1,6})\s+(.+)$/);
-    if (heading) { closeList(); const level = heading[1].length; out.push(`<h${level}>${inline(heading[2])}</h${level}>`); continue; }
+    if (heading) { closeList(); const level = heading[1].length; out.push(`<h${level} dir="auto">${inline(heading[2])}</h${level}>`); continue; }
     const bullet = line.match(/^\s*[-*+]\s+(.+)$/), numbered = line.match(/^\s*\d+[.)]\s+(.+)$/);
     if (bullet || numbered) {
       const next = bullet ? 'ul' : 'ol';
       if (list !== next) { closeList(); out.push(`<${next}>`); list = next; }
       const body = (bullet || numbered)[1], task = bullet && body.match(/^\[([ xX])\]\s*(.*)$/);
-      out.push(task ? `<li class="md-task"><input type="checkbox" data-task-line="${index}" aria-label="${escapeHtml(task[2])}" ${task[1] !== ' ' ? 'checked' : ''}><span>${inline(task[2])}</span></li>` : `<li>${inline(body)}</li>`);
+      out.push(task ? `<li class="md-task" dir="auto"><input type="checkbox" data-task-line="${index}" aria-label="${escapeHtml(task[2])}" ${task[1] !== ' ' ? 'checked' : ''}><span>${inline(task[2])}</span></li>` : `<li dir="auto">${inline(body)}</li>`);
       continue;
     }
-    closeList(); const quote = line.match(/^>\s?(.*)$/); out.push(quote ? `<blockquote>${inline(quote[1])}</blockquote>` : `<p>${inline(line)}</p>`);
+    closeList(); const quote = line.match(/^>\s?(.*)$/); out.push(quote ? `<blockquote dir="auto">${inline(quote[1])}</blockquote>` : `<p dir="auto">${inline(line)}</p>`);
   }
   closeList(); if (code) out.push(`<pre><code>${escapeHtml(codeLines.join('\n'))}</code></pre>`);
   return out.join('');
@@ -73,6 +82,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   } catch {}
   const input = $('notepadInput'), preview = $('notepadPreview'), status = $('saveStatus'), shell = $('editorShell');
   const titleInput = $('noteTitle'), tabs = $('noteTabs'), sortInput = $('noteSort');
+  const renderPreview = () => {
+    input.dir = noteDirection(input.value);
+    preview.dir = input.dir;
+    preview.innerHTML = markdown(input.value);
+  };
   const data = saved && Array.isArray(saved.notes) ? saved : {notes: [], sort: 'manual'};
   data.notes = data.notes.filter(note => note && typeof note.id === 'string');
   if (!data.notes.length) data.notes.push({id: crypto.randomUUID(), title: 'My note', body: '', updatedAt: Date.now()});
@@ -121,7 +135,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     tabs.innerHTML = orderedNotes().map((note, index, notes) => `
       <li class="note-tab ${note.id === data.activeId ? 'active' : ''}" data-note-id="${escapeHtml(note.id)}" draggable="${data.sort === 'manual'}">
         <button type="button" class="note-tab-open" data-open-note="${escapeHtml(note.id)}" aria-current="${note.id === data.activeId ? 'page' : 'false'}" title="${escapeHtml(displayTitle(note))}">
-          <span class="note-tab-name">${escapeHtml(displayTitle(note))}</span><span class="note-tab-preview">${escapeHtml(note.body.split(/\r?\n/).find(line => line.trim()) || 'Empty note')}</span>
+          <span class="note-tab-name" dir="auto">${escapeHtml(displayTitle(note))}</span><span class="note-tab-preview" dir="${noteDirection(note.body)}">${escapeHtml(note.body.split(/\r?\n/).find(line => line.trim()) || 'Empty note')}</span>
         </button>
         <span class="note-tab-actions">
           <button type="button" data-move-note="up" data-note-id="${escapeHtml(note.id)}" aria-label="Move ${escapeHtml(displayTitle(note))} up" ${data.sort !== 'manual' || index === 0 ? 'disabled' : ''}>↑</button>
@@ -139,7 +153,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     data.activeId = id;
     titleInput.value = note.title;
     input.value = note.body;
-    preview.innerHTML = markdown(note.body);
+    renderPreview();
     updateWritingStats();
     renderTabs();
     status.textContent = 'Saved';
@@ -160,11 +174,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   sortInput.value = data.sort;
   input.value = activeNote().body;
   titleInput.value = activeNote().title;
-  preview.innerHTML = markdown(input.value);
+  renderPreview();
   renderTabs();
   updateWritingStats();
   input.addEventListener('input', () => {
-    preview.innerHTML = markdown(input.value);
+    renderPreview();
     updateWritingStats();
     const note = activeNote();
     if (note) note.updatedAt = Date.now();
