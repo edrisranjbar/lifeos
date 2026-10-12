@@ -664,6 +664,14 @@ textarea { resize: vertical; min-height: 70px; line-height: 1.55; }
   padding: 0;
 }
 .task-item .task-title { flex: 1; overflow-wrap: anywhere; }
+.task-title-edit { display: block; width: 100%; padding: 4px 0; border: 0; background: transparent; color: inherit; font: inherit; text-align: start; text-decoration: inherit; cursor: text; }
+.task-title-edit:hover { color: var(--accent); }
+.task-title-edit:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+.task-item.editing .task-title { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; text-decoration: none; }
+.task-item.editing .task-edit-input { flex: 1 1 180px; width: 100%; color: var(--text); }
+.task-edit-actions { display: inline-flex; gap: 8px; }
+.task-edit-actions button { border: 1px solid var(--border); border-radius: 6px; background: transparent; color: var(--text-secondary); padding: 5px 9px; font: inherit; cursor: pointer; }
+.task-edit-actions button:hover { color: var(--accent); border-color: var(--accent); }
 .task-item .task-remove {
   background: transparent;
   border: 0;

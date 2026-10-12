@@ -90,7 +90,7 @@ Most of us run our lives across a to-do app, a habit tracker, a budgeting spread
 | **Habittify** | Daily habits with completion, streaks and monthly progress. |
 | **Kanban** | Draggable cards and lists with priorities, labels, dates, checklists, comments and file attachments. |
 | **Calendar** | Due cards and financial dues across all boards in Month or Schedule view. |
-| **Goals** | SMART goals with measures, deadlines, priorities, checklists — or progress driven by a habit. |
+| **Goals** | SMART goals with measures, deadlines, priorities, editable and sortable checklists — or progress driven by a habit. Click a checklist title to edit it; save with Enter or cancel with Escape. |
 | **Notepad** | Markdown notes with preview and export. Persian/Arabic and Hebrew notes automatically use RTL writing; mixed-language preview blocks detect their own direction, while code stays LTR. |
 | **Notes** | Sticky notes with colors, fonts and connections. |
 

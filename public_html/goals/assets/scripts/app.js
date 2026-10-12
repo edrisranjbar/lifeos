@@ -694,7 +694,7 @@ function renderDetailTasks(g) {
       <li class="task-item ${t.done ? "done" : ""}" data-id="${t.id}" data-task-index="${i}">
         <button type="button" class="task-drag" draggable="true" data-drag-index="${i}" aria-label="Drag checklist item ${i + 1} to reorder" title="Drag to reorder">⠿</button>
         <input type="checkbox" ${t.done ? "checked" : ""} aria-label="Mark complete">
-        <span class="task-title">${escapeHtml(t.title)}</span>
+        <span class="task-title"><button type="button" class="task-title-edit" aria-label="Edit checklist item ${i + 1}">${escapeHtml(t.title)}</button></span>
         <span class="task-order-actions">
           <button type="button" data-move="-1" aria-label="Move checklist item ${i + 1} up" ${i === 0 ? "disabled" : ""}>↑</button>
           <button type="button" data-move="1" aria-label="Move checklist item ${i + 1} down" ${i === g.tasks.length - 1 ? "disabled" : ""}>↓</button>
@@ -707,6 +707,7 @@ function renderDetailTasks(g) {
 
   ul.querySelectorAll(".task-item").forEach((li) => {
     const taskId = li.dataset.id;
+    li.querySelector(".task-title-edit").addEventListener("click", () => editDetailTask(g, taskId, li));
     li.querySelector("input").addEventListener("change", (e) => {
       const task = g.tasks.find((t) => t.id === taskId);
       if (task) {
@@ -739,6 +740,60 @@ function renderDetailTasks(g) {
     save();
     renderDetailTasks(g);
   });
+}
+
+function editDetailTask(g, taskId, row) {
+  const task = g.tasks.find((item) => item.id === taskId);
+  if (!task) return;
+  const title = row.querySelector(".task-title");
+  const input = document.createElement("input");
+  input.className = "input task-edit-input";
+  input.value = task.title;
+  input.maxLength = 150;
+  input.setAttribute("aria-label", "Task title");
+  const actions = document.createElement("span");
+  actions.className = "task-edit-actions";
+  const saveButton = document.createElement("button");
+  saveButton.type = "button";
+  saveButton.textContent = "Save";
+  const cancelButton = document.createElement("button");
+  cancelButton.type = "button";
+  cancelButton.textContent = "Cancel";
+  actions.append(saveButton, cancelButton);
+  title.replaceChildren(input, actions);
+  row.classList.add("editing");
+  const finish = (commit) => {
+    if (!row.isConnected) return;
+    const value = input.value.trim();
+    if (commit && !value) {
+      input.setCustomValidity("Enter a task title.");
+      input.reportValidity();
+      input.focus();
+      return;
+    }
+    if (commit && task.title !== value) {
+      task.title = value;
+      save();
+      render();
+    }
+    renderDetailTasks(g);
+    $("tasksList").querySelectorAll(".task-item").forEach((item) => {
+      if (item.dataset.id === taskId) item.querySelector(".task-title-edit")?.focus();
+    });
+  };
+  input.addEventListener("input", () => input.setCustomValidity(""));
+  input.addEventListener("keydown", (event) => {
+    if (event.isComposing) return;
+    if (event.key === "Enter" || event.key === "Escape") {
+      event.preventDefault();
+      event.stopPropagation();
+      finish(event.key === "Enter");
+    }
+  });
+  saveButton.addEventListener("click", () => finish(true));
+  cancelButton.addEventListener("click", () => finish(false));
+  input.focus();
+  input.select();
 }
 
 function bumpProgress() {
