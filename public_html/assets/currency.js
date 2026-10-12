@@ -26,6 +26,14 @@
     { code: 'ARS', name: 'Argentine peso', unit: 'ARS' },
     { code: 'CLP', name: 'Chilean peso', unit: 'CLP' },
     { code: 'COP', name: 'Colombian peso', unit: 'COP' },
+    { code: 'SAR', name: 'Saudi riyal', unit: 'SAR' },
+    { code: 'QAR', name: 'Qatari riyal', unit: 'QAR' },
+    { code: 'KWD', name: 'Kuwaiti dinar', unit: 'KWD' },
+    { code: 'EGP', name: 'Egyptian pound', unit: 'EGP' },
+    { code: 'ZAR', name: 'South African rand', unit: 'ZAR' },
+    { code: 'NGN', name: 'Nigerian naira', unit: 'NGN' },
+    { code: 'PKR', name: 'Pakistani rupee', unit: 'PKR' },
+    { code: 'BDT', name: 'Bangladeshi taka', unit: 'BDT' },
   ];
 
   function current() {
