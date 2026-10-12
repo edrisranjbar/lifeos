@@ -66,7 +66,7 @@
 
   window.appStorage = {
     getItem(key) { return cache.has(key) ? cache.get(key) : null; },
-    // Session CSRF token for apps that write to their own endpoints.
+    // Shared session CSRF API used by Habittify and other endpoint writers.
     async csrfToken() { await window.appStorageReady; return csrf; },
     setItem(key, value) {
       if (!keys.includes(key)) throw new Error('Unknown storage key');
