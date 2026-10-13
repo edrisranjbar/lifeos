@@ -228,6 +228,7 @@ Built with PHP, MySQL and vanilla JavaScript — no frontend build step, no fram
 - [API reference](docs/api.md) — authentication, routes, data formats and concurrency
 - [MCP guide](mcp/README.md) — tools, environment settings and client setup
 - [Deployment guide](docs/deployment.md) — Apache, shared hosting, backups and migration
+- [Troubleshooting](docs/troubleshooting.md) — common first-run issues, causes and solutions
 - [Development guide](docs/development.md) — local checks and disposable integration fixtures
 - [Growth workspace](docs/growth.md) · [Debts and credits](docs/financial-commitments.md)
 
