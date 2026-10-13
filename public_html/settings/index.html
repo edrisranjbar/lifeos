@@ -1,164 +1,40 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Settings · Edi Life OS</title>
-  <script src="/assets/storage.js?v=storage-20261012-1"></script>
-  <script src="/assets/currency.js?v=currency-4"></script>
-  <link rel="stylesheet" href="../assets/base.css">
-  <style>
-    main{max-width:680px;margin:0 auto;padding:48px 22px 80px}
-    .eyebrow{color:var(--accent);font-size:12px;letter-spacing:2px;text-transform:uppercase}
-    h1{font:400 clamp(30px,5vw,44px) Georgia,serif;margin:12px 0 8px}
-    p{color:var(--text-secondary);line-height:1.6}
-    .card{margin-top:32px;padding:28px;background:var(--surface);border:1px solid var(--border);border-radius:4px;box-shadow:var(--shadow-card)}
-    h2{font-size:19px;font-weight:600;margin:0 0 22px}
-    label{display:block;margin-top:18px;color:var(--text-secondary);font-size:13px;font-weight:600}
-    input,select{display:block;width:100%;margin-top:8px;padding:12px 14px;background:var(--surface-2);border:1px solid var(--border-strong);border-radius:4px;color:var(--text);font:inherit}
-    input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-    .hint{font-size:12px;margin:8px 0 0}
-    .divider{border-top:1px solid var(--border);margin:26px 0 0}
-    button{margin-top:24px;padding:12px 20px;background:var(--accent);color:var(--bg);border:0;border-radius:4px;font:600 14px Inter,system-ui,sans-serif;cursor:pointer}
-    button:disabled{opacity:.6;cursor:wait}
-    .links{display:flex;flex-wrap:wrap;gap:12px;margin-top:20px}
-    a.btn{display:inline-block;padding:12px 20px;background:var(--accent);color:var(--bg);border:0;border-radius:4px;font:600 14px Inter,system-ui,sans-serif;text-decoration:none}
-    a.btn.ghost{background:transparent;color:var(--text);border:1px solid var(--border-strong)}
-    a.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-    #message,#currencyMessage,#signOutMessage{min-height:24px;margin-top:18px;font-size:13px}
-    #message.error,#currencyMessage.error,#signOutMessage.error{color:var(--danger)}#message.success,#currencyMessage.success{color:var(--good)}
-    @media(max-width:600px){main{padding:28px 16px 56px}.card{padding:20px}}
-  </style>
+  <script src="/assets/storage.js?v=multi-user-1"></script><script src="/assets/currency.js?v=currency-4"></script>
+  <link rel="stylesheet" href="../assets/base.css"><link rel="stylesheet" href="style.css?v=multi-user-1"><script src="app.js?v=multi-user-1" defer></script>
 </head>
-<body>
-  <main>
-    <div class="eyebrow">Edi Life OS</div>
-    <h1>Settings</h1>
-    <p>Choose your currency and update the username and password you use to sign in.</p>
-    <section class="card" aria-labelledby="currency-title">
-      <h2 id="currency-title">Currency</h2>
-      <label for="currency">Display currency</label>
-      <select id="currency" disabled></select>
-      <p class="hint">Changes the currency label in Finance, the dashboard and the calendar. Existing amounts keep their numbers; nothing is converted.</p>
-      <p id="currencyMessage" role="status" aria-live="polite"></p>
-    </section>
-    <section class="card" aria-labelledby="sign-in-title">
-      <h2 id="sign-in-title">Sign-in credentials</h2>
-      <form id="credentialsForm">
-        <label for="username">Username</label>
-        <input id="username" name="username" type="text" autocomplete="username" maxlength="190" required>
-        <div class="divider"></div>
-        <label for="newPassword">New password</label>
-        <input id="newPassword" name="newPassword" type="password" autocomplete="new-password" minlength="12" maxlength="200">
-        <p class="hint">Leave blank to keep your current password. A new password needs at least 12 characters.</p>
-        <label for="confirmPassword">Confirm new password</label>
-        <input id="confirmPassword" name="confirmPassword" type="password" autocomplete="new-password">
-        <div class="divider"></div>
-        <label for="currentPassword">Current password</label>
-        <input id="currentPassword" name="currentPassword" type="password" autocomplete="current-password" required>
-        <button id="save" type="submit">Save changes</button>
-        <p id="message" role="status" aria-live="polite"></p>
-      </form>
-    </section>
-    <section class="card" aria-labelledby="session-title">
-      <h2 id="session-title">Current session</h2>
-      <p>Sign out of Life OS on this browser.</p>
-      <button id="signOut" type="button" disabled>Sign out</button>
-      <p id="signOutMessage" role="status" aria-live="polite"></p>
-    </section>
-    <section class="card" aria-labelledby="about-title">
-      <h2 id="about-title">About</h2>
-      <p>Edi Life OS is free and open source (MIT). If it is useful to you, a star on GitHub helps other people find it.</p>
-      <div class="links">
-        <a class="btn" href="https://github.com/edrisranjbar/lifeos" target="_blank" rel="noopener noreferrer"><span aria-hidden="true">&#9733;</span> Star on GitHub</a>
-        <a class="btn ghost" href="https://github.com/edrisranjbar/lifeos/issues" target="_blank" rel="noopener noreferrer">Report a bug or idea</a>
-      </div>
-      <p class="hint">These are plain links. This page does not contact GitHub or send anything on its own.</p>
-    </section>
-  </main>
-  <script>
-    const form = document.getElementById('credentialsForm');
-    const message = document.getElementById('message');
-    const save = document.getElementById('save');
-    const signOut = document.getElementById('signOut');
-    const signOutMessage = document.getElementById('signOutMessage');
-    let csrf = '';
-    function status(text, kind = '') { message.textContent = text; message.className = kind; }
-    async function readResponse(response) {
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Could not complete the request.');
-      return data;
-    }
-    async function load() {
-      try {
-        const data = await readResponse(await fetch('../credentials.php', {headers: {'Accept':'application/json'}, cache:'no-store'}));
-        document.getElementById('username').value = data.username;
-        csrf = data.csrf;
-        signOut.disabled = false;
-      } catch (error) {
-        status(error.message, 'error');
-        save.disabled = true;
-      }
-    }
-    form.addEventListener('submit', async (event) => {
-      event.preventDefault();
-      if (!form.reportValidity()) return;
-      save.disabled = true;
-      status('Saving…');
-      try {
-        const data = await readResponse(await fetch('../credentials.php', {
-          method:'POST',
-          headers:{'Accept':'application/json','Content-Type':'application/json','X-CSRF-Token':csrf},
-          body:JSON.stringify({
-            new_username:document.getElementById('username').value.trim(),
-            new_password:document.getElementById('newPassword').value,
-            confirm_password:document.getElementById('confirmPassword').value,
-            current_password:document.getElementById('currentPassword').value
-          })
-        }));
-        csrf = data.csrf;
-        document.getElementById('username').value = data.username;
-        for (const id of ['newPassword','confirmPassword','currentPassword']) document.getElementById(id).value = '';
-        status('Sign-in credentials updated. Other sessions will need to sign in again.', 'success');
-      } catch (error) { status(error.message, 'error'); }
-      finally { save.disabled = false; }
-    });
-    load();
-
-    signOut.addEventListener('click', async () => {
-      signOut.disabled = true;
-      signOutMessage.className = '';
-      signOutMessage.textContent = 'Signing out…';
-      try {
-        const data = await readResponse(await fetch('/logout.php', {
-          method: 'POST',
-          redirect: 'error',
-          headers: {'Accept': 'application/json', 'X-CSRF-Token': csrf}
-        }));
-        if (data.ok !== true) throw new Error('Could not sign out. Please try again.');
-        window.top.location.href = '/login.php';
-      } catch (error) {
-        signOutMessage.textContent = error.message;
-        signOutMessage.className = 'error';
-        signOut.disabled = false;
-      }
-    });
-
-    const currencySelect = document.getElementById('currency');
-    const currencyMessage = document.getElementById('currencyMessage');
-    for (const currency of lifeOsCurrency.list) currencySelect.append(new Option(`${currency.name} (${currency.unit})`, currency.code));
-    window.appStorageReady.then(() => {
-      currencySelect.value = lifeOsCurrency.current().code;
-      currencySelect.disabled = false;
-    }).catch(() => {
-      currencyMessage.textContent = 'Unable to load your settings. Reload to try again.';
-      currencyMessage.className = 'error';
-    });
-    currencySelect.addEventListener('change', () => {
-      appStorage.setItem(lifeOsCurrency.KEY, currencySelect.value);
-      currencyMessage.textContent = `Currency set to ${lifeOsCurrency.current().name}.`;
-      currencyMessage.className = 'success';
-    });
-  </script>
-</body>
-</html>
+<body><main class="settings-shell">
+  <header class="page-header"><div><p class="eyebrow">MAKE IT YOURS</p><h1>Settings</h1><p class="lead">Your preferences, your account, your space.</p></div><div class="account-pill"><span class="avatar" id="accountAvatar" aria-hidden="true">·</span><div><strong id="accountName">Loading account…</strong><span>Administrator · Private workspace</span></div></div></header>
+  <div class="settings-layout">
+    <nav class="settings-nav" aria-label="Settings sections"><a href="#preferences" aria-current="location">Preferences</a><a href="#account">My account</a><a href="#people">Accounts</a><a href="#about">About LifeOS</a></nav>
+    <div class="settings-content">
+      <section class="settings-card" id="preferences" aria-labelledby="preferencesTitle"><header class="section-heading"><span class="section-number" aria-hidden="true">01</span><div><h2 id="preferencesTitle">Preferences</h2><p>A familiar space, wherever you sign in.</p></div></header>
+        <div class="preference-row"><div><h3>Appearance</h3><p>Choose the look that feels right.</p></div><div class="theme-options" role="group" aria-label="Appearance"><button type="button" data-theme-choice="dark" aria-pressed="false" disabled>Dark</button><button type="button" data-theme-choice="light" aria-pressed="false" disabled>Light</button></div></div>
+        <div class="preference-row"><div><h3>Display currency</h3><p>Labels change across LifeOS. Amounts are not converted.</p></div><label class="sr-only" for="currency">Display currency</label><select id="currency" disabled></select></div><p class="status" id="preferenceMessage" role="status" aria-live="polite"></p>
+      </section>
+      <section class="settings-card" id="account" aria-labelledby="accountTitle"><header class="section-heading"><span class="section-number" aria-hidden="true">02</span><div><h2 id="accountTitle">My account</h2><p>Keep your sign-in details up to date.</p></div></header>
+        <form id="credentialsForm"><label for="username">Username</label><input id="username" autocomplete="username" maxlength="190" required>
+          <div class="form-grid"><div><label for="newPassword">New password <span class="optional">optional</span></label><input id="newPassword" type="password" autocomplete="new-password" minlength="12" maxlength="72"></div><div><label for="confirmPassword">Confirm new password</label><input id="confirmPassword" type="password" autocomplete="new-password" maxlength="72"></div></div><p class="hint">Leave blank to keep your current password. New passwords need 12–72 bytes.</p>
+          <div class="confirmation"><label for="currentPassword">Current password</label><input id="currentPassword" type="password" autocomplete="current-password" required><p class="hint">Confirm it is you before changing your sign-in details.</p></div>
+          <div class="form-footer"><p class="status" id="message" role="status" aria-live="polite"></p><button class="primary" id="save" type="submit" disabled>Save changes</button></div>
+        </form><div class="session-row"><div><h3>Current session</h3><p>Sign out on this browser.</p></div><button class="secondary" id="signOut" type="button" disabled>Sign out</button></div><p class="status" id="signOutMessage" role="status" aria-live="polite"></p>
+      </section>
+      <section class="settings-card" id="people" aria-labelledby="peopleTitle"><header class="section-heading"><span class="section-number" aria-hidden="true">03</span><div><h2 id="peopleTitle">Accounts <span class="count" id="accountCount">—</span></h2><p>Every account is an administrator with its own private data.</p></div><button class="secondary" id="addUser" type="button" disabled>+ Add account</button></header>
+        <div id="usersList" class="users-list" aria-live="polite"><p class="hint">Loading accounts…</p></div><p class="status" id="usersMessage" role="status"></p><button class="secondary" id="retryUsers" type="button" hidden>Retry</button>
+        <p class="privacy-note">Administrators can create accounts, reset another user's password, and deactivate access. Account management does not display anyone else's personal records. Deactivation keeps their data.</p>
+      </section>
+      <section class="settings-card" id="about" aria-labelledby="aboutTitle"><header class="section-heading"><span class="section-number" aria-hidden="true">04</span><div><h2 id="aboutTitle">A little more about LifeOS</h2><p>A space to build a life with intention.</p></div></header><p class="about-copy">Free and open source, under the MIT license. Help shape what comes next.</p><div class="about-links"><a href="https://github.com/edrisranjbar/lifeos" target="_blank" rel="noopener noreferrer">Star on GitHub ↗</a><a href="https://github.com/edrisranjbar/lifeos/issues" target="_blank" rel="noopener noreferrer">Share an idea ↗</a></div></section>
+    </div>
+  </div>
+</main>
+<dialog id="userDialog" aria-labelledby="userDialogTitle"><form id="userForm"><header class="dialog-heading"><div><p class="eyebrow">ACCOUNT MANAGEMENT</p><h2 id="userDialogTitle">Add account</h2></div><button class="close-button" id="closeUserDialog" type="button" aria-label="Close account editor">×</button></header><p class="hint" id="userDialogHint">A new administrator starts with an empty private workspace.</p>
+  <label for="userUsername">Username</label><input id="userUsername" autocomplete="off" maxlength="190" required>
+  <div class="form-grid"><div><label for="userPassword">Password</label><input id="userPassword" type="password" autocomplete="new-password" minlength="12" maxlength="72"></div><div><label for="userConfirmPassword">Confirm password</label><input id="userConfirmPassword" type="password" autocomplete="new-password" maxlength="72"></div></div>
+  <label class="checkbox-label" id="activeUserLabel" hidden><input id="userActive" type="checkbox"> Account active</label>
+  <div class="confirmation"><label for="adminPassword">Your current password</label><input id="adminPassword" type="password" autocomplete="current-password" required><p class="hint">Required to confirm account changes.</p></div>
+  <p id="userFormMessage" class="status" role="status" aria-live="polite"></p><footer class="dialog-footer"><button class="secondary" id="cancelUserDialog" type="button">Cancel</button><button class="primary" id="saveUser" type="submit">Create account</button></footer>
+</form></dialog>
+</body></html>

@@ -11,6 +11,8 @@ return [
     'username' => 'your_app_username',
     'password' => 'your_app_password',
     'api_token' => 'replace-with-a-long-random-token',
+    // The operator API/MCP token can access only this active account's data.
+    'api_user_id' => 1,
     'api_allow_secret_notes' => false,
     'timezone' => 'Asia/Tehran',
     'weather_latitude' => 26.9492,

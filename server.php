@@ -60,6 +60,10 @@ if ($relativePath === 'credentials.php') {
     require __DIR__ . '/credentials.php';
     return true;
 }
+if ($relativePath === 'users.php') {
+    require __DIR__ . '/users.php';
+    return true;
+}
 
 if ($relativePath === '') {
     $relativePath = 'index.html';

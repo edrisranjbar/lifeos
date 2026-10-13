@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/user_context.php';
+
 const GOALS_KEY = 'edi_goals_v1';
 
 function goals_progress(array $goal, ?PDO $db = null): ?array
@@ -9,7 +11,7 @@ function goals_progress(array $goal, ?PDO $db = null): ?array
     $source = $goal['progressSource'] ?? 'checklist';
     if ($source === 'habit') {
         if (!$db || empty($goal['startDate']) || empty($goal['deadline']) || empty($goal['habitProgress']['targetDays'])) return null;
-        $query = $db->prepare('SELECT COUNT(DISTINCT log_date) FROM habit_logs WHERE habit_id = ? AND done = 1 AND log_date >= ? AND log_date <= ?');
+        $query = $db->prepare('SELECT COUNT(DISTINCT log_date) FROM habit_logs WHERE user_id = ' . life_os_user_id() . ' AND habit_id = ? AND done = 1 AND log_date >= ? AND log_date <= ?');
         $query->execute([$goal['habitProgress']['habitId'], $goal['startDate'], min($goal['deadline'], api_today())]);
         $done = (int) $query->fetchColumn(); $total = (int) $goal['habitProgress']['targetDays'];
         return ['source' => $source, 'completedDays' => $done, 'targetDays' => $total, 'percent' => $done >= $total ? 100 : min(99, (int) round($done / $total * 100))];
@@ -107,7 +109,7 @@ function goals_api(StateStore $store, string $method, ?string $id, array $body, 
         throw new ApiException(404, 'not_found', 'Goal not found.');
     }
     if ($db && isset($body['habitProgress']['habitId'])) {
-        $query = $db->prepare('SELECT id FROM habits WHERE id = ?');
+        $query = $db->prepare('SELECT id FROM habits WHERE user_id = ' . life_os_user_id() . ' AND id = ?');
         $query->execute([$body['habitProgress']['habitId']]);
         if ($query->fetchColumn() === false) throw new ApiException(422, 'validation_error', 'Linked habit does not exist.');
     }

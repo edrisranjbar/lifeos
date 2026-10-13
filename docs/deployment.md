@@ -71,6 +71,8 @@ server {
 
 ## Sign-in credentials after setup
 
+Schema version 3 adds multiple administrator accounts and assigns all existing personal records to the original account (`id=1`). Login and credential changes then use `app_users`; `app_credentials` is retained as a legacy bootstrap table. New accounts start without personal records. See [account management and migration](accounts.md) before upgrading an existing host. Deploy the backend, storage helper and versioned browser entry pages together; the migration runs on the first database connection.
+
 The configured sign-in `username` and `password` (Docker: `LIFEOS_USERNAME` and `LIFEOS_PASSWORD`) are required only when creating the initial `app_credentials` row. After setup, you can remove these bootstrap values from `config.php` or `.env`; keep all database connection credentials. For Docker, recreate the app container to remove the old values from its environment. Login and session validation use the username and password hash stored in MySQL; changing bootstrap values does not reset an existing account. Manage sign-in credentials in Settings.
 
 An empty credentials table still requires non-empty bootstrap values and fails with an explicit setup error if either is missing. Restore the credentials row with your database backup when recovering an installation. Sessions from the old plaintext configuration fingerprint are no longer upgraded and must sign in again; sessions already using the stored credential hash continue to work.

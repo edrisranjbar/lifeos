@@ -19,7 +19,7 @@ curl -X POST -H "Authorization: Bearer $LIFEOS_API_TOKEN" \
   https://example.com/api/v1/finance/expenses
 ```
 
-Use HTTPS outside localhost: the token grants read/write access to the domains below. Never put it in URLs, Git, screenshots, logs or frontend JavaScript. Rotate it by changing the server setting and client environment. No endpoint returns config or credentials. This is a single-owner API, without token scopes or a rate limiter. Configure host-level request limits and omit Authorization headers from access logs. Errors contain no stack traces or SQL parameters.
+Use HTTPS outside localhost: the token grants read/write access to the domains below for one active account. `api_user_id` in `config.php` selects that account, defaulting to the original account (`1`); browser sign-in does not change this identity. An invalid or inactive API account is rejected. Never put the token in URLs, Git, screenshots, logs or frontend JavaScript. Rotate it by changing the server setting and client environment. No endpoint returns config or credentials. Per-user token issuance, token scopes and API rate limiting are not implemented. Configure host-level request limits and omit Authorization headers from access logs. Errors contain no stack traces or SQL parameters.
 
 ## Routes and response formats
 

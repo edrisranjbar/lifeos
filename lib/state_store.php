@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/user_context.php';
+
 require_once __DIR__ . '/api_response.php';
 
 final class StateStore
@@ -10,7 +12,7 @@ final class StateStore
 
     public function raw(string $key): ?string
     {
-        $query = $this->db->prepare('SELECT state_value FROM app_state WHERE state_key = ?');
+        $query = $this->db->prepare('SELECT state_value FROM app_state WHERE user_id = ' . life_os_user_id() . ' AND state_key = ?');
         $query->execute([$key]);
         $value = $query->fetchColumn();
         return $value === false ? null : (string) $value;
@@ -27,15 +29,15 @@ final class StateStore
         try {
             $mysql = $this->db->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql';
             // Reserve missing rows too. The placeholder is rolled back on conflict.
-            $insert = $this->db->prepare($mysql ? 'INSERT INTO app_state (state_key, state_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE state_key = VALUES(state_key)' : 'INSERT OR IGNORE INTO app_state (state_key, state_value) VALUES (?, ?)');
+            $insert = $this->db->prepare($mysql ? 'INSERT INTO app_state (user_id, state_key, state_value) VALUES (' . life_os_user_id() . ', ?, ?) ON DUPLICATE KEY UPDATE state_key = VALUES(state_key)' : 'INSERT OR IGNORE INTO app_state (user_id, state_key, state_value) VALUES (' . life_os_user_id() . ', ?, ?)');
             $insert->execute([$key, '']);
             $created = $insert->rowCount() === 1;
-            $select = $this->db->prepare('SELECT state_value FROM app_state WHERE state_key = ?' . ($mysql ? ' FOR UPDATE' : ''));
+            $select = $this->db->prepare('SELECT state_value FROM app_state WHERE user_id = ' . life_os_user_id() . ' AND state_key = ?' . ($mysql ? ' FOR UPDATE' : ''));
             $select->execute([$key]);
             $current = (string) $select->fetchColumn();
             $actual = $created ? null : hash('sha256', $current);
             if ($actual !== $revision) throw new ApiException(409, 'state_conflict', 'Saved data changed elsewhere. Reload before editing again.');
-            $write = $this->db->prepare('UPDATE app_state SET state_value = ? WHERE state_key = ?');
+            $write = $this->db->prepare('UPDATE app_state SET state_value = ? WHERE user_id = ' . life_os_user_id() . ' AND state_key = ?');
             $write->execute([$value, $key]);
             $this->db->commit();
             return hash('sha256', $value);
@@ -62,9 +64,9 @@ final class StateStore
         try {
             $mysql = $this->db->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql';
             $insert = $this->db->prepare($mysql
-                ? 'INSERT INTO app_state (state_key, state_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE state_key = VALUES(state_key)'
-                : 'INSERT OR IGNORE INTO app_state (state_key, state_value) VALUES (?, ?)');
-            $select = $this->db->prepare('SELECT state_value FROM app_state WHERE state_key = ?' . ($mysql ? ' FOR UPDATE' : ''));
+                ? 'INSERT INTO app_state (user_id, state_key, state_value) VALUES (' . life_os_user_id() . ', ?, ?) ON DUPLICATE KEY UPDATE state_key = VALUES(state_key)'
+                : 'INSERT OR IGNORE INTO app_state (user_id, state_key, state_value) VALUES (' . life_os_user_id() . ', ?, ?)');
+            $select = $this->db->prepare('SELECT state_value FROM app_state WHERE user_id = ' . life_os_user_id() . ' AND state_key = ?' . ($mysql ? ' FOR UPDATE' : ''));
             $documents = [];
             $originals = [];
             $initial = [];
@@ -83,11 +85,11 @@ final class StateStore
                 $originals[$key] = json_decode($raw, false, 64, JSON_THROW_ON_ERROR);
             }
             $result = $mutator($documents);
-            $write = $this->db->prepare('UPDATE app_state SET state_value = ? WHERE state_key = ?');
+            $write = $this->db->prepare('UPDATE app_state SET state_value = ? WHERE user_id = ' . life_os_user_id() . ' AND state_key = ?');
             foreach ($documents as $key => $value) {
                 if ($value === $initial[$key]) {
                     if ($created[$key]) {
-                        $delete = $this->db->prepare('DELETE FROM app_state WHERE state_key = ?');
+                        $delete = $this->db->prepare('DELETE FROM app_state WHERE user_id = ' . life_os_user_id() . ' AND state_key = ?');
                         $delete->execute([$key]);
                     }
                     continue;

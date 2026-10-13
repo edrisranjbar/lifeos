@@ -67,7 +67,7 @@ try {
         $table = $db->prepare('SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ?');
         $table->execute(['card_attachments']);
         if ((int) $table->fetchColumn() > 0) {
-            $moveFiles = $db->prepare('UPDATE card_attachments SET board_id = ? WHERE board_id = ? AND card_id = ?');
+            $moveFiles = $db->prepare('UPDATE card_attachments SET board_id = ? WHERE user_id = ' . life_os_user_id() . ' AND board_id = ? AND card_id = ?');
             $moveFiles->execute([$target['id'], $source['id'], $card['id']]);
         }
     });
