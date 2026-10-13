@@ -39,7 +39,6 @@
     $('userUsername').value = user?.username || '';
     $('userPassword').required = !user; $('userConfirmPassword').required = !user;
     $('activeUserLabel').hidden = !user; $('userActive').checked = user?.active ?? true;
-    for (const radio of document.querySelectorAll('[name=userRole]')) radio.checked = radio.value === (user?.role || 'user');
     $('saveUser').textContent = user ? 'Save account' : 'Create account';
     $('userDialog').showModal(); $('userUsername').focus();
   }
@@ -74,7 +73,7 @@
   $('userDialog').addEventListener('close',()=>{ $('userForm').reset(); editingUser=null; });
   $('userForm').addEventListener('submit',async event=>{
     event.preventDefault(); if (savingUser || !$('userForm').reportValidity()) return;
-    const body = {action:editingUser?'update':'create', id:editingUser?.id, username:$('userUsername').value.trim(), password:$('userPassword').value, confirm_password:$('userConfirmPassword').value, current_password:$('adminPassword').value, active:$('userActive').checked, role:document.querySelector('[name=userRole]:checked')?.value || 'user'};
+    const body = {action:editingUser?'update':'create', id:editingUser?.id, username:$('userUsername').value.trim(), password:$('userPassword').value, confirm_password:$('userConfirmPassword').value, current_password:$('adminPassword').value, active:$('userActive').checked, role:'admin'};
     savingUser=true; $('saveUser').disabled=true; status('userFormMessage','Saving…');
     try { await request('/users.php',body); $('userDialog').close(); await loadUsers(); status('usersMessage',body.action==='create'?'Account created. They can sign in with their own password.':'Account updated.','success'); }
     catch (error) { status('userFormMessage',error.message,'error'); }

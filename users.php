@@ -35,8 +35,8 @@ try {
     if (($action === 'create' || $password !== '') && (strlen($password)<12 || strlen($password)>72)) users_reply(['error'=>'Use a password of 12–72 bytes.'],400);
     if ($password !== '' && !hash_equals($password,$input['confirm_password'] ?? '')) users_reply(['error'=>'The passwords do not match.'],400);
     if (isset($input['active']) && !is_bool($input['active'])) users_reply(['error'=>'Invalid account status.'],400);
-    // Members get a private workspace only; administrators can also manage accounts.
-    if (isset($input['role']) && !in_array($input['role'],['admin','user'],true)) users_reply(['error'=>'Choose Administrator or Member.'],400);
+    // Every account is an administrator with a separate private workspace.
+    if (isset($input['role']) && $input['role'] !== 'admin') users_reply(['error'=>'Every account must be an administrator.'],400);
     $id = filter_var($input['id'] ?? 0,FILTER_VALIDATE_INT);
     $active = $input['active'] ?? true;
     // Serialize account administration, including the last active administrator guard.
@@ -52,12 +52,12 @@ try {
     }
     if ($action === 'create') {
         $query = $db->prepare('INSERT INTO app_users(username, password_hash, role, active) VALUES (?, ?, ?, 1)');
-        $query->execute([$name,password_hash($password,PASSWORD_DEFAULT),$input['role'] ?? 'user']);
+        $query->execute([$name,password_hash($password,PASSWORD_DEFAULT),'admin']);
         $id = (int)$db->lastInsertId();
     } else {
         if (!$target) { $db->rollBack(); users_reply(['error'=>'Account not found.'],404); }
         if ($id === life_os_user_id()) { $db->rollBack(); users_reply(['error'=>'Use My account to change your own sign-in details.'],400); }
-        $role = $input['role'] ?? $target['role'];
+        $role = 'admin';
         $admins = count(array_filter($all,fn($u)=>(bool)$u['active'] && $u['role']==='admin'));
         $losesAdmin = (bool)$target['active'] && $target['role']==='admin' && (!$active || $role!=='admin');
         if ($losesAdmin && $admins<=1) { $db->rollBack(); users_reply(['error'=>'Keep at least one active administrator.'],409); }
