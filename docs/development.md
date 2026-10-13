@@ -18,6 +18,8 @@ npm ci --prefix mcp
 
 ## Verification
 
+Account ownership and schema version 3 are described in the [accounts guide](accounts.md). Personal data helpers require the authenticated request identity; operator CLI commands default to the original account. Existing pre-version-3 SQLite fixtures do not include ownership columns and must be updated before they can exercise the current schema.
+
 Session write endpoints share `life_os_require_csrf()` in `auth.php`. Its optional failure callback preserves an endpoint's existing error response or API exception; returning from that callback still rejects the request with HTTP `403`. It validates the session token with `hash_equals` and does not create a missing token.
 
 The browser Habittify endpoint (`GET /habittify/api.php?route=logs&start=YYYY-MM-DD&end=YYYY-MM-DD`) requires both dates to be real, zero-padded ISO calendar dates and `start <= end`. Missing, malformed, impossible or reversed dates return HTTP `400` with the existing `{ "error": "..." }` shape before querying logs. Valid ranges remain inclusive; a single-day range is allowed. This session-authenticated endpoint is separate from the bearer-token API.

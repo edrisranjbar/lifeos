@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-const LIFE_OS_SCHEMA_VERSION = 2;
+const LIFE_OS_SCHEMA_VERSION = 3;
 
 function life_os_schema_version(PDO $db): int {
     try { return (int) $db->query('SELECT MAX(version) FROM schema_migrations')->fetchColumn(); }
@@ -23,7 +23,7 @@ function life_os_migrate(PDO $db): int {
         $db->exec('CREATE TABLE IF NOT EXISTS schema_migrations (version INT UNSIGNED PRIMARY KEY, applied_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP) ENGINE=InnoDB');
         $current = life_os_schema_version($db);
         $applied = 0;
-        foreach ([1 => 'life_os_schema_initial', 2 => 'life_os_schema_upgrade'] as $version => $migration) {
+        foreach ([1 => 'life_os_schema_initial', 2 => 'life_os_schema_upgrade', 3 => 'life_os_schema_users'] as $version => $migration) {
             if ($version <= $current) continue;
             $migration($db);
             $db->prepare('INSERT INTO schema_migrations (version) VALUES (?)')->execute([$version]);
@@ -33,6 +33,35 @@ function life_os_migrate(PDO $db): int {
     } finally {
         $release = $db->prepare('SELECT RELEASE_LOCK(?)'); $release->execute([$lock]);
     }
+}
+
+/** Idempotent DDL permits resuming a partially applied MySQL migration. */
+function life_os_schema_users(PDO $db): void
+{
+    $db->exec("CREATE TABLE IF NOT EXISTS app_users (
+        id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        username VARCHAR(190) NOT NULL UNIQUE,
+        password_hash VARCHAR(255) NOT NULL,
+        role ENUM('admin','user') NOT NULL DEFAULT 'admin',
+        active TINYINT(1) NOT NULL DEFAULT 1,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin");
+    $db->exec("INSERT IGNORE INTO app_users(id, username, password_hash, role)
+        SELECT 1, username, password_hash, 'admin' FROM app_credentials WHERE credential_id = 1");
+    if (!$db->query('SELECT 1 FROM app_users WHERE id = 1')->fetchColumn()) throw new RuntimeException('Original account is required for migration.');
+    foreach (['app_state','habits','habit_logs','categories','card_attachments'] as $table) {
+        $column = $db->prepare('SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?');
+        $column->execute([$table, 'user_id']);
+        if (!(int) $column->fetchColumn()) $db->exec('ALTER TABLE `' . $table . '` ADD COLUMN user_id INT UNSIGNED NOT NULL DEFAULT 1');
+        $index = $db->prepare('SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = ? AND index_name = ?');
+        $index->execute([$table, 'idx_user']);
+        if (!(int) $index->fetchColumn()) $db->exec('ALTER TABLE `' . $table . '` ADD INDEX idx_user(user_id)');
+    }
+    $primary = $db->query("SELECT GROUP_CONCAT(column_name ORDER BY seq_in_index) FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'app_state' AND index_name = 'PRIMARY'")->fetchColumn();
+    if ($primary !== 'user_id,state_key') $db->exec('ALTER TABLE app_state DROP PRIMARY KEY, ADD PRIMARY KEY(user_id, state_key)');
+    $unique = $db->query("SELECT GROUP_CONCAT(column_name ORDER BY seq_in_index) FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'categories' AND index_name = 'name'")->fetchColumn();
+    if ($unique !== 'user_id,name') $db->exec('ALTER TABLE categories DROP INDEX name, ADD UNIQUE KEY name(user_id, name)');
 }
 
 function life_os_schema_upgrade(PDO $db): void {

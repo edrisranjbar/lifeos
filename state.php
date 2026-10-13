@@ -25,7 +25,7 @@ try {
     ];
     $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
     if ($method === 'GET') {
-        $rows = $db->query('SELECT state_key, state_value FROM app_state')->fetchAll();
+        $rows = $db->query('SELECT state_key, state_value FROM app_state WHERE user_id = ' . life_os_user_id())->fetchAll();
         $data = [];
         $revisions = [];
         foreach ($rows as $row) {
@@ -34,7 +34,7 @@ try {
         }
         life_os_start_session();
         $_SESSION['state_csrf'] ??= bin2hex(random_bytes(32));
-        state_reply(['data' => $data, 'revisions' => $revisions, 'csrf' => $_SESSION['state_csrf']]);
+        state_reply(['data' => (object) $data, 'revisions' => (object) $revisions, 'csrf' => $_SESSION['state_csrf'], 'user_id' => life_os_user_id()]);
     }
     if ($method !== 'PUT') state_reply(['error' => 'Method not allowed'], 405);
     life_os_require_csrf(fn () => state_reply(['error' => 'Invalid request token'], 403));

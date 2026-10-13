@@ -36,6 +36,16 @@ addEventListener('message',event=>{
 // Keep planning together in the menu: Growth, then Goals, then Habittify.
 {const growthLink=document.querySelector('nav a[href="#growth"]'),goalsLink=document.querySelector('nav a[href="#goals"]'),habitsLink=document.querySelector('nav a[href="#habittify"]');if(growthLink&&goalsLink&&habitsLink){growthLink.after(goalsLink);goalsLink.after(habitsLink);}}
 mountMobileNavigation();
+// Several people can share one device, so always show whose workspace is open.
+fetch('/credentials.php',{headers:{Accept:'application/json'},cache:'no-store',redirect:'error'}).then(response=>response.ok?response.json():null).then(account=>{
+  if(typeof account?.username!=='string')return;
+  const chip=document.createElement('a');
+  chip.href='#settings';chip.className='account-chip';
+  chip.textContent=Array.from(account.username).slice(0,2).join('').toUpperCase();
+  chip.title=`Signed in as ${account.username}${account.role==='admin'?' (administrator)':''}`;
+  chip.setAttribute('aria-label',`${chip.title}. Open account settings`);
+  $('theme').before(chip);
+}).catch(()=>{});
 let data;try{data=JSON.parse(appStorage.getItem('edi_focus_v1'))}catch{}
 data={history:[],lengths:{focus:25,short:5,long:15},mode:'focus',remaining:1500,deadline:null,round:0,...data};
 let storageFailed=false;

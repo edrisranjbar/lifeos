@@ -33,7 +33,7 @@ try {
     if ($method === 'GET' && isset($_GET['id'])) {
         $id = (string) $_GET['id'];
         if (!preg_match('/^[a-f0-9]{32}$/D', $id)) attachment_reply(['error' => 'Attachment not found.'], 404);
-        $query = $db->prepare('SELECT * FROM card_attachments WHERE attachment_id = ?');
+        $query = $db->prepare('SELECT * FROM card_attachments WHERE user_id = ' . life_os_user_id() . ' AND attachment_id = ?');
         $query->execute([$id]);
         $row = $query->fetch();
         $path = attachment_storage() . '/' . $id . '.bin';
@@ -51,8 +51,9 @@ try {
     if ($method === 'DELETE') {
         $id = (string) ($_GET['id'] ?? '');
         if (!preg_match('/^[a-f0-9]{32}$/D', $id)) attachment_reply(['error' => 'Attachment not found.'], 404);
-        $delete = $db->prepare('DELETE FROM card_attachments WHERE attachment_id = ?');
+        $delete = $db->prepare('DELETE FROM card_attachments WHERE user_id = ' . life_os_user_id() . ' AND attachment_id = ?');
         $delete->execute([$id]);
+        if (!$delete->rowCount()) attachment_reply(['error' => 'Attachment not found.'], 404);
         $path = attachment_storage() . '/' . $id . '.bin';
         if (is_file($path) && !unlink($path)) error_log('Unable to remove attachment bytes: ' . $id);
         attachment_reply(['ok' => true]);
@@ -62,11 +63,11 @@ try {
     $cardId = (string) ($method === 'POST' ? ($_POST['card'] ?? '') : ($_GET['card'] ?? ''));
     if (!preg_match('/^[a-zA-Z0-9_-]{1,100}$/D', $boardId) || !preg_match('/^[a-zA-Z0-9_-]{1,100}$/D', $cardId)) attachment_reply(['error' => 'Invalid card.'], 400);
     if ($method === 'GET') {
-        $query = $db->prepare('SELECT * FROM card_attachments WHERE board_id = ? AND card_id = ? ORDER BY created_at, attachment_id');
+        $query = $db->prepare('SELECT * FROM card_attachments WHERE user_id = ' . life_os_user_id() . ' AND board_id = ? AND card_id = ? ORDER BY created_at, attachment_id');
         $query->execute([$boardId, $cardId]);
         attachment_reply(['attachments' => array_map('attachment_public', $query->fetchAll()), 'maxSize' => $limit]);
     }
-    $stateQuery = $db->prepare('SELECT state_value FROM app_state WHERE state_key = ?');
+    $stateQuery = $db->prepare('SELECT state_value FROM app_state WHERE user_id = ' . life_os_user_id() . ' AND state_key = ?');
     $stateQuery->execute(['kanban_boards_v1']);
     $state = json_decode((string) $stateQuery->fetchColumn(), true);
     $exists = false;
@@ -91,13 +92,13 @@ try {
     if (!move_uploaded_file($file['tmp_name'], $path)) throw new RuntimeException('Cannot store uploaded file.');
     chmod($path, 0640);
     try {
-        $insert = $db->prepare('INSERT INTO card_attachments (attachment_id, board_id, card_id, filename, byte_size) VALUES (?, ?, ?, ?, ?)');
+        $insert = $db->prepare('INSERT INTO card_attachments (user_id, attachment_id, board_id, card_id, filename, byte_size) VALUES (' . life_os_user_id() . ', ?, ?, ?, ?, ?)');
         $insert->execute([$id, $boardId, $cardId, $filename, (int) $file['size']]);
     } catch (Throwable $error) {
         unlink($path);
         throw $error;
     }
-    $query = $db->prepare('SELECT * FROM card_attachments WHERE attachment_id = ?');
+    $query = $db->prepare('SELECT * FROM card_attachments WHERE user_id = ' . life_os_user_id() . ' AND attachment_id = ?');
     $query->execute([$id]);
     attachment_reply(['attachment' => attachment_public($query->fetch())], 201);
 } catch (Throwable $error) {

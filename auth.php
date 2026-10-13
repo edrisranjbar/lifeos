@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/lib/user_context.php';
 
 const LIFE_OS_LOGIN_MAX_FAILURES = 5;
 const LIFE_OS_LOGIN_WINDOW_SECONDS = 900;
@@ -79,7 +80,9 @@ function life_os_username(): string
 
 function life_os_credentials(): array
 {
-    $credentials = life_os_db()->query('SELECT username, password_hash FROM app_credentials WHERE credential_id = 1')->fetch();
+    $query = life_os_db()->prepare('SELECT id, username, password_hash, role, active FROM app_users WHERE id = ?');
+    $query->execute([(int) ($_SESSION['life_os_user_id'] ?? 1)]);
+    $credentials = $query->fetch();
     if (!is_array($credentials)) {
         throw new RuntimeException('App sign-in credentials are not initialized.');
     }
@@ -100,7 +103,10 @@ function life_os_is_authenticated(): bool
         $credentials = life_os_credentials();
         $fingerprint = life_os_credential_fingerprint($credentials);
         $sessionFingerprint = (string) ($_SESSION['life_os_fingerprint'] ?? '');
-        return hash_equals($fingerprint, $sessionFingerprint);
+        if (!(bool) $credentials['active'] || !hash_equals($fingerprint, $sessionFingerprint)) return false;
+        $_SESSION['life_os_user_id'] = (int) $credentials['id'];
+        $GLOBALS['life_os_request_user_id'] = (int) $credentials['id'];
+        return true;
     } catch (Throwable $error) {
         error_log('LifeOS authentication failed: ' . get_class($error) . ' (code ' . $error->getCode() . ') at ' . $error->getFile() . ':' . $error->getLine());
     }
@@ -153,8 +159,12 @@ function life_os_login(string $username, string $password): bool
     $retryAfter = life_os_login_retry_after($db, $throttleKey);
     if ($retryAfter > 0) throw new LifeOsLoginThrottled($retryAfter);
 
-    $credentials = life_os_credentials();
-    if (!hash_equals((string) $credentials['username'], $username) || !password_verify($password, (string) $credentials['password_hash'])) {
+    $query = $db->prepare('SELECT id, username, password_hash, role, active FROM app_users WHERE username = ?');
+    $query->execute([$username]);
+    $credentials = $query->fetch();
+    // Verify a dummy hash for unknown accounts to reduce username timing disclosure.
+    $valid = password_verify($password, (string) ($credentials['password_hash'] ?? '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi'));
+    if (!$credentials || !(bool) $credentials['active'] || !hash_equals((string) $credentials['username'], $username) || !$valid) {
         life_os_record_login_failure($db, $throttleKey);
         return false;
     }
@@ -163,6 +173,9 @@ function life_os_login(string $username, string $password): bool
     session_regenerate_id(true);
     $_SESSION['life_os_authenticated'] = true;
     $_SESSION['life_os_username'] = $username;
+    $_SESSION['life_os_user_id'] = (int) $credentials['id'];
+    $GLOBALS['life_os_request_user_id'] = (int) $credentials['id'];
+    $_SESSION['state_csrf'] = bin2hex(random_bytes(32));
     $_SESSION['life_os_fingerprint'] = life_os_credential_fingerprint($credentials);
     return true;
 }

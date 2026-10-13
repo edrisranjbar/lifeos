@@ -11,8 +11,8 @@ final class LibraryTest extends TestCase
     public function testStateMutationRollsBackEveryDocumentOnFailure(): void
     {
         $db = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
-        $db->exec('CREATE TABLE app_state (state_key TEXT PRIMARY KEY, state_value TEXT NOT NULL)');
-        $db->exec("INSERT INTO app_state VALUES ('a', '{\"value\":1}')");
+        $db->exec('CREATE TABLE app_state (user_id INTEGER NOT NULL DEFAULT 1, state_key TEXT NOT NULL, state_value TEXT NOT NULL, PRIMARY KEY (user_id, state_key))');
+        $db->exec("INSERT INTO app_state (state_key, state_value) VALUES ('a', '{\"value\":1}')");
         $store = new StateStore($db);
         try {
             $store->mutate(['a' => [], 'b' => []], function (array &$documents) {
@@ -30,7 +30,7 @@ final class LibraryTest extends TestCase
     public function testStaleRevisionCannotOverwriteSavedState(): void
     {
         $db = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
-        $db->exec('CREATE TABLE app_state (state_key TEXT PRIMARY KEY, state_value TEXT NOT NULL)');
+        $db->exec('CREATE TABLE app_state (user_id INTEGER NOT NULL DEFAULT 1, state_key TEXT NOT NULL, state_value TEXT NOT NULL, PRIMARY KEY (user_id, state_key))');
         $store = new StateStore($db);
         $revision = $store->compareAndSwap('a', '{"value":1}', null);
         $store->compareAndSwap('a', '{"value":2}', $revision);

@@ -7,7 +7,7 @@ require_once dirname(__DIR__) . '/lib/obligations.php';
 
 // Debts and credits against an in-memory SQLite fixture; no config.php is loaded.
 $db = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
-$db->exec('CREATE TABLE app_state (state_key TEXT PRIMARY KEY, state_value TEXT NOT NULL)');
+$db->exec('CREATE TABLE app_state (user_id INTEGER NOT NULL DEFAULT 1, state_key TEXT NOT NULL, state_value TEXT NOT NULL, PRIMARY KEY (user_id, state_key))');
 $store = new StateStore($db);
 $checks = 0;
 function check(bool $condition, string $label): void { global $checks; if (!$condition) throw new RuntimeException('FAIL: ' . $label); $checks++; }

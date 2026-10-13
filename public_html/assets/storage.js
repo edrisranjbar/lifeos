@@ -20,8 +20,9 @@
   let csrf = '';
   let writes = Promise.resolve();
   let errorShown = false;
-  const channel = 'BroadcastChannel' in window ? new BroadcastChannel('edi-life-os-state') : null;
-  if (channel) channel.onmessage = ({data}) => {
+  let userId = null;
+  let channel = null;
+  const receiveBroadcast = ({data}) => {
     if (data?.updates && typeof data.updates === 'object') {
       const entries = Object.entries(data.updates);
       if (!entries.length || entries.some(([key, item]) => !keys.includes(key) || typeof item?.value !== 'string' || !/^[a-f0-9]{64}$/.test(item?.revision || '') || pending.has(key) || conflicts.has(key) || failedWrites.has(key))) return;
@@ -65,6 +66,10 @@
   }
 
   window.appStorage = {
+    async flush() {
+      await writes;
+      if (failedWrites.size || conflicts.size) throw new Error('Your changes could not be saved. Reload before editing again.');
+    },
     getItem(key) { return cache.has(key) ? cache.get(key) : null; },
     // Shared session CSRF API used by Habittify and other endpoint writers.
     async csrfToken() { await window.appStorageReady; return csrf; },
@@ -128,6 +133,7 @@
         const response = await fetch('/state.php', {headers:{Accept:'application/json'}, cache:'no-store', redirect:'error'});
         if (!response.ok) return;
         const payload = await response.json();
+        if (payload.user_id !== userId) { channel?.close(); cache.clear(); window.top.location.reload(); throw new Error('Account changed. Reload before editing.'); }
         let changed = false;
         for (const [key, value] of Object.entries(payload.data || {})) {
           const revision = payload.revisions?.[key];
@@ -147,12 +153,18 @@
     const response = await fetch('/state.php', {headers:{Accept:'application/json'}, cache:'no-store', redirect:'error'});
     if (!response.ok) throw new Error(`MySQL load failed (${response.status})`);
     const payload = await response.json();
+    if (!Number.isInteger(payload.user_id) || payload.user_id < 1) throw new Error('Unable to identify the signed-in account.');
+    userId = payload.user_id;
+    channel = 'BroadcastChannel' in window ? new BroadcastChannel(`edi-life-os-state-${userId}`) : null;
+    if (channel) channel.onmessage = receiveBroadcast;
     csrf = payload.csrf;
     for (const [key, revision] of Object.entries(payload.revisions || {})) revisions.set(key, revision);
     for (const [key, value] of Object.entries(payload.data || {})) {
       if (keys.includes(key) && typeof value === 'string') cache.set(key, value);
     }
     // Archive divergent browser values in MySQL before clearing old copies.
+    // Unscoped legacy browser records belong only to the original account.
+    if (userId !== 1) return;
     for (const key of keys) {
       let legacy;
       try { legacy = localStorage.getItem(key); } catch { continue; }

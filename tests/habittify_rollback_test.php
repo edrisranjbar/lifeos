@@ -5,17 +5,17 @@ declare(strict_types=1);
 $fixture = sys_get_temp_dir() . '/lifeos_category_' . bin2hex(random_bytes(6));
 mkdir($fixture . '/public_html/habittify', 0700, true);
 mkdir($fixture . '/lib');
-foreach (['api_response.php', 'runtime_config.php', 'habits.php'] as $file) copy(dirname(__DIR__) . '/lib/' . $file, $fixture . '/lib/' . $file);
+foreach (['api_response.php', 'runtime_config.php', 'habits.php', 'user_context.php'] as $file) copy(dirname(__DIR__) . '/lib/' . $file, $fixture . '/lib/' . $file);
 copy(dirname(__DIR__) . '/public_html/habittify/api.php', $fixture . '/public_html/habittify/api.php');
 file_put_contents($fixture . '/auth.php', '<?php function life_os_require_auth(): void {} function life_os_require_csrf(): void {} function life_os_db(): PDO { return $GLOBALS["db"]; }');
 file_put_contents($fixture . '/request.php', <<<'PHP'
 <?php
 ini_set('error_log', __DIR__ . '/errors.log');
 $db = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
-$db->exec('CREATE TABLE categories (id INTEGER PRIMARY KEY, name TEXT, created_at TEXT)');
-$db->exec('CREATE TABLE habits (id INTEGER PRIMARY KEY, category TEXT)');
-$db->exec("INSERT INTO categories VALUES (1, 'Learning', 'now')");
-$db->exec("INSERT INTO habits VALUES (1, 'Learning')");
+$db->exec('CREATE TABLE categories (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL DEFAULT 1, name TEXT, created_at TEXT)');
+$db->exec('CREATE TABLE habits (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL DEFAULT 1, category TEXT)');
+$db->exec("INSERT INTO categories (id, name, created_at) VALUES (1, 'Learning', 'now')");
+$db->exec("INSERT INTO habits (id, category) VALUES (1, 'Learning')");
 $db->exec("CREATE TRIGGER fail_delete BEFORE DELETE ON categories BEGIN SELECT RAISE(ABORT, 'fixture failure'); END");
 $_GET = ['route' => 'categories/1']; $_SERVER['REQUEST_METHOD'] = 'DELETE';
 register_shutdown_function(function () use ($db) {

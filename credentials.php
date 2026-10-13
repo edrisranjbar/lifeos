@@ -22,6 +22,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET') {
     try {
         credentials_reply([
             'username' => life_os_username(),
+            'user_id' => life_os_user_id(),
+            'role' => life_os_credentials()['role'],
             'csrf' => $_SESSION['state_csrf'],
         ]);
     } catch (Throwable $error) {
@@ -51,8 +53,8 @@ if ($currentPassword === '') credentials_reply(['error' => 'Enter your current p
 if ($newUsername === '' || strlen($newUsername) > 190 || preg_match('/[\x00-\x20\x7F]/', $newUsername)) {
     credentials_reply(['error' => 'Choose a username of 1–190 characters with no spaces.'], 400);
 }
-if ($newPassword !== '' && (strlen($newPassword) < 12 || strlen($newPassword) > 200)) {
-    credentials_reply(['error' => 'A new password must be between 12 and 200 characters.'], 400);
+if ($newPassword !== '' && (strlen($newPassword) < 12 || strlen($newPassword) > 72)) {
+    credentials_reply(['error' => 'A new password must be between 12 and 72 bytes.'], 400);
 }
 if ($newPassword !== '' && !hash_equals($newPassword, $confirmPassword)) {
     credentials_reply(['error' => 'The new passwords do not match.'], 400);
@@ -61,7 +63,8 @@ if ($newPassword !== '' && !hash_equals($newPassword, $confirmPassword)) {
 try {
     $db = life_os_db();
     $db->beginTransaction();
-    $query = $db->query('SELECT username, password_hash FROM app_credentials WHERE credential_id = 1 FOR UPDATE');
+    $query = $db->prepare('SELECT username, password_hash FROM app_users WHERE id = ? FOR UPDATE');
+    $query->execute([life_os_user_id()]);
     $credentials = $query->fetch();
     if (!is_array($credentials) || !password_verify($currentPassword, (string) $credentials['password_hash'])) {
         $db->rollBack();
@@ -77,8 +80,8 @@ try {
         : password_hash($newPassword, PASSWORD_DEFAULT);
     if (!is_string($passwordHash)) throw new RuntimeException('Could not hash the new password.');
 
-    $update = $db->prepare('UPDATE app_credentials SET username = ?, password_hash = ? WHERE credential_id = 1');
-    $update->execute([$newUsername, $passwordHash]);
+    $update = $db->prepare('UPDATE app_users SET username = ?, password_hash = ? WHERE id = ?');
+    $update->execute([$newUsername, $passwordHash, life_os_user_id()]);
     $db->commit();
 
     session_regenerate_id(true);
@@ -96,6 +99,7 @@ try {
     ]);
 } catch (Throwable $error) {
     if (isset($db) && $db->inTransaction()) $db->rollBack();
-    error_log($error->__toString());
+    error_log('LifeOS credential update failed: ' . get_class($error));
+    if ($error instanceof PDOException && $error->getCode() === '23000') credentials_reply(['error' => 'That username is already in use.'], 409);
     credentials_reply(['error' => 'Could not update sign-in credentials.'], 500);
 }
