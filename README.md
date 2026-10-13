@@ -144,7 +144,7 @@ Edit `config.php` with your database connection and the username and password yo
 php -S localhost:8000 -t public_html server.php
 ```
 
-Open [localhost:8000](http://localhost:8000) and sign in. The database and tables are created on first use. Use **Settings → My account** to change your sign-in, or **Settings → Accounts** to add administrators with their own passwords and private workspaces. [Account guide](docs/accounts.md)
+Open [localhost:8000](http://localhost:8000) and sign in. The database and tables are created on first use. Use **Settings → My account** to change your sign-in, or **Settings → Accounts** to add people with their own passwords and private workspaces. [Account guide](docs/accounts.md)
 
 > [!IMPORTANT]
 > `config.php` and `.env` hold real credentials and are gitignored. Never commit them.
@@ -200,7 +200,7 @@ Moving from the old Habittify SQLite database? See [migrating Habittify](docs/de
 
 ## Security
 
-Edi Life OS supports **multiple administrators with separate private data**. Every account can manage accounts; this does not grant access to another account's records through the app. Administrators can reset other users' passwords, so invite only people you trust.
+Edi Life OS supports **multiple accounts with separate private data**. New accounts are members, who see only their own workspace. Administrators can also add accounts, reset passwords and deactivate access; because a password reset lets them sign in as that person, make only trusted people administrators.
 
 - The operator API token grants read and write access to supported domains for one active account (`api_user_id`, default `1`). Per-user token issuance, token scopes and API rate limiting are not implemented, so set request limits at the hosting layer.
 - Use HTTPS anywhere other than localhost, and keep tokens out of URLs, frontend code, screenshots and logs.

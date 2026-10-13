@@ -1,6 +1,9 @@
 (() => {
   const $ = id => document.getElementById(id);
-  let csrf = '', currentUserId = null, editingUser = null, savingUser = false;
+  let csrf = '', currentUserId = null, isAdmin = false, editingUser = null, savingUser = false;
+  const roleName = role => role === 'admin' ? 'Administrator' : 'Member';
+  const joined = value => { const date = new Date(String(value).replace(' ', 'T')); return Number.isNaN(date.getTime()) ? '' : `Joined ${date.toLocaleDateString(undefined, {year:'numeric', month:'short', day:'numeric'})}`; };
+  const pill = (text, kind) => { const node = document.createElement('span'); node.className = `pill ${kind}`; node.textContent = text; return node; };
   const status = (id, text, kind = '') => { $(id).textContent = text; $(id).className = `status ${kind}`; };
   async function request(url, body) {
     const response = await fetch(url, {method: body ? 'POST' : 'GET', redirect: 'error', cache: 'no-store', headers: {Accept:'application/json', ...(body ? {'Content-Type':'application/json','X-CSRF-Token':csrf} : {})}, ...(body ? {body:JSON.stringify(body)} : {})});
@@ -19,17 +22,24 @@
     try {
       const data = await request('/credentials.php');
       csrf = data.csrf; currentUserId = data.user_id; setAccount(data.username);
+      isAdmin = data.role === 'admin';
+      $('accountRole').textContent = `${roleName(data.role)} · Private workspace`;
+      // Only administrators can manage accounts; members never see the section.
+      $('people').hidden = !isAdmin; $('peopleNav').hidden = !isAdmin;
       $('save').disabled = false; $('signOut').disabled = false;
+      if (isAdmin) await loadUsers();
+      spy();
     } catch (error) { $('accountName').textContent = 'Account unavailable'; status('message',error.message,'error'); }
   }
   function openUser(user = null) {
     editingUser = user;
     $('userForm').reset(); status('userFormMessage','');
     $('userDialogTitle').textContent = user ? 'Manage account' : 'Add account';
-    $('userDialogHint').textContent = user ? 'Leave the password blank to keep it. Deactivation preserves this user’s data.' : 'A new administrator starts with an empty private workspace.';
+    $('userDialogHint').textContent = user ? 'Leave the password blank to keep it. Deactivation preserves this user’s data.' : 'A new account starts with an empty private workspace.';
     $('userUsername').value = user?.username || '';
     $('userPassword').required = !user; $('userConfirmPassword').required = !user;
     $('activeUserLabel').hidden = !user; $('userActive').checked = user?.active ?? true;
+    for (const radio of document.querySelectorAll('[name=userRole]')) radio.checked = radio.value === (user?.role || 'user');
     $('saveUser').textContent = user ? 'Save account' : 'Create account';
     $('userDialog').showModal(); $('userUsername').focus();
   }
@@ -44,11 +54,13 @@
         const avatar = document.createElement('span'); avatar.className='avatar'; avatar.setAttribute('aria-hidden','true'); avatar.textContent=initials(user.username);
         const info = document.createElement('div'); info.className='user-info';
         const name = document.createElement('div'); name.className='user-name'; name.textContent=user.username;
-        const meta = document.createElement('div'); meta.className='user-meta'; meta.textContent=`Administrator · ${user.active ? 'Active' : 'Inactive'}`;
+        if (user.id === currentUserId) name.append(pill('You','you'));
+        const meta = document.createElement('div'); meta.className='user-meta';
+        meta.append(pill(roleName(user.role), user.role === 'admin' ? 'admin' : 'member'), pill(user.active ? 'Active' : 'Inactive', user.active ? 'active' : 'inactive'));
+        const since = joined(user.created_at);
+        if (since) { const date = document.createElement('span'); date.className='user-joined'; date.textContent=since; meta.append(date); }
         info.append(name,meta); row.append(avatar,info);
-        if (user.id === currentUserId) {
-          const you = document.createElement('span'); you.className='user-badge'; you.textContent='You'; row.append(you);
-        } else {
+        if (user.id !== currentUserId) {
           const edit = document.createElement('button'); edit.type='button'; edit.className='secondary'; edit.textContent='Manage'; edit.setAttribute('aria-label',`Manage ${user.username}`); edit.addEventListener('click',()=>openUser(user)); row.append(edit);
         }
         $('usersList').append(row);
@@ -62,7 +74,7 @@
   $('userDialog').addEventListener('close',()=>{ $('userForm').reset(); editingUser=null; });
   $('userForm').addEventListener('submit',async event=>{
     event.preventDefault(); if (savingUser || !$('userForm').reportValidity()) return;
-    const body = {action:editingUser?'update':'create', id:editingUser?.id, username:$('userUsername').value.trim(), password:$('userPassword').value, confirm_password:$('userConfirmPassword').value, current_password:$('adminPassword').value, active:$('userActive').checked};
+    const body = {action:editingUser?'update':'create', id:editingUser?.id, username:$('userUsername').value.trim(), password:$('userPassword').value, confirm_password:$('userConfirmPassword').value, current_password:$('adminPassword').value, active:$('userActive').checked, role:document.querySelector('[name=userRole]:checked')?.value || 'user'};
     savingUser=true; $('saveUser').disabled=true; status('userFormMessage','Saving…');
     try { await request('/users.php',body); $('userDialog').close(); await loadUsers(); status('usersMessage',body.action==='create'?'Account created. They can sign in with their own password.':'Account updated.','success'); }
     catch (error) { status('userFormMessage',error.message,'error'); }
@@ -75,7 +87,7 @@
       const data=await request('/credentials.php',{new_username:$('username').value.trim(),new_password:$('newPassword').value,confirm_password:$('confirmPassword').value,current_password:$('currentPassword').value});
       csrf=data.csrf; setAccount(data.username);
       for (const id of ['newPassword','confirmPassword','currentPassword']) $(id).value='';
-      await loadUsers(); status('message','Account updated. Your other sessions will need to sign in again.','success');
+      if (isAdmin) await loadUsers(); status('message','Account updated. Your other sessions will need to sign in again.','success');
     } catch (error) { status('message',error.message,'error'); }
     finally { $('save').disabled=false; }
   });
@@ -107,8 +119,18 @@
     finally { themeButtons.forEach(item=>item.disabled=false); }
   }));
   new MutationObserver(updateThemeButtons).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
-  document.querySelectorAll('.settings-nav a').forEach(link=>link.addEventListener('click',()=>{
-    document.querySelectorAll('.settings-nav a').forEach(item=>item.removeAttribute('aria-current')); link.setAttribute('aria-current','location');
-  }));
-  Promise.all([loadAccount(),loadUsers()]);
+  // Highlight the section in view, not just the last clicked link.
+  const navLinks=[...document.querySelectorAll('.settings-nav a')];
+  const markCurrent=id=>navLinks.forEach(link=>link.getAttribute('href')===`#${id}` ? link.setAttribute('aria-current','location') : link.removeAttribute('aria-current'));
+  navLinks.forEach(link=>link.addEventListener('click',()=>markCurrent(link.getAttribute('href').slice(1))));
+  // The last cards can never reach the top, so at the page bottom pick the last one.
+  let spyFrame=0;
+  const spy=()=>{ cancelAnimationFrame(spyFrame); spyFrame=requestAnimationFrame(()=>{
+    const cards=[...document.querySelectorAll('.settings-card')].filter(card=>!card.hidden);
+    const atBottom=innerHeight+scrollY>=document.documentElement.scrollHeight-4;
+    const current=atBottom ? cards.at(-1) : cards.filter(card=>card.getBoundingClientRect().top<=innerHeight*0.3).at(-1) || cards[0];
+    if (current) markCurrent(current.id);
+  }); };
+  addEventListener('scroll',spy,{passive:true}); addEventListener('resize',spy);
+  loadAccount();
 })();

@@ -7,10 +7,10 @@ require_once dirname(__DIR__) . '/lib/api_router.php';
 
 // No config.php is loaded. By default this suite uses an in-memory SQLite fixture.
 $db = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
-$db->exec('CREATE TABLE app_state (state_key TEXT PRIMARY KEY, state_value TEXT NOT NULL)');
-$db->exec('CREATE TABLE habits (id INTEGER PRIMARY KEY, name TEXT, category TEXT, color TEXT, icon TEXT, created_at TEXT, archived INTEGER DEFAULT 0)');
-$db->exec('CREATE TABLE habit_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, habit_id INTEGER, log_date TEXT, done INTEGER, created_at TEXT, UNIQUE(habit_id, log_date))');
-$db->exec("INSERT INTO habits VALUES (1, 'Reading', 'Learning', '#fff', '✓', '2026-01-01', 0), (2, 'Archived', '', '', '', '', 1)");
+$db->exec('CREATE TABLE app_state (user_id INTEGER NOT NULL DEFAULT 1, state_key TEXT NOT NULL, state_value TEXT NOT NULL, PRIMARY KEY (user_id, state_key))');
+$db->exec('CREATE TABLE habits (id INTEGER PRIMARY KEY, name TEXT, category TEXT, color TEXT, icon TEXT, created_at TEXT, archived INTEGER DEFAULT 0, user_id INTEGER NOT NULL DEFAULT 1)');
+$db->exec('CREATE TABLE habit_logs (id INTEGER PRIMARY KEY AUTOINCREMENT, habit_id INTEGER, log_date TEXT, done INTEGER, created_at TEXT, user_id INTEGER NOT NULL DEFAULT 1, UNIQUE(habit_id, log_date))');
+$db->exec("INSERT INTO habits (id, name, category, color, icon, created_at, archived) VALUES (1, 'Reading', 'Learning', '#fff', '✓', '2026-01-01', 0), (2, 'Archived', '', '', '', '', 1)");
 $store = new StateStore($db);
 $checks = 0;
 function check(bool $condition, string $label): void { global $checks; if (!$condition) throw new RuntimeException('FAIL: ' . $label); $checks++; }
@@ -40,7 +40,7 @@ seed('fixture', ['number' => 1, 'unknown' => ['preserve' => true]]);
 check($store->get('fixture', [])['number'] === 1, 'valid stored JSON');
 $store->mutate(['fixture' => []], function (array &$docs) { $docs['fixture']['number']++; });
 check($store->get('fixture', [])['number'] === 2, 'atomic mutation');
-$db->exec('INSERT INTO app_state VALUES (\'object_fixture\', \'{"count":0,"unknown":{},"numeric":{"0":"zero"}}\')');
+$db->exec('INSERT INTO app_state (state_key, state_value) VALUES (\'object_fixture\', \'{"count":0,"unknown":{},"numeric":{"0":"zero"}}\')');
 $store->mutate(['object_fixture' => []], function (array &$docs) { $docs['object_fixture']['count']++; });
 $object = json_decode($store->raw('object_fixture'));
 check($object->unknown instanceof stdClass && $object->numeric instanceof stdClass, 'unknown JSON object containers preserved');
@@ -120,4 +120,15 @@ check(request('DELETE', 'goals/' . $goalId)['deleted'], 'goal delete');
 fails(fn () => request('GET', 'goals/' . $goalId), 404, 'deleted goal missing');
 fails(fn () => request('PUT', 'goals'), 405, 'method not allowed');
 fails(fn () => request('GET', 'credentials'), 404, 'no credential route');
+
+// A second account sees none of the first account's documents or habits.
+$ownerNotes = $store->raw(NOTES_KEY);
+$GLOBALS['life_os_request_user_id'] = 2;
+check($store->raw(NOTES_KEY) === null, 'second account starts without the owner notes');
+check(habits_active($db) === [], 'second account sees no owner habits');
+fails(fn () => request('POST', 'habits/1/complete'), 404, 'second account cannot complete an owner habit');
+request('POST', 'notes', ['title' => 'Second account note']);
+check(count($store->get(NOTES_KEY, ['notes' => []])['notes']) === 1, 'second account writes its own notes document');
+$GLOBALS['life_os_request_user_id'] = 1;
+check($store->raw(NOTES_KEY) === $ownerNotes, 'owner notes unchanged by the second account');
 echo "PASS: $checks isolated API assertions\n";

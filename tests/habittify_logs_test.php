@@ -5,7 +5,7 @@ declare(strict_types=1);
 $directory = sys_get_temp_dir() . '/lifeos_logs_' . bin2hex(random_bytes(6));
 mkdir($directory . '/public_html/habittify', 0700, true);
 mkdir($directory . '/lib');
-foreach (['api_response.php', 'habits.php', 'runtime_config.php'] as $file) copy(dirname(__DIR__) . '/lib/' . $file, $directory . '/lib/' . $file);
+foreach (['api_response.php', 'habits.php', 'runtime_config.php', 'user_context.php'] as $file) copy(dirname(__DIR__) . '/lib/' . $file, $directory . '/lib/' . $file);
 copy(dirname(__DIR__) . '/public_html/habittify/api.php', $directory . '/public_html/habittify/api.php');
 file_put_contents($directory . '/auth.php', '<?php function life_os_require_auth(): void {} function life_os_require_csrf(): void { throw new RuntimeException("Unexpected write"); } function life_os_db(): PDO { return $GLOBALS["fixtureDb"]; }');
 file_put_contents($directory . '/request.php', <<<'PHP'
@@ -19,11 +19,13 @@ class LogsTestDb extends PDO {
 }
 $db = new LogsTestDb('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
 $GLOBALS['fixtureDb'] = $db;
-$db->exec('CREATE TABLE categories (name TEXT UNIQUE, created_at TEXT)');
-$db->exec('CREATE TABLE habits (id INTEGER PRIMARY KEY, category TEXT)');
-$db->exec("INSERT INTO habits VALUES (1, '')");
-$db->exec('CREATE TABLE habit_logs (habit_id INTEGER, log_date TEXT, done INTEGER)');
-$db->exec("INSERT INTO habit_logs VALUES (1, '2028-02-28', 1), (1, '2028-02-29', 1), (2, '2028-02-29', 0), (1, '2028-03-01', 1)");
+$db->exec('CREATE TABLE categories (user_id INTEGER NOT NULL DEFAULT 1, name TEXT, created_at TEXT, UNIQUE(user_id, name))');
+$db->exec('CREATE TABLE habits (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL DEFAULT 1, category TEXT)');
+$db->exec("INSERT INTO habits (id, category) VALUES (1, '')");
+$db->exec('CREATE TABLE habit_logs (user_id INTEGER NOT NULL DEFAULT 1, habit_id INTEGER, log_date TEXT, done INTEGER)');
+$db->exec("INSERT INTO habit_logs (habit_id, log_date, done) VALUES (1, '2028-02-28', 1), (1, '2028-02-29', 1), (2, '2028-02-29', 0), (1, '2028-03-01', 1)");
+// Another account's log on the same day must never appear.
+$db->exec("INSERT INTO habit_logs (user_id, habit_id, log_date, done) VALUES (2, 9, '2028-02-29', 1)");
 $_GET = json_decode($argv[1], true);
 $_GET['route'] = 'logs';
 $_SERVER['REQUEST_METHOD'] = 'GET';

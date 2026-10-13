@@ -52,6 +52,11 @@ try {
     $fixture = $directory . '/auth-fixture';
     mkdir($fixture);
     copy(dirname(__DIR__) . '/auth.php', $fixture . '/auth.php');
+    mkdir($fixture . '/lib');
+    copy(dirname(__DIR__) . '/lib/user_context.php', $fixture . '/lib/user_context.php');
+    // Schema version 3 signs in against app_users; mirror the migrated original account.
+    $db->exec("CREATE TABLE app_users (id INTEGER PRIMARY KEY, username TEXT UNIQUE, password_hash TEXT, role TEXT NOT NULL DEFAULT 'admin', active INTEGER NOT NULL DEFAULT 1)");
+    $db->exec('INSERT INTO app_users (id, username, password_hash) SELECT 1, username, password_hash FROM app_credentials WHERE credential_id = 1');
     file_put_contents($fixture . '/db.php', <<<'PHP'
 <?php
 function life_os_config(): array {
@@ -79,7 +84,11 @@ $results = [life_os_is_authenticated()];
 $_SESSION['life_os_fingerprint'] = hash('sha256', 'initial' . "\0" . 'fixture-password');
 $results[] = life_os_is_authenticated();
 $_SESSION['life_os_fingerprint'] = life_os_credential_fingerprint($row);
-$GLOBALS['credentialDb']->exec("UPDATE app_credentials SET password_hash = 'changed-hash'");
+// A deactivated account loses its existing session.
+$GLOBALS['credentialDb']->exec('UPDATE app_users SET active = 0');
+$results[] = life_os_is_authenticated();
+$GLOBALS['credentialDb']->exec('UPDATE app_users SET active = 1');
+$GLOBALS['credentialDb']->exec("UPDATE app_users SET password_hash = 'changed-hash'");
 $results[] = life_os_is_authenticated();
 $_SESSION['life_os_authenticated'] = false;
 $results[] = life_os_is_authenticated();
@@ -99,7 +108,7 @@ PHP);
     $output = stream_get_contents($pipes[1]); fclose($pipes[1]);
     $errors = stream_get_contents($pipes[2]); fclose($pipes[2]);
     check(proc_close($process) === 0 && $errors === '', 'Authentication fixture runs cleanly.');
-    check(json_decode($output, true) === [true, false, false, false, true, false, false, 0], 'Current sessions work; invalid sessions are quiet and backend failures still deny authentication.');
+    check(json_decode($output, true) === [true, false, false, false, false, true, false, false, 0], 'Current sessions work; deactivated and invalid sessions are quiet and backend failures still deny authentication.');
     $log = file_get_contents($directory . '/authentication.log');
     check(substr_count($log, 'LifeOS authentication failed:') === 2, 'Both backend failures are logged.');
     check(str_contains($log, 'RuntimeException (code 0) at ') && str_contains($log, 'PDOException (code 0) at '), 'Logs identify the exception type, code and source location.');
@@ -109,7 +118,9 @@ PHP);
     $db = null;
     unset($error);
     gc_collect_cycles();
-    foreach (glob($directory . '/auth-fixture/*') ?: [] as $file) unlink($file);
+    foreach (glob($directory . '/auth-fixture/lib/*') ?: [] as $file) unlink($file);
+    if (is_dir($directory . '/auth-fixture/lib')) rmdir($directory . '/auth-fixture/lib');
+    foreach (glob($directory . '/auth-fixture/*') ?: [] as $file) if (is_file($file)) unlink($file);
     if (is_dir($directory . '/auth-fixture')) rmdir($directory . '/auth-fixture');
     foreach (glob($directory . '/*') as $file) unlink($file);
     rmdir($directory);
