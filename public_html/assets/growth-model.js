@@ -1,4 +1,4 @@
-import './goal-progress.js';
+import './goal-progress.js?v=goal-measures-2';
 // Connections live separately; source workspaces remain the owners of their records.
 export const KEY = 'edi_growth_v1';
 export const dimensions = [

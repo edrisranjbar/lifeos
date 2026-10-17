@@ -70,7 +70,7 @@ function uid() {
 function goalMeasures(goal) {
   if (Array.isArray(goal.measures)) return goal.measures;
   return goal.metric || goal.target != null || goal.unit
-    ? [{id: uid(), metric: goal.metric || '', target: goal.target ?? null, unit: goal.unit || '', current: null}]
+    ? [{id: uid(), metric: goal.metric || '', target: goal.target ?? null, unit: goal.unit || '', current: goal.current ?? null}]
     : [];
 }
 
@@ -122,7 +122,7 @@ function renderDetailMeasures(goal) {
       if (!input.checkValidity()) { input.reportValidity(); return; }
       measures[index].current = input.value === '' ? null : Number(input.value);
       goal.measures = measures;
-      goal.updatedAt = Date.now(); save(); render();
+      goal.updatedAt = Date.now(); save(); render(); renderDetailProgress(goal); renderDetailMeta(goal);
     });
     label.append(title, input); row.append(description, label); container.append(row);
   });
@@ -225,7 +225,7 @@ function renderStats() {
   const active = state.goals.filter((g) => effectiveStatus(g) === "active").length;
   const completed = state.goals.filter((g) => effectiveStatus(g) === "completed").length;
   const avgProgress = (() => {
-    const measurable = state.goals.filter((g) => (g.tasks.length > 0 || g.progressSource) && calcProgress(g)!==null);
+    const measurable = state.goals.filter((g) => (g.tasks.length > 0 || progressResult(g).source !== 'checklist') && calcProgress(g)!==null);
     if (!measurable.length) return 0;
     return Math.round(measurable.reduce((n, g) => n + (calcProgress(g) ?? 0), 0) / measurable.length);
   })();
@@ -331,7 +331,7 @@ function openWizard(editGoalId = null) {
   } else if (editGoalId) {
     const g = state.goals.find((x) => x.id === editGoalId);
     if (g) {
-      $('gProgressSource').value=g.progressSource||'checklist';
+      $('gProgressSource').value=LifeGoalProgress.source(g);
       $('gHabit').value=g.habitProgress?.habitId||'';
       $('gHabitTarget').value=g.habitProgress?.targetDays||24;
       $("gTitle").value = g.title || "";
@@ -675,7 +675,7 @@ function renderDetailProgress(g) {
   const done = g.tasks.filter((t) => t.done).length;
   $("progressLabel").textContent = pct === null ? "—" : pct + "%";
   $("progressCount").textContent = progressCaption(g);
-  $('bumpProgressBtn').hidden=!!g.progressSource && g.progressSource!=='checklist';
+  $('bumpProgressBtn').hidden=progressResult(g).source!=='checklist';
   $('detailTaskSection').hidden=g.progressSource==='habit';
   const p=progressResult(g); $('habitMilestones').hidden=p.source!=='habit';
   $('habitMilestones').innerHTML=p.source==='habit' ? `<a href="/habittify/">Open Habittify ↗</a><div>${[...new Set([.25,.5,.75,1].map(n=>Math.ceil(p.total*n)))].map(n=>`<span class="${p.done!==null && p.done>=n?'reached':''}">${p.done!==null && p.done>=n?'✓ ':''}${n} days</span>`).join('')}</div>` : '';

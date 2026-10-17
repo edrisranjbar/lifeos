@@ -4,6 +4,8 @@ Growth adds a planning and review layer over the existing Goals and Habittify wo
 
 ## Getting started
 
+Goal progress respects the selected tracking source. For older goals without a saved source, an empty checklist plus a positive numeric target uses success measures (for example, 900 of 1,000 is 90%); goals with checklist items keep checklist tracking. The Goals detail progress refreshes when a current measure value is changed. Habit-linked goals continue to derive progress from Habittify.
+
 1. Open **Growth** from the navigation or the six-dimension summary in Overview.
 2. Choose a dimension and add a long-term goal: title, reason and optional target date.
 3. Search and select existing SMART goals and daily habits. Growth does not connect to Kanban cards or individual tasks; a goal's own checklist still counts toward that goal's progress.

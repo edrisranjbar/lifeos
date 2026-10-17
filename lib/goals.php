@@ -6,9 +6,20 @@ require_once __DIR__ . '/user_context.php';
 
 const GOALS_KEY = 'edi_goals_v1';
 
+function goals_measures(array $goal): array
+{
+    return $goal['measures'] ?? (isset($goal['target']) ? [['target'=>$goal['target'], 'current'=>$goal['current'] ?? null]] : []);
+}
+
+function goals_progress_source(array $goal): string
+{
+    if (!empty($goal['progressSource'])) return $goal['progressSource'];
+    return empty($goal['tasks']) && count(array_filter(goals_measures($goal), fn($m)=>($m['target'] ?? 0)>0)) > 0 ? 'measure' : 'checklist';
+}
+
 function goals_progress(array $goal, ?PDO $db = null): ?array
 {
-    $source = $goal['progressSource'] ?? 'checklist';
+    $source = goals_progress_source($goal);
     if ($source === 'habit') {
         if (!$db || empty($goal['startDate']) || empty($goal['deadline']) || empty($goal['habitProgress']['targetDays'])) return null;
         $query = $db->prepare('SELECT COUNT(DISTINCT log_date) FROM habit_logs WHERE user_id = ' . life_os_user_id() . ' AND habit_id = ? AND done = 1 AND log_date >= ? AND log_date <= ?');
@@ -17,7 +28,7 @@ function goals_progress(array $goal, ?PDO $db = null): ?array
         return ['source' => $source, 'completedDays' => $done, 'targetDays' => $total, 'percent' => $done >= $total ? 100 : min(99, (int) round($done / $total * 100))];
     }
     if ($source === 'measure') {
-        $measures = array_values(array_filter($goal['measures'] ?? [], fn ($m) => ($m['target'] ?? 0) > 0));
+        $measures = array_values(array_filter(goals_measures($goal), fn ($m) => ($m['target'] ?? 0) > 0));
         $sum = array_sum(array_map(fn ($m) => max(0, min(100, ($m['current'] ?? 0) / $m['target'] * 100)), $measures));
         return ['source' => $source, 'percent' => count($measures) ? (int) round($sum / count($measures)) : 0];
     }
@@ -28,7 +39,7 @@ function goals_progress(array $goal, ?PDO $db = null): ?array
 function goals_status(array $goal, ?PDO $db = null): string
 {
     if (($goal['status'] ?? '') === 'archived') return 'archived';
-    if (isset($goal['progressSource'])) return (goals_progress($goal, $db)['percent'] ?? 0) === 100 ? 'completed' : 'active';
+    if (isset($goal['progressSource']) || goals_progress_source($goal) !== 'checklist') return (goals_progress($goal, $db)['percent'] ?? 0) === 100 ? 'completed' : 'active';
     $tasks = $goal['tasks'] ?? [];
     return count($tasks) > 0 && count(array_filter($tasks, fn ($task) => ($task['done'] ?? false) === true)) === count($tasks) ? 'completed' : 'active';
 }

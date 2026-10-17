@@ -1,4 +1,4 @@
-import {dimensions,documentState,sources,summary,nextReview,today} from './growth-model.js?v=issue19-1';
+import {dimensions,documentState,sources,summary,nextReview,today} from './growth-model.js?v=goal-measures-2';
 export function mountGrowthOverview(main) {
   const section=document.createElement('section');section.className='dash-card growth-summary';section.setAttribute('aria-label','Personal growth dimensions');
   section.innerHTML='<div class="card-head"><div><span class="card-kicker">PERSONAL GROWTH</span><h3 class="card-title">Six dimensions. One direction.</h3></div><a href="#growth">Open Growth →</a></div><div class="growth-summary-grid" id="growthSummary"></div><p id="growthReviewHint" class="meta"></p>';

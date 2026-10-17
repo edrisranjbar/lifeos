@@ -1,5 +1,5 @@
 import '../assets/html-escape.js?v=issue19-1';
-import {KEY, dimensions, array, documentState, sources, habitData, summary, goalProgress, today, nextReview} from '../assets/growth-model.js?v=issue19-1';
+import {KEY, dimensions, array, documentState, sources, habitData, summary, goalProgress, today, nextReview} from '../assets/growth-model.js?v=goal-measures-2';
 import {createReviewStepper} from './review-stepper.js?v=issue19-1';
 import {shareReviewImage} from './share-image.js?v=issue19-1';
 const $=id=>document.getElementById(id);

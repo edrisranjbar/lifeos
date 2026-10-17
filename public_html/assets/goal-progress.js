@@ -1,8 +1,14 @@
 // Derived progress: habit logs remain the single attendance record.
 (() => {
   const today = () => new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Tehran',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+  const measures = goal => Array.isArray(goal.measures) ? goal.measures : (goal.target != null ? [{target:goal.target,current:goal.current ?? null}] : []);
+  function progressSource(goal) {
+    if (goal.progressSource) return goal.progressSource;
+    // Older numeric goals never saved a source; an empty checklist cannot track them.
+    return !(goal.tasks || []).length && measures(goal).some(m => Number(m.target) > 0) ? 'measure' : 'checklist';
+  }
   function result(goal, context) {
-    const source=goal.progressSource || 'checklist';
+    const source=progressSource(goal);
     if(source==='habit') {
       const target=Number(goal.habitProgress?.targetDays), start=goal.startDate, end=goal.deadline;
       if(!context || !start || !end || !(target>0)) return {pct:null,done:null,total:target,unit:'days',source};
@@ -10,8 +16,8 @@
       return {pct:done>=target?100:Math.min(99,Math.round(done/target*100)),done,total:target,unit:'days',source};
     }
     if(source==='measure') {
-      const measures=(goal.measures||[]).filter(m=>Number(m.target)>0);
-      const pct=measures.length ? Math.round(measures.reduce((sum,m)=>sum+Math.max(0,Math.min(100,Number(m.current||0)/Number(m.target)*100)),0)/measures.length):0;
+      const validMeasures=measures(goal).filter(m=>Number(m.target)>0);
+      const pct=validMeasures.length ? Math.round(validMeasures.reduce((sum,m)=>sum+Math.max(0,Math.min(100,Number(m.current||0)/Number(m.target)*100)),0)/validMeasures.length):0;
       return {pct,done:null,total:null,unit:'measures',source};
     }
     const tasks=goal.tasks||[], done=tasks.filter(t=>t.done).length;
@@ -29,5 +35,5 @@
     if(!logs.logs || typeof logs.logs!=='object' || (includeHabits && !Array.isArray(habits?.habits)))throw Error('Invalid habit response.');
     return {logs:logs.logs,habits:habits?.habits||[]};
   }
-  window.LifeGoalProgress={result,load,today};
+  window.LifeGoalProgress={result,source:progressSource,load,today};
 })();
