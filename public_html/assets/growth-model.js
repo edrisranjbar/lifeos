@@ -9,6 +9,17 @@ export const dimensions = [
   {id:'self-growth', name:'Self Growth', icon:'◈', color:'#7da5ee', hint:'Learn, create and become more capable.'},
   {id:'rest', name:'Fun & Rest', icon:'☼', color:'#6bc6ce', hint:'Make space for joy, recovery and curiosity.'}
 ];
+// Line icons for the dimensions. `icon` above stays a text glyph for the share
+// image canvas; markup uses these. Sized 1em so the container's font-size sets it.
+const ICON_PATHS = {
+  'spirituality': '<path d="M12 3l1.9 4.9L19 9.5l-5.1 1.7L12 16l-1.9-4.8L5 9.5l5.1-1.6Z"/><path d="M18.5 15.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7Z"/>',
+  'health': '<path d="M19.5 13.5C21 12 22 10.4 22 8.5A5.5 5.5 0 0 0 12 5.3 5.5 5.5 0 0 0 2 8.5c0 1.9 1 3.5 2.5 5L12 21Z"/><path d="M3.5 12h4l1.8-3 3 6 1.8-3h6.4"/>',
+  'relationships': '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20v-1.5a4.5 4.5 0 0 1 4.5-4.5h4a4.5 4.5 0 0 1 4.5 4.5V20M16 4.6a3.5 3.5 0 0 1 0 6.8M21.5 20v-1.5a4.5 4.5 0 0 0-3.2-4.3"/>',
+  'finance': '<path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/>',
+  'self-growth': '<path d="M7 20h10M12 20v-8"/><path d="M12 12c0-4-3-6.5-7.5-6.5C4.5 9.5 7.5 12 12 12Z"/><path d="M12 12c0-3.5 2.5-6.5 7.5-6.5 0 4-3 6.5-7.5 6.5Z"/>',
+  'rest': '<path d="M17 9h1.5a3.5 3.5 0 0 1 0 7H17"/><path d="M3 9h14v7.5A4.5 4.5 0 0 1 12.5 21h-5A4.5 4.5 0 0 1 3 16.5Z"/><path d="M7 2.5v3M10.5 2.5v3M14 2.5v3"/>',
+};
+export const dimensionIcon = id => `<svg class="dimension-svg" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON_PATHS[id] || ''}</svg>`;
 export const array = value => Array.isArray(value) ? value : [];
 export function read(key, fallback = {}) {
   const raw = appStorage.getItem(key);

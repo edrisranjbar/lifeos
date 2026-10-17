@@ -9,25 +9,32 @@
   <script>
     try { document.documentElement.dataset.theme = appStorage.getItem('edi_os_theme') || 'dark'; } catch { document.documentElement.dataset.theme = 'dark'; }
   </script>
-  <link rel="stylesheet" href="static/style.css?v=issue19-1">
+  <link rel="stylesheet" href="static/style.css?v=notepad-ui-1">
 <script src="/assets/html-escape.js?v=issue19-1"></script>
 </head>
 <body>
   <main class="app">
     <header class="page-header">
+      <div class="page-title">
+        <span class="eyebrow">Markdown writing desk</span>
+        <h1>Notepad</h1>
+      </div>
       <div class="header-actions">
-        <span class="save-status" id="saveStatus" role="status">Saved</span>
+        <span class="save-status" id="saveStatus" role="status" data-state="saved">Saved</span>
         <div class="view-switch" role="group" aria-label="Notepad layout">
-          <button type="button" data-view="write" aria-pressed="false">Write</button>
-          <button type="button" data-view="split" aria-pressed="true">Split</button>
-          <button type="button" data-view="preview" aria-pressed="false">Preview</button>
+          <button type="button" data-view="write" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Write</button>
+          <button type="button" data-view="split" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 4v16"/></svg>Split</button>
+          <button type="button" data-view="preview" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>Preview</button>
         </div>
       </div>
     </header>
     <section class="notepad-workspace">
       <aside class="notes-sidebar" aria-label="Saved notes">
-        <div class="notes-sidebar-heading"><h2>Notes</h2><button type="button" class="new-note-btn" id="newNoteBtn" title="New note" aria-label="New note">＋</button></div>
-        <label class="sort-label" for="noteSort">Sort notes</label>
+        <div class="notes-sidebar-heading">
+          <h2>Your notes</h2>
+          <button type="button" class="new-note-btn" id="newNoteBtn" title="New note" aria-label="New note"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>New</span></button>
+        </div>
+        <label class="sort-label" for="noteSort">Sort by</label>
         <select id="noteSort" class="note-sort">
           <option value="manual">Custom order</option>
           <option value="title">Name</option>
@@ -36,19 +43,45 @@
         <ol class="note-tabs" id="noteTabs" aria-label="Note tabs"></ol>
       </aside>
       <div class="note-work-area">
-        <div class="note-title-row" hidden>
+        <div class="note-title-row">
           <label class="sr-only" for="noteTitle">Note name</label>
-          <input id="noteTitle" class="note-title-input" dir="auto" maxlength="100" placeholder="Name this note" autocomplete="off">
+          <input id="noteTitle" class="note-title-input" dir="auto" maxlength="100" placeholder="Untitled note" autocomplete="off">
         </div>
         <section class="editor-shell" data-view="split" id="editorShell">
-          <div class="pane write-pane"><div class="pane-label">Markdown</div><div class="md-toolbar" role="toolbar" aria-label="Format markdown"><button type="button" data-md="bold" title="Bold (Ctrl+B)" class="md-bold">B</button><button type="button" data-md="italic" title="Italic (Ctrl+I)" class="md-italic">I</button><button type="button" data-md="strike" title="Strikethrough" class="md-strike">S</button><button type="button" data-md="heading" title="Heading">H</button><button type="button" data-md="quote" title="Quote">❝</button><button type="button" data-md="ul" title="Bullet list">•</button><button type="button" data-md="ol" title="Numbered list">1.</button><button type="button" data-md="code" title="Inline code">`</button><button type="button" data-md="codeblock" title="Code block">{}</button><button type="button" data-md="link" title="Link">[]()</button></div><textarea id="notepadInput" spellcheck="true" aria-label="Markdown notepad" placeholder="# Start writing…"></textarea></div>
-          <article class="pane preview-pane"><div class="pane-label">Preview</div><div class="markdown-preview" id="notepadPreview" dir="auto"></div></article>
+          <div class="pane write-pane">
+            <div class="md-toolbar" role="toolbar" aria-label="Format markdown">
+              <button type="button" data-md="bold" title="Bold (Ctrl+B)" aria-label="Bold"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h6a3.5 3.5 0 0 1 0 7H7zM7 12h7a3.5 3.5 0 0 1 0 7H7z"/></svg></button>
+              <button type="button" data-md="italic" title="Italic (Ctrl+I)" aria-label="Italic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 4h-9M14 20H5M15 4 9 20"/></svg></button>
+              <button type="button" data-md="strike" title="Strikethrough" aria-label="Strikethrough"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 5H9.5a3 3 0 0 0-1.4 5.6M14 13a3.5 3.5 0 0 1-1 6H6M4 12h16"/></svg></button>
+              <span class="md-toolbar-separator" aria-hidden="true"></span>
+              <button type="button" data-md="heading" title="Heading" aria-label="Heading"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4v16M18 4v16M6 12h12"/></svg></button>
+              <button type="button" data-md="quote" title="Quote" aria-label="Quote"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h5v5c0 3-1.5 5-4 5M14 7h5v5c0 3-1.5 5-4 5"/></svg></button>
+              <span class="md-toolbar-separator" aria-hidden="true"></span>
+              <button type="button" data-md="ul" title="Bullet list" aria-label="Bullet list"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r=".6"/><circle cx="4.5" cy="12" r=".6"/><circle cx="4.5" cy="18" r=".6"/></svg></button>
+              <button type="button" data-md="ol" title="Numbered list" aria-label="Numbered list"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 6h10M10 12h10M10 18h10M4 5l1.5-1v5M3.5 14.5c.4-.6 1-.9 1.6-.9.8 0 1.4.5 1.4 1.2 0 1.2-3 2.3-3 3.7h3"/></svg></button>
+              <button type="button" data-md="task" title="Task checklist" aria-label="Task checklist"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="6" height="6" rx="1.2"/><path d="m4.8 16.5 1.6 1.6 3-3.2M13 7.5h7.5M13 16.5h7.5"/></svg></button>
+              <span class="md-toolbar-separator" aria-hidden="true"></span>
+              <button type="button" data-md="code" title="Inline code" aria-label="Inline code"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></svg></button>
+              <button type="button" data-md="codeblock" title="Code block" aria-label="Code block"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m10 9.5-2.5 2.5 2.5 2.5M14 9.5l2.5 2.5-2.5 2.5"/></svg></button>
+              <button type="button" data-md="link" title="Link" aria-label="Link"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg></button>
+              <span class="md-toolbar-separator" aria-hidden="true"></span>
+              <button type="button" data-md="table" title="Insert table" aria-label="Insert table"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M10 10v10"/></svg></button>
+              <button type="button" data-md="divider" title="Horizontal divider" aria-label="Horizontal divider"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h18"/><path d="M8 6h8M8 18h8" opacity=".4"/></svg></button>
+            </div>
+            <textarea id="notepadInput" spellcheck="true" aria-label="Markdown notepad" placeholder="Start writing… Markdown works here: # heading, **bold**, - list"></textarea>
+          </div>
+          <article class="pane preview-pane"><div class="pane-label"><span>Preview</span></div><div class="markdown-preview" id="notepadPreview" dir="auto"></div></article>
         </section>
-        <footer class="editor-status"><span id="writingStats">0 words · 0 characters</span><span id="cursorPosition">Ln 1, Col 1</span><button type="button" id="downloadNote" title="Download this note as Markdown">↓ Export .md</button></footer>
+        <footer class="editor-status">
+          <span id="writingStats">0 words · 0 characters</span>
+          <span class="status-dot" aria-hidden="true">·</span>
+          <span id="cursorPosition">Ln 1, Col 1</span>
+          <button type="button" id="downloadNote" title="Download this note as Markdown"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m-5-5 5 5 5-5M5 20h14"/></svg>Export .md</button>
+        </footer>
       </div>
     </section>
   </main>
   <script src="../assets/voice-input.js" defer></script>
-  <script src="static/app.js?v=issue19-1" defer></script>
+  <script src="static/app.js?v=notepad-ui-1" defer></script>
 </body>
 </html>

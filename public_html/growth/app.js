@@ -1,5 +1,5 @@
 import '../assets/html-escape.js?v=issue19-1';
-import {KEY, dimensions, array, documentState, sources, habitData, summary, goalProgress, today, nextReview} from '../assets/growth-model.js?v=issue19-1';
+import {KEY, dimensions, dimensionIcon, array, documentState, sources, habitData, summary, goalProgress, today, nextReview} from '../assets/growth-model.js?v=issue19-1';
 import {createReviewStepper} from './review-stepper.js?v=issue19-1';
 import {shareReviewImage} from './share-image.js?v=issue19-1';
 const $=id=>document.getElementById(id);
@@ -44,7 +44,7 @@ function render() {
   $('dimensions').innerHTML=dimensions.map(d=>{
     const plans=activePlans(d.id),s=summary(plans,source,habit);
     return `<button class="dimension" data-dimension="${d.id}" style="--tone:${d.color}" aria-pressed="${d.id===selected}">
-      <span class="dimension-head"><span class="dimension-icon" aria-hidden="true">${d.icon}</span><span class="dimension-name">${d.name}</span></span>
+      <span class="dimension-head"><span class="dimension-icon" aria-hidden="true">${dimensionIcon(d.id)}</span><span class="dimension-name">${d.name}</span></span>
       <span class="dimension-score${s.goalPct===null?' is-empty':''}"><strong>${s.goalPct??'—'}</strong>${s.goalPct===null?'':'<small>%</small>'}<span>SMART progress</span></span>
       <span class="track" aria-hidden="true"><span style="width:${s.goalPct??0}%"></span></span>
       <span class="dimension-foot"><span>Habits <b>${habit?pct(s.habitPct):'—'}</b></span><span>Plans <b>${plans.length}</b></span></span>
@@ -52,7 +52,7 @@ function render() {
   }).join('');
   const dimension=dimensions.find(d=>d.id===selected);
   $('detail').style.setProperty('--tone',dimension.color);
-  $('dimensionIcon').textContent=dimension.icon;$('dimensionTitle').textContent=dimension.name;$('dimensionHint').textContent=dimension.hint;
+  $('dimensionIcon').innerHTML=dimensionIcon(dimension.id);$('dimensionTitle').textContent=dimension.name;$('dimensionHint').textContent=dimension.hint;
   const plans=doc.plans.filter(p=>p.dimensionId===selected);
   $('plans').innerHTML=plans.length?plans.map(p=>{
     const s=summary([p],source,habit);
