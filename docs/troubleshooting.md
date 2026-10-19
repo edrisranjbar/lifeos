@@ -24,6 +24,7 @@ Common first-run issues and how to fix them.
   1. Set `LIFEOS_TRUST_PROXY=true` in your `.env` file (or `trust_proxy => true` in `config.php`).
   2. Ensure your reverse proxy (Caddy, nginx, Traefik) passes `X-Forwarded-For` and `X-Forwarded-Proto`. The backend will then extract the client IP address from the last `X-Forwarded-For` entry.
   3. Ensure the backend container is only reachable through your trusted proxy to prevent header spoofing.
+  4. Working Caddy and nginx configurations are in the [reverse proxy examples](deployment.md#reverse-proxy-examples).
 
 ---
 
@@ -52,24 +53,25 @@ Common first-run issues and how to fix them.
      docker compose ps db
      docker compose logs db
      ```
-  3. Verify that `LIFEOS_DB_PASSWORD` in `.env` matches the database password configured for MySQL.
+  3. If `db` is healthy but the app is still refused, see the password note in [item 5](#5-database-connection-refused-on-initial-startup): MySQL only reads `LIFEOS_DB_PASSWORD` the first time it creates its data volume.
 
 ---
 
 ### 5. Database connection refused on initial startup
 
 - **Symptom**: Opening the application in a browser shows a database error or 500 status stating `Connection refused` or `Access denied`.
-- **Cause**: In Docker, the database service needs a few seconds to run initial MySQL initialization scripts on the first startup before accepting client connections. On shared hosting, MySQL credentials or privileges may be incorrect.
+- **Cause**: In Docker there are two common reasons. On the very first start, the database service needs a few seconds to initialize before it accepts connections. Later, if you changed `LIFEOS_DB_PASSWORD` in `.env` after the first start, `Access denied` is expected: MySQL only reads that password when it first creates its data volume, so the stored password and the one in `.env` no longer match even though they may look identical. On shared hosting, MySQL credentials or privileges may be incorrect.
 - **Fix**:
   1. In Docker, wait for the `db` healthcheck to pass. The `app` service depends on `condition: service_healthy` for `db`.
-  2. On shared hosting, verify in `config.php` that `db_host`, `db_user`, `db_password`, and `db_name` match the MySQL database details created in your hosting control panel.
-  3. Ensure the database user has permissions to create tables and insert records.
+  2. If you changed `LIFEOS_DB_PASSWORD` after the first start, put the original password back in `.env` and restart with `docker compose up -d`. Only if the data is disposable, you can instead start fresh with `docker compose down -v`, **which permanently deletes the database and the attachments volume**. Back up first (see [Backups and recovery](deployment.md#backups-and-recovery)).
+  3. On shared hosting, verify in `config.php` that `db_host`, `db_user`, `db_password`, and `db_name` match the MySQL database details created in your hosting control panel.
+  4. Ensure the database user has permissions to create tables and insert records.
 
 ---
 
 ### 6. Session cookie not secure over HTTPS
 
-- **Symptom**: The browser warns about insecure cookies or does not persist session logins over HTTPS behind a reverse proxy.
+- **Symptom**: Sign-in works, but in the browser's developer tools (Application, then Cookies) the session cookie is missing the **Secure** flag even though you use HTTPS behind a reverse proxy. Login itself is not blocked; the cookie is just less protected.
 - **Cause**: The application terminates behind a proxy on plain HTTP and does not know the original connection was HTTPS because `X-Forwarded-Proto` is missing or `LIFEOS_TRUST_PROXY` is `false`.
 - **Fix**:
   1. Set `LIFEOS_TRUST_PROXY=true` in `.env`.
