@@ -11,6 +11,20 @@ cp .env.example .env    # set LIFEOS_USERNAME, LIFEOS_PASSWORD and both database
 docker compose up -d
 ```
 
+### Prebuilt image (no clone, no build)
+
+Every release is also published as a multi-architecture image (`linux/amd64` and `linux/arm64`, so it runs on a Raspberry Pi) at `ghcr.io/edrisranjbar/lifeos`. `docker-compose.image.yml` is the same stack as `docker-compose.yml`, except that the app service pulls that image:
+
+```sh
+curl -fsSLO https://raw.githubusercontent.com/edrisranjbar/lifeos/main/docker-compose.image.yml
+curl -fsSL https://raw.githubusercontent.com/edrisranjbar/lifeos/main/.env.example -o .env    # then edit it
+docker compose -f docker-compose.image.yml up -d
+```
+
+- **Tags:** `latest` is the newest release, `1.2.0` and `1.2` are fixed versions, and `edge` is the current `main`. Pin one with `LIFEOS_VERSION=1.2.0` in `.env`.
+- **Upgrade:** `docker compose -f docker-compose.image.yml pull && docker compose -f docker-compose.image.yml up -d`. Data lives in the same named volumes, so nothing is lost.
+- **Backups** below work the same way. Add `-f docker-compose.image.yml` to the compose commands if you started the stack from that file.
+
 The app listens on `LIFEOS_PORT` (default 8080). Configuration comes from environment variables through `docker/config.php`, so no `config.php` is needed. Set `LIFEOS_API_TOKEN` to enable the HTTP API and MCP server; leave it empty to disable the API.
 
 Data lives in two named volumes: `mysql` (the database) and `attachments` (Kanban files). Back up both. To upgrade, `git pull` and run `docker compose up -d --build`.

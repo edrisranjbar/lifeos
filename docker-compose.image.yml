@@ -1,0 +1,59 @@
+# Run Edi Life OS from the published image (no git clone, no build):
+#   curl -fsSLO https://raw.githubusercontent.com/edrisranjbar/lifeos/main/docker-compose.image.yml
+#   curl -fsSL https://raw.githubusercontent.com/edrisranjbar/lifeos/main/.env.example -o .env
+#   (edit .env: set your sign-in and passwords)
+#   docker compose -f docker-compose.image.yml up -d
+# Open http://localhost:8080
+# Upgrade later with:  docker compose -f docker-compose.image.yml pull && docker compose -f docker-compose.image.yml up -d
+# To pin a version, add LIFEOS_VERSION=1.2.0 to .env (default: latest)
+services:
+  app:
+    image: ghcr.io/edrisranjbar/lifeos:${LIFEOS_VERSION:-latest}
+    restart: unless-stopped
+    ports:
+      - "${LIFEOS_PORT:-8080}:80"
+    environment:
+      LIFEOS_DB_HOST: db
+      LIFEOS_DB_NAME: lifeos
+      LIFEOS_DB_USER: lifeos
+      LIFEOS_DB_PASSWORD: ${LIFEOS_DB_PASSWORD:?}
+      LIFEOS_USERNAME: ${LIFEOS_USERNAME:-}
+      LIFEOS_PASSWORD: ${LIFEOS_PASSWORD:-}
+      LIFEOS_API_TOKEN: ${LIFEOS_API_TOKEN:-}
+      LIFEOS_TRUST_PROXY: ${LIFEOS_TRUST_PROXY:-false}
+      LIFEOS_TIMEZONE: ${LIFEOS_TIMEZONE:-Asia/Tehran}
+      LIFEOS_WEATHER_LATITUDE: ${LIFEOS_WEATHER_LATITUDE:-26.9492}
+      LIFEOS_WEATHER_LONGITUDE: ${LIFEOS_WEATHER_LONGITUDE:-56.2691}
+      LIFEOS_WEATHER_LOCATION: ${LIFEOS_WEATHER_LOCATION:-Qeshm}
+      TZ: ${LIFEOS_TIMEZONE:-Asia/Tehran}
+    volumes:
+      - attachments:/data/attachments
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "php -r \"exit(@file_get_contents('http://localhost/login.php') === false ? 1 : 0);\""]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  db:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: lifeos
+      MYSQL_USER: lifeos
+      MYSQL_PASSWORD: ${LIFEOS_DB_PASSWORD:?}
+      MYSQL_ROOT_PASSWORD: ${LIFEOS_DB_ROOT_PASSWORD:?}
+    volumes:
+      - mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u lifeos -p\"$$MYSQL_PASSWORD\" --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+volumes:
+  mysql:
+  attachments:
