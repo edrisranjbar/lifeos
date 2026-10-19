@@ -100,3 +100,49 @@ iframe{height:calc(100dvh - 64px)}
 /* Signed-in account avatar beside the theme toggle. */
 .account-chip{flex:0 0 32px;width:32px;height:32px;display:grid;place-items:center;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-size:11px;font-weight:600;letter-spacing:.02em;text-decoration:none;border:1px solid transparent}
 .account-chip:hover{border-color:var(--accent)}
+
+/* Due-date alerts: bell with badge, popover list and Overview banner. */
+.due-bell{position:relative;display:grid;place-items:center;flex:0 0 32px;width:32px;height:32px;padding:0;border-radius:50%;background:transparent;border-color:transparent;color:var(--text-secondary)}
+.due-bell:hover{color:var(--text);border-color:var(--border)}
+.due-bell svg,.due-panel svg,.due-banner svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.due-bell-count{position:absolute;top:-3px;right:-5px;min-width:18px;height:18px;padding:0 5px;border:2px solid var(--bg);border-radius:999px;background:var(--warn,#f3c969);color:#1a1405;font:700 10px/14px Inter,system-ui,sans-serif;text-align:center}
+.due-bell.has-overdue .due-bell-count{background:var(--danger,#ff8060);color:#fff}
+.due-panel{position:fixed;top:72px;right:max(16px,calc((100vw - 1400px)/2));z-index:40;display:flex;flex-direction:column;width:min(400px,calc(100vw - 24px));max-height:min(620px,calc(100dvh - 92px));border:1px solid var(--border);border-radius:16px;background:var(--surface);box-shadow:0 24px 60px rgba(0,0,0,.35);overflow:hidden}
+.due-panel>header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:18px 18px 14px;border-bottom:1px solid var(--border)}
+.due-panel h2{margin:0;font:600 16px Inter,system-ui,sans-serif}
+.due-panel header p{margin:4px 0 0;color:var(--text-tertiary);font-size:12.5px}
+.due-close{display:grid;place-items:center;width:30px;height:30px;padding:0;border-color:transparent;border-radius:8px;background:transparent;color:var(--text-secondary);font-size:20px;line-height:1}
+.due-close:hover{background:var(--surface-2)}
+.due-body{flex:1;overflow-y:auto;padding:6px 10px 10px}
+.due-group h3{display:flex;align-items:center;gap:8px;margin:12px 8px 6px;color:var(--text-tertiary);font:600 11px Inter,system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase}
+.due-group h3 span{padding:1px 7px;border-radius:999px;background:var(--surface-2);color:var(--text-secondary);letter-spacing:0}
+.due-group-overdue h3{color:var(--danger,#ff8060)}
+.due-group ul{margin:0;padding:0;list-style:none}
+.due-item{display:flex;align-items:center;gap:12px;width:100%;padding:10px 8px;border:0;border-radius:10px;background:transparent;color:var(--text);text-align:start}
+.due-item:hover{background:var(--surface-2)}
+.due-item-icon{display:grid;place-items:center;flex:none;width:34px;height:34px;border-radius:10px;background:var(--accent-soft);color:var(--accent)}
+.due-item-icon svg{width:16px;height:16px}
+.due-finance .due-item-icon{background:color-mix(in srgb,#f3c969 16%,transparent);color:#d6a344}
+.due-goals .due-item-icon{background:color-mix(in srgb,#7da5ee 16%,transparent);color:#7da5ee}
+.due-item-text{display:flex;flex:1;flex-direction:column;gap:2px;min-width:0}
+.due-item-text strong{overflow:hidden;font-size:13.5px;font-weight:600;text-overflow:ellipsis;white-space:nowrap}
+.due-item-text small{overflow:hidden;color:var(--text-tertiary);font-size:12px;text-overflow:ellipsis;white-space:nowrap}
+.due-item-when{flex:none;color:var(--text-secondary);font-size:12px;font-variant-numeric:tabular-nums}
+.due-group-overdue .due-item-when{color:var(--danger,#ff8060);font-weight:600}
+.due-empty{display:flex;flex-direction:column;align-items:center;gap:6px;padding:36px 16px;color:var(--text-tertiary);text-align:center;font-size:13px}
+.due-empty svg{width:28px;height:28px;margin-bottom:4px;color:var(--accent)}
+.due-empty strong{color:var(--text);font-size:14px}
+.due-panel>footer{padding:12px 18px;border-top:1px solid var(--border);background:var(--surface-2);text-align:start;font-size:12.5px;line-height:1.5}
+.due-notify{display:flex;align-items:center;justify-content:space-between;gap:12px;color:var(--text-secondary)}
+.due-notify button{flex:none;padding:6px 12px;border-radius:8px;font-size:12.5px;font-weight:600}
+.due-notify button[data-due-notify="on"]{border-color:var(--accent);background:var(--accent);color:var(--bg)}
+.due-notify-note,.due-error{margin:0;color:var(--text-tertiary)}
+.due-error{margin-top:8px;color:var(--danger,#ff8060)}
+.due-banner{display:flex;align-items:center;gap:12px;width:100%;margin:0 0 22px;padding:12px 16px;border:1px solid color-mix(in srgb,var(--warn,#f3c969) 40%,var(--border));border-radius:12px;background:color-mix(in srgb,var(--warn,#f3c969) 9%,var(--surface));color:var(--text-secondary);font-size:13.5px;text-align:start}
+.due-banner svg{color:var(--warn,#f3c969)}
+.due-banner strong{color:var(--text)}
+.due-banner.is-overdue{border-color:color-mix(in srgb,var(--danger,#ff8060) 45%,var(--border));background:color-mix(in srgb,var(--danger,#ff8060) 8%,var(--surface))}
+.due-banner.is-overdue svg{color:var(--danger,#ff8060)}
+.due-banner-action{margin-inline-start:auto;color:var(--accent);font-weight:600;white-space:nowrap}
+.due-banner:hover{border-color:var(--accent)}
+@media(max-width:900px){.due-bell{flex-basis:44px;width:44px;height:44px}.due-panel{top:70px;right:12px;left:12px;width:auto}}

@@ -2,6 +2,7 @@ import { mountFocusAudio } from './focus-audio.js?v=issue19-1';
 import { remainingSeconds, nextMode } from './timer.mjs';
 import { mountDashboard, refreshDashboard } from './dashboard.js?v=issue19-1';
 import { mountMobileNavigation } from './mobile-nav.js?v=issue19-1';
+import { mountDueAlerts } from './due-alerts.js?v=due-alerts-1';
 await window.appStorageReady;
 mountDashboard();
 const $=id=>document.getElementById(id);
@@ -36,6 +37,16 @@ addEventListener('message',event=>{
 // Keep planning together in the menu: Growth, then Goals, then Habittify.
 {const growthLink=document.querySelector('nav a[href="#growth"]'),goalsLink=document.querySelector('nav a[href="#goals"]'),habitsLink=document.querySelector('nav a[href="#habittify"]');if(growthLink&&goalsLink&&habitsLink){growthLink.after(goalsLink);goalsLink.after(habitsLink);}}
 mountMobileNavigation();
+// Open a due item in its app, reusing the deep links the Calendar and Growth send.
+function openDueItem(open){
+  const frame=$(open?.page);if(!frame||!['kanban','goals','finance'].includes(open.page))return;
+  const url=new URL(frame.dataset.src,location.href);
+  if(open.page==='kanban'){url.searchParams.set('board',open.boardId);url.searchParams.set('card',open.cardId);}
+  if(open.page==='goals')url.searchParams.set('goal',open.goalId);
+  if(open.page==='finance'){url.searchParams.set('payment',open.occurrenceId);url.searchParams.set('due',open.dueDate);}
+  frame.src=url.href;location.hash='#'+open.page;
+}
+mountDueAlerts({esc:globalThis.lifeOsHtml.escapeHtml,openItem:openDueItem});
 // Several people can share one device, so always show whose workspace is open.
 fetch('/credentials.php',{headers:{Accept:'application/json'},cache:'no-store',redirect:'error'}).then(response=>response.ok?response.json():null).then(account=>{
   if(typeof account?.username!=='string')return;

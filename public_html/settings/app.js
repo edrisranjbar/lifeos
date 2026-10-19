@@ -131,5 +131,21 @@
     if (current) markCurrent(current.id);
   }); };
   addEventListener('scroll',spy,{passive:true}); addEventListener('resize',spy);
+  // Browser notifications for due items; the bell panel in the top bar shares this setting.
+  import('/assets/due-alerts.js?v=due-alerts-1').then(due=>{
+    const button=$('dueNotifyToggle');
+    const sync=()=>{
+      if (!due.notificationsSupported()) { button.hidden=true; $('dueNotifyHint').textContent='This browser does not support notifications.'; return; }
+      const blocked=Notification.permission==='denied';
+      button.disabled=blocked; button.textContent=due.notificationsEnabled()?'Turn off':'Turn on';
+      if (blocked) $('dueNotifyHint').textContent='Notifications are blocked for this site. Allow them in your browser settings to turn this on.';
+    };
+    button.addEventListener('click',async()=>{
+      try { if (due.notificationsEnabled()) due.disableNotifications(); else await due.enableNotifications(); status('preferenceMessage',due.notificationsEnabled()?'Due-date notifications are on for this device.':'Due-date notifications are off.','success'); }
+      catch (error) { status('preferenceMessage',error.message,'error'); }
+      sync();
+    });
+    sync();
+  }).catch(()=>{ $('dueNotifyToggle').hidden=true; });
   loadAccount();
 })();
