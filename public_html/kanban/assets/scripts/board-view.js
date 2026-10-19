@@ -10,7 +10,7 @@ function renderBoardContent() {
 
   const board = getActiveBoard();
   if (!board) {
-    container.innerHTML = '<div class="empty-board"><h3>No boards</h3><p>Create a board to get started</p></div>';
+    container.innerHTML = window.lifeOsI18n.markup('<div class="empty-board"><h3>No boards</h3><p>Create a board to get started</p></div>');
     return;
   }
 
@@ -19,7 +19,7 @@ function renderBoardContent() {
   $('boardDescription').textContent = board.description || '';
   $('boardDescription').hidden = !board.description;
   const cardCount = board.columns.reduce((total, column) => total + column.cards.length, 0);
-  $('boardSummary').textContent = `${board.columns.length} lists · ${cardCount} cards`;
+  $('boardSummary').textContent = window.lifeOsI18n.t("{value0} lists · {value1} cards",{value0:board.columns.length,value1:cardCount});
   container.innerHTML = '';
 
   board.columns.forEach(column => {
@@ -31,23 +31,23 @@ function renderBoardContent() {
     colEl.innerHTML = `
       <div class="column-header">
         <div class="column-title-wrap">
-          <span class="column-title">${escapeHtml(column.name)}</span>
+          <span class="column-title">${escapeHtml(['Backlog','To Do','In Progress','To Review','Done'].includes(column.name)?window.lifeOsI18n.t(column.name):column.name)}</span>
           <span class="column-count">${column.cards.length}</span>
         </div>
         <div class="column-menu">
-          <button class="icon-btn column-actions" type="button" aria-label="Actions for ${escapeHtml(column.name)}" aria-haspopup="menu" aria-expanded="false" title="Column actions">⋯</button>
+          <button class="icon-btn column-actions" type="button" aria-label="Actions for ${escapeHtml(['Backlog','To Do','In Progress','To Review','Done'].includes(column.name)?window.lifeOsI18n.t(column.name):column.name)}" aria-haspopup="menu" aria-expanded="false" title="${window.lifeOsI18n.t("Column actions")}">⋯</button>
           <div class="column-actions-menu" role="menu" hidden>
-            <button type="button" role="menuitem" data-action="add">Add card</button>
-            <button type="button" role="menuitem" data-action="rename">Rename column</button>
+            <button type="button" role="menuitem" data-action="add">${window.lifeOsI18n.t("Add card")}</button>
+            <button type="button" role="menuitem" data-action="rename">${window.lifeOsI18n.t("Rename column")}</button>
             <div class="menu-divider" role="separator"></div>
-            <button type="button" role="menuitem" data-action="delete" class="menu-danger">Delete column</button>
+            <button type="button" role="menuitem" data-action="delete" class="menu-danger">${window.lifeOsI18n.t("Delete column")}</button>
           </div>
         </div>
       </div>
       <div class="column-cards" id="column-${column.id}"></div>
       <div class="column-footer">
-        <button class="add-card-btn" aria-label="Add card to ${escapeHtml(column.name)}">
-          <span>+ Add card</span>
+        <button class="add-card-btn" aria-label="Add card to ${escapeHtml(['Backlog','To Do','In Progress','To Review','Done'].includes(column.name)?window.lifeOsI18n.t(column.name):column.name)}">
+          <span>${window.lifeOsI18n.t("+ Add card")}</span>
         </button>
       </div>
     `;
@@ -92,7 +92,7 @@ function renderBoardContent() {
             newCard.title = newValue;
             newCardEl.textContent = newValue;
             saveState();
-            showToast('Card added', 'success');
+            showToast(window.lifeOsI18n.t('Card added'), 'success');
           }, discard);
         }
       }, 50);
@@ -124,15 +124,15 @@ function renderBoardContent() {
       if (action === 'rename') { startColumnRename(titleSpan, column.id); return; }
       if (action !== 'delete') return;
       if (column.cards.length > 0) {
-        if (!confirm(`Delete column "${column.name}" and all its ${column.cards.length} card(s)?`)) return;
+        if (!confirm(window.lifeOsI18n.t("Delete column \"{value0}\" and all its {value1} card(s)?",{value0:column.name,value1:column.cards.length}))) return;
       } else {
-        if (!confirm(`Delete column "${column.name}"?`)) return;
+        if (!confirm(window.lifeOsI18n.t("Delete column \"{value0}\"?",{value0:column.name}))) return;
       }
       const board = getActiveBoard();
       board.columns = board.columns.filter(c => c.id !== column.id);
       saveState();
       render();
-      showToast('Column deleted', 'success');
+      showToast(window.lifeOsI18n.t('Column deleted'), 'success');
     });
 
     // Column drag & drop
@@ -174,13 +174,13 @@ function renderBoardContent() {
       // Card content with inline edit support
       cardEl.innerHTML = `
         <div class="card-header">
-          <span class="priority-dot ${priorityClass}" role="img" aria-label="${priority} priority" title="${priority} priority"></span>
+          <span class="priority-dot ${priorityClass}" role="img" aria-label="${escapeHtml(window.lifeOsI18n.t(priority + ' priority'))}" title="${escapeHtml(window.lifeOsI18n.t(priority + ' priority'))}"></span>
           <h3 class="card-title" contenteditable="false">${escapeHtml(card.title)}</h3>
-          <details class="card-menu"><summary aria-label="Card actions" title="Card actions">⋯</summary><div class="card-actions-menu"><button type="button" data-action="edit">Edit card</button><button type="button" data-action="move">Move to another project</button><button type="button" data-action="delete" class="menu-danger">Delete card</button></div></details>
+          <details class="card-menu"><summary aria-label="${window.lifeOsI18n.t("Card actions")}" title="${window.lifeOsI18n.t("Card actions")}">⋯</summary><div class="card-actions-menu"><button type="button" data-action="edit">${window.lifeOsI18n.t("Edit card")}</button><button type="button" data-action="move">${window.lifeOsI18n.t("Move to another project")}</button><button type="button" data-action="delete" class="menu-danger">${window.lifeOsI18n.t("Delete card")}</button></div></details>
         </div>
         ${card.description ? `<p class="card-desc">${escapeHtml(card.description)}</p>` : ''}
         ${labelsHtml ? `<div class="card-meta"><div class="card-labels">${labelsHtml}</div></div>` : ''}
-        ${(dueDate || checklist.length) ? `<div class="card-details-meta">${dueDate ? `<span class="due-badge ${dueClass}" title="Due ${escapeHtml(dueDate)}">◷ ${escapeHtml(formatCardDueDate(dueDate))}</span>` : ''}${checklist.length ? `<span class="checklist-badge" title="Checklist progress">☑ ${completed}/${checklist.length}</span>` : ''}</div>` : ''}
+        ${(dueDate || checklist.length) ? `<div class="card-details-meta">${dueDate ? `<span class="due-badge ${dueClass}" title="Due ${escapeHtml(dueDate)}">◷ ${escapeHtml(formatCardDueDate(dueDate))}</span>` : ''}${checklist.length ? `<span class="checklist-badge" title="${window.lifeOsI18n.t("Checklist progress")}">☑ ${completed}/${checklist.length}</span>` : ''}</div>` : ''}
       `;
 
       // Remove card
@@ -196,11 +196,11 @@ function renderBoardContent() {
       });
       cardEl.querySelector('[data-action="delete"]').addEventListener('click', (e) => {
         e.stopPropagation();
-        if (!confirm('Delete this card?')) return;
+        if (!confirm(window.lifeOsI18n.t('Delete this card?'))) return;
         column.cards.splice(cardIndex, 1);
         saveState();
         render();
-        showToast('Card deleted', 'success');
+        showToast(window.lifeOsI18n.t('Card deleted'), 'success');
       });
 
       // Open details from any part of the card, as on a Trello board.
@@ -228,13 +228,13 @@ function renderBoardContent() {
   const addColEl = document.createElement('div');
   addColEl.className = 'add-column-card';
   addColEl.innerHTML = `
-    <button class="add-column-btn" aria-label="Add new column">
+    <button class="add-column-btn" aria-label="${window.lifeOsI18n.t("Add new column")}">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      <span>Add Column</span>
+      <span>${window.lifeOsI18n.t("Add Column")}</span>
     </button>
   `;
   addColEl.querySelector('.add-column-btn').addEventListener('click', () => {
-    const colName = prompt('Enter column name:');
+    const colName = prompt(window.lifeOsI18n.t('Enter column name:'));
     if (colName && colName.trim()) {
       const board = getActiveBoard();
       board.columns.push({
@@ -244,7 +244,7 @@ function renderBoardContent() {
       });
       saveState();
       render();
-      showToast('Column added', 'success');
+      showToast(window.lifeOsI18n.t('Column added'), 'success');
     }
   });
   container.appendChild(addColEl);

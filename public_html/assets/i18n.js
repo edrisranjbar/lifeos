@@ -5,7 +5,7 @@
   const KEY = 'edi_language_v1';
   // Per-device hint so the first paint already has the right direction.
   const HINT = 'lifeos-language';
-  const VERSION = 'i18n-1';
+  const VERSION = 'persian-1';
   const LANGUAGES = [
     { code: 'en', name: 'English', dir: 'ltr', locale: null },
     { code: 'fa', name: 'فارسی', dir: 'rtl', locale: 'fa-IR-u-ca-gregory' },
@@ -24,7 +24,8 @@
   try { use(localStorage.getItem(HINT)); } catch { /* Storage may be unavailable. */ }
 
   function t(text, vars) {
-    let out = Object.prototype.hasOwnProperty.call(dictionary, text) ? dictionary[text] : text;
+    const key = String(text).replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
+    let out = Object.prototype.hasOwnProperty.call(dictionary, key) ? dictionary[key] : text;
     if (vars) out = out.replace(/\{(\w+)\}/g, (match, name) => (name in vars ? String(vars[name]) : match));
     return out;
   }
@@ -51,17 +52,28 @@
     });
     for (let node = walker.nextNode(); node; node = walker.nextNode()) {
       const text = node.nodeValue.trim();
-      if (!text || !/\p{L}/u.test(text) || !Object.prototype.hasOwnProperty.call(dictionary, text)) continue;
-      node.nodeValue = node.nodeValue.replace(text, dictionary[text]);
+      const key = text.replace(/\s+/g, ' ');
+      if (!text || !Object.prototype.hasOwnProperty.call(dictionary, key)) continue;
+      node.nodeValue = node.nodeValue.replace(text, dictionary[key]);
     }
     const elements = [base, ...base.querySelectorAll(ATTRIBUTES.map(name => `[${name}]`).join(','))];
     for (const element of elements) {
       if (element.closest?.(SKIP)) continue;
       for (const name of ATTRIBUTES) {
         const value = element.getAttribute?.(name);
-        if (value && Object.prototype.hasOwnProperty.call(dictionary, value.trim())) element.setAttribute(name, dictionary[value.trim()]);
+        const key = value?.replace(/\s+/g, ' ').trim();
+        if (key && Object.prototype.hasOwnProperty.call(dictionary, key)) element.setAttribute(name, dictionary[key]);
       }
     }
+  }
+
+  // Only use with app-owned static markup. User text is interpolated separately
+  // by callers and is never passed through the translation dictionary.
+  function markup(source) {
+    const template = document.createElement('template');
+    template.innerHTML = source;
+    apply(template.content);
+    return template.innerHTML;
   }
 
   function addFont() {
@@ -96,7 +108,7 @@
     apply(document);
   }
 
-  window.lifeOsI18n = { KEY, languages: LANGUAGES, lang: () => current.code, dir: () => current.dir, t, locale, number, date, digits, apply };
+  window.lifeOsI18n = { KEY, languages: LANGUAGES, lang: () => current.code, dir: () => current.dir, t, locale, number, date, digits, apply, markup };
   if (window.appStorageReady) window.appStorageReady = window.appStorageReady.then(load);
 
   // A language change from Settings, another tab or another device reloads the

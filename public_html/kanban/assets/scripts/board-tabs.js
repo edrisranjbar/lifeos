@@ -38,8 +38,8 @@ function renderBoardTabs() {
     const settings = document.createElement('button');
     settings.type = 'button';
     settings.className = 'board-settings';
-    settings.title = 'Board settings';
-    settings.setAttribute('aria-label', `Settings for ${board.name}`);
+    settings.title = window.lifeOsI18n.t('Board settings');
+    settings.setAttribute('aria-label', window.lifeOsI18n.t("Settings for {value0}",{value0:board.name}));
     settings.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m9.5 3-.5 2-2 1.2-2-.6L3 9l1.5 1.5v3L3 15l2 3.4 2-.6L9 19l.5 2h5l.5-2 2-1.2 2 .6 2-3.4-1.5-1.5v-3L21 9l-2-3.4-2 .6L15 5l-.5-2Z"/><circle cx="12" cy="12" r="3"/></svg>';
     settings.addEventListener('click', () => openBoardModal(board.id));
     group.append(tab, settings);
@@ -49,8 +49,8 @@ function renderBoardTabs() {
   // Add board tab
   const addTab = document.createElement('button');
   addTab.className = 'board-add-tab';
-  addTab.title = 'Add new board';
-  addTab.textContent = '+ New board';
+  addTab.title = window.lifeOsI18n.t('Add new board');
+  addTab.textContent = window.lifeOsI18n.t('+ New board');
   addTab.addEventListener('click', () => openBoardModal());
   container.appendChild(addTab);
 }

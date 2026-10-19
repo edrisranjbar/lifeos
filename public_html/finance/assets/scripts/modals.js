@@ -151,14 +151,14 @@ function deleteCategory(id) {
 
 function openAddBudgetModal() {
   openModal(`
-    <div class="section-label" style="margin-bottom:18px;">${esc("Add Budget Category")}</div>
-    <input type="text" id="newCatEmoji" placeholder="${esc("Emoji (optional, e.g. 🎮)")}" class="mb-3" maxlength="4">
-    <input type="text" id="newCatName" placeholder="${esc("Category name (e.g. Entertainment)")}" class="mb-3">
-    <label class="budget-unlimited-choice"><input type="checkbox" id="newCatUnlimited" onchange="toggleBudgetLimit('newCat')"><span>${esc("Unlimited budget")}<small>${esc("Track spending without a limit or over-budget alerts.")}</small></span></label>
-    <input type="number" id="newCatTarget" min="1" step="any" aria-label="${esc('Monthly budget')}" placeholder="${esc(`Monthly budget in ${currencyUnit()}`)}" class="mb-5">
+    <div class="section-label" style="margin-bottom:18px;">${esc(window.lifeOsI18n.t("Add Budget Category"))}</div>
+    <input type="text" id="newCatEmoji" placeholder="${esc(window.lifeOsI18n.t("Emoji (optional, e.g. 🎮)"))}" class="mb-3" maxlength="4">
+    <input type="text" id="newCatName" placeholder="${esc(window.lifeOsI18n.t("Category name (e.g. Entertainment)"))}" class="mb-3">
+    <label class="budget-unlimited-choice"><input type="checkbox" id="newCatUnlimited" onchange="toggleBudgetLimit('newCat')"><span>${esc(window.lifeOsI18n.t("Unlimited budget"))}<small>${esc(window.lifeOsI18n.t("Track spending without a limit or over-budget alerts."))}</small></span></label>
+    <input type="number" id="newCatTarget" min="1" step="any" aria-label="${esc(window.lifeOsI18n.t('Monthly budget'))}" placeholder="${esc(window.lifeOsI18n.t("Monthly budget in {value0}",{value0:currencyUnit()}))}" class="mb-5">
     <div style="display:flex;gap:10px;">
-      <button class="btn-ghost" style="flex:1;padding:13px;" onclick="closeModal()">${esc("Cancel")}</button>
-      <button class="btn-primary" style="flex:1;" onclick="saveNewBudget()">${esc("Add Category")}</button>
+      <button class="btn-ghost" style="flex:1;padding:13px;" onclick="closeModal()">${esc(window.lifeOsI18n.t("Cancel"))}</button>
+      <button class="btn-primary" style="flex:1;" onclick="saveNewBudget()">${esc(window.lifeOsI18n.t("Add Category"))}</button>
     </div>
   `);
 }
@@ -173,20 +173,20 @@ function openEditBudgetModal(id) {
   if (!category) return;
   const parts = splitCategoryLabel(category.label);
   openModal(`
-    <div class="modal-kicker">${esc("Budget category")}</div>
-    <div class="section-label" style="margin-bottom:8px;">${esc("Edit Budget")}</div>
-    <p class="modal-copy">${esc("Change its name, icon, or monthly limit. Existing expenses stay attached.")}</p>
-    <label class="field-label" for="editCatEmoji">${esc("Icon")}</label>
-    <input type="text" id="editCatEmoji" value="${esc(parts.emoji)}" placeholder="${esc("Optional emoji")}" class="mb-3" maxlength="8">
-    <label class="field-label" for="editCatName">${esc("Category name")}</label>
-    <input type="text" id="editCatName" value="${esc(parts.name)}" placeholder="${esc("Category name")}" class="mb-3">
-    <label class="field-label" for="editCatTarget">${esc(`Monthly limit in ${currencyUnit()}`)}</label>
-    <label class="budget-unlimited-choice"><input type="checkbox" id="editCatUnlimited" ${budgetIsUnlimited(category) ? 'checked' : ''} onchange="toggleBudgetLimit('editCat')"><span>${esc("Unlimited budget")}<small>${esc("Track spending without a limit or over-budget alerts.")}</small></span></label>
-    <input type="number" id="editCatTarget" value="${Number(category.target) || 0}" ${budgetIsUnlimited(category) ? 'disabled' : ''} min="1" step="any" class="mb-5" placeholder="${esc(`Monthly budget in ${currencyUnit()}`)}">
+    <div class="modal-kicker">${esc(window.lifeOsI18n.t("Budget category"))}</div>
+    <div class="section-label" style="margin-bottom:8px;">${esc(window.lifeOsI18n.t("Edit Budget"))}</div>
+    <p class="modal-copy">${esc(window.lifeOsI18n.t("Change its name, icon, or monthly limit. Existing expenses stay attached."))}</p>
+    <label class="field-label" for="editCatEmoji">${esc(window.lifeOsI18n.t("Icon"))}</label>
+    <input type="text" id="editCatEmoji" value="${esc(parts.emoji)}" placeholder="${esc(window.lifeOsI18n.t("Optional emoji"))}" class="mb-3" maxlength="8">
+    <label class="field-label" for="editCatName">${esc(window.lifeOsI18n.t("Category name"))}</label>
+    <input type="text" id="editCatName" value="${esc(parts.name)}" placeholder="${esc(window.lifeOsI18n.t("Category name"))}" class="mb-3">
+    <label class="field-label" for="editCatTarget">${esc(window.lifeOsI18n.t("Monthly limit in {value0}",{value0:currencyUnit()}))}</label>
+    <label class="budget-unlimited-choice"><input type="checkbox" id="editCatUnlimited" ${budgetIsUnlimited(category) ? 'checked' : ''} onchange="toggleBudgetLimit('editCat')"><span>${esc(window.lifeOsI18n.t("Unlimited budget"))}<small>${esc(window.lifeOsI18n.t("Track spending without a limit or over-budget alerts."))}</small></span></label>
+    <input type="number" id="editCatTarget" value="${Number(category.target) || 0}" ${budgetIsUnlimited(category) ? 'disabled' : ''} min="1" step="any" class="mb-5" placeholder="${esc(window.lifeOsI18n.t("Monthly budget in {value0}",{value0:currencyUnit()}))}">
     <div class="modal-actions triple">
-      <button type="button" class="btn-ghost btn-danger-ghost" onclick="deleteCategory('${id}')">${esc("🗑️ Delete")}</button>
-      <button type="button" class="btn-ghost" onclick="closeModal()">${esc("Cancel")}</button>
-      <button type="button" class="btn-primary" onclick="saveEditedBudget('${id}')">${esc("Save changes")}</button>
+      <button type="button" class="btn-ghost btn-danger-ghost" onclick="deleteCategory('${id}')">${esc(window.lifeOsI18n.t("🗑️ Delete"))}</button>
+      <button type="button" class="btn-ghost" onclick="closeModal()">${esc(window.lifeOsI18n.t("Cancel"))}</button>
+      <button type="button" class="btn-primary" onclick="saveEditedBudget('${id}')">${esc(window.lifeOsI18n.t("Save changes"))}</button>
     </div>
   `);
   setTimeout(() => document.getElementById("editCatName")?.focus(), 0);
@@ -197,13 +197,13 @@ function openEditIncomeModal(id) {
   const inc = state.incomes.find((i) => i.id === id);
   if (!inc) return;
   openModal(`
-    <div class="section-label" style="margin-bottom:18px;">${esc("Edit Income")}</div>
-    <input type="text" id="editIncomeName" value="${esc(inc.name)}" class="mb-3" placeholder="${esc("Stream name")}">
-    <input type="number" id="editIncomeAmount" value="${inc.amount}" class="mb-5" placeholder="${esc(`Amount in ${currencyUnit()}`)}">
+    <div class="section-label" style="margin-bottom:18px;">${esc(window.lifeOsI18n.t("Edit Income"))}</div>
+    <input type="text" id="editIncomeName" value="${esc(inc.name)}" class="mb-3" placeholder="${esc(window.lifeOsI18n.t("Stream name"))}">
+    <input type="number" id="editIncomeAmount" value="${inc.amount}" class="mb-5" placeholder="${esc(__t('Amount in {unit}', {unit:currencyUnit()}))}">
     <div class="modal-actions triple">
-      <button type="button" class="btn-ghost btn-danger-ghost" onclick="deleteIncome('${id}')">${esc("🗑️ Delete")}</button>
-      <button type="button" class="btn-ghost" onclick="closeModal()">${esc("Cancel")}</button>
-      <button type="button" class="btn-primary" style="flex:1;" onclick="saveEditedIncome('${id}')">${esc("Save changes")}</button>
+      <button type="button" class="btn-ghost btn-danger-ghost" onclick="deleteIncome('${id}')">${esc(window.lifeOsI18n.t("🗑️ Delete"))}</button>
+      <button type="button" class="btn-ghost" onclick="closeModal()">${esc(window.lifeOsI18n.t("Cancel"))}</button>
+      <button type="button" class="btn-primary" style="flex:1;" onclick="saveEditedIncome('${id}')">${esc(window.lifeOsI18n.t("Save changes"))}</button>
     </div>
   `);
 }
@@ -219,14 +219,14 @@ function openEditExpenseModal(id) {
     )
     .join("");
   openModal(`
-    <div class="section-label" style="margin-bottom:18px;">${esc("Edit Expense")}</div>
+    <div class="section-label" style="margin-bottom:18px;">${esc(window.lifeOsI18n.t("Edit Expense"))}</div>
     <select id="editExpenseCategory" class="mb-3">${catOptions}</select>
-    <input type="text" id="editExpenseDesc" value="${esc(exp.desc || "")}" class="mb-3" placeholder="${esc("Description (optional)")}">
-    <input type="number" id="editExpenseAmount" value="${exp.amount}" class="mb-5" placeholder="${esc(`Amount in ${currencyUnit()}`)}">
+    <input type="text" id="editExpenseDesc" value="${esc(exp.desc || "")}" class="mb-3" placeholder="${esc(window.lifeOsI18n.t("Description (optional)"))}">
+    <input type="number" id="editExpenseAmount" value="${exp.amount}" class="mb-5" placeholder="${esc(__t('Amount in {unit}', {unit:currencyUnit()}))}">
     <div class="modal-actions triple">
-      <button type="button" class="btn-ghost btn-danger-ghost" onclick="deleteExpense('${id}')">${esc("🗑️ Delete")}</button>
-      <button type="button" class="btn-ghost" onclick="closeModal()">${esc("Cancel")}</button>
-      <button type="button" class="btn-primary" style="flex:1;" onclick="saveEditedExpense('${id}')">${esc("Save changes")}</button>
+      <button type="button" class="btn-ghost btn-danger-ghost" onclick="deleteExpense('${id}')">${esc(window.lifeOsI18n.t("🗑️ Delete"))}</button>
+      <button type="button" class="btn-ghost" onclick="closeModal()">${esc(window.lifeOsI18n.t("Cancel"))}</button>
+      <button type="button" class="btn-primary" style="flex:1;" onclick="saveEditedExpense('${id}')">${esc(window.lifeOsI18n.t("Save changes"))}</button>
     </div>
   `);
 }

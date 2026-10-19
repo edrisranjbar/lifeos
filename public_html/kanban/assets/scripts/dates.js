@@ -4,7 +4,7 @@ function cardDateString(date) {
 
 function formatCardDueDate(value) {
   const date = parseCardDate(value);
-  return date ? date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' }) : value;
+  return date ? date.toLocaleDateString(window.lifeOsI18n.locale('en-GB'), { day: 'numeric', month: 'long' }) : value;
 }
 
 function parseCardDate(value) {
@@ -58,7 +58,7 @@ function closeCardDates() {
 
 function renderDateCalendar() {
   const month = state.calendarMonth;
-  $('dateCalendarMonth').textContent = month.toLocaleDateString('en-US', {month: 'long', year: 'numeric'});
+  $('dateCalendarMonth').textContent = month.toLocaleDateString(window.lifeOsI18n.locale(), {month: 'long', year: 'numeric'});
   const first = new Date(month.getFullYear(), month.getMonth(), 1 - month.getDay());
   const today = cardDateString(new Date());
   const selected = $(`datePicker${state.calendarTarget}`).value;
@@ -68,9 +68,9 @@ function renderDateCalendar() {
     const date = new Date(first.getFullYear(), first.getMonth(), first.getDate() + index);
     const value = cardDateString(date);
     const button = document.createElement('button');
-    button.type = 'button'; button.textContent = date.getDate();
+    button.type = 'button'; button.textContent = window.lifeOsI18n.number(date.getDate());
     button.className = [date.getMonth() !== month.getMonth() ? 'outside-month' : '', value === today ? 'is-today' : '', value === selected ? 'is-selected' : ''].filter(Boolean).join(' ');
-    button.setAttribute('aria-label', date.toLocaleDateString('en-US', {weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'}));
+    button.setAttribute('aria-label', date.toLocaleDateString(window.lifeOsI18n.locale(), {weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'}));
     button.setAttribute('aria-pressed', String(value === selected));
     if (value === today) button.setAttribute('aria-current', 'date');
     button.addEventListener('click', () => {
@@ -91,7 +91,7 @@ function saveCardDates(remove) {
   const startDate = !remove && $('dateStartEnabled').checked ? $('datePickerStart').value : '';
   const dueDate = !remove && $('dateDueEnabled').checked ? $('datePickerDue').value : '';
   if ((!remove && $('dateStartEnabled').checked && !parseCardDate(startDate)) || (!remove && $('dateDueEnabled').checked && !parseCardDate(dueDate)) || (startDate && dueDate && startDate > dueDate)) {
-    $('datePickerError').textContent = 'Choose valid dates. Start date must be on or before the due date.';
+    $('datePickerError').textContent = window.lifeOsI18n.t('Choose valid dates. Start date must be on or before the due date.');
     $('datePickerError').hidden = false;
     return;
   }
@@ -105,7 +105,7 @@ function saveCardDates(remove) {
   $('cardDueDate').value = dueDate;
   updateCardDateSummary(card);
   saveState(); renderBoardContent(); closeCardDates();
-  showToast(remove ? 'Dates removed' : 'Dates saved', 'success');
+  showToast(remove ? window.lifeOsI18n.t('Dates removed') : window.lifeOsI18n.t('Dates saved'), 'success');
 }
 
 function checkCardReminders() {
@@ -122,7 +122,7 @@ function checkCardReminders() {
         if (now >= due - minutes * 60000 && now <= due + 86400000 && card.reminderShown !== key) {
           card.reminderShown = key;
           saveState();
-          showToast(`Reminder: ${card.title} · due ${card.dueDate} ${card.dueTime || '09:00'}`);
+          showToast(window.lifeOsI18n.t("Reminder: {value0} · due {value1} {value2}",{value0:card.title,value1:card.dueDate,value2:card.dueTime || '09:00'}));
           return;
         }
       }

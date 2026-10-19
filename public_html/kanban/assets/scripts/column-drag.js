@@ -63,5 +63,5 @@ function handleColumnDropOnColumn(e) {
 
   saveState();
   render();
-  showToast('Column moved', 'success');
+  showToast(window.lifeOsI18n.t('Column moved'), 'success');
 }

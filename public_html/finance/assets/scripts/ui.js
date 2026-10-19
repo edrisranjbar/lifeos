@@ -1,6 +1,6 @@
 // ── FORMAT ────────────────────────────────────────────────────────────────────
 function fmt(n) {
-  return Math.abs(n).toLocaleString("en-US");
+  return window.lifeOsI18n.number(Math.abs(n));
 }
 
 function prefersReducedMotion() {
@@ -65,7 +65,7 @@ function applyTheme(theme) {
     toggle.innerHTML = normalized === "dark" ? THEME_ICONS.sun : THEME_ICONS.moon;
     toggle.setAttribute(
       "aria-label",
-      normalized === "dark" ? "Switch to light mode" : "Switch to dark mode",
+      normalized === "dark" ? window.lifeOsI18n.t("Switch to light mode") : window.lifeOsI18n.t("Switch to dark mode"),
     );
   }
 }
@@ -92,25 +92,25 @@ function toggleTheme() {
 // ── SETTINGS MODAL ────────────────────────────────────────────────────────────
 function openSettingsModal() {
   openModal(`
-    <div class="modal-kicker">${esc("Preferences")}</div>
-    <div class="section-label" style="margin-bottom:22px;">${esc("Settings")}</div>
+    <div class="modal-kicker">${esc(window.lifeOsI18n.t("Preferences"))}</div>
+    <div class="section-label" style="margin-bottom:22px;">${esc(window.lifeOsI18n.t("Settings"))}</div>
 
-    <label class="field-label">${esc("Appearance")}</label>
-    <div class="seg mb-4" role="group" aria-label="${esc("Appearance")}">
+    <label class="field-label">${esc(window.lifeOsI18n.t("Appearance"))}</label>
+    <div class="seg mb-4" role="group" aria-label="${esc(window.lifeOsI18n.t("Appearance"))}">
       <button type="button" class="seg-btn${currentTheme() === "dark" ? " active" : ""}" onclick="setAppTheme('dark')">
-        ${THEME_ICONS.moon}<span>${esc("Dark")}</span>
+        ${THEME_ICONS.moon}<span>${esc(window.lifeOsI18n.t("Dark"))}</span>
       </button>
       <button type="button" class="seg-btn${currentTheme() === "light" ? " active" : ""}" onclick="setAppTheme('light')">
-        ${THEME_ICONS.sun}<span>${esc("Light")}</span>
+        ${THEME_ICONS.sun}<span>${esc(window.lifeOsI18n.t("Light"))}</span>
       </button>
     </div>
 
     <div class="danger-zone">
       <div class="danger-copy">
-        <strong>${esc("Reset all data")}</strong>
+        <strong>${esc(window.lifeOsI18n.t("Reset all data"))}</strong>
         <p>${esc(__t("Every income stream, expense and budget in \"{period}\" will be wiped and replaced with defaults. This cannot be undone.", { period: activePeriod }))}</p>
       </div>
-      <button class="btn-danger-solid" onclick="clearAllData()">${esc("Reset period data")}</button>
+      <button class="btn-danger-solid" onclick="clearAllData()">${esc(window.lifeOsI18n.t("Reset period data"))}</button>
     </div>
   `);
 }

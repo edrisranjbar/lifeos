@@ -89,5 +89,5 @@ function handleCardContainerDrop(e) {
 
   saveState();
   render();
-  showToast('Card moved', 'success');
+  showToast(window.lifeOsI18n.t('Card moved'), 'success');
 }

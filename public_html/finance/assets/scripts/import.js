@@ -9,17 +9,17 @@ let pendingFileName = "";
 function openImportModal() {
   openModal(
     `
-    <div class="section-label" style="margin-bottom:18px;">${esc("Import from Excel")}</div>
+    <div class="section-label" style="margin-bottom:18px;">${esc(window.lifeOsI18n.t("Import from Excel"))}</div>
     <p style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:18px;">
-      ${esc("Upload your finance workbook. Sheets matching the Budget structure (category totals, income sources, and a transaction list) will be parsed automatically.")}
+      ${esc(window.lifeOsI18n.t("Upload your finance workbook. Sheets matching the Budget structure (category totals, income sources, and a transaction list) will be parsed automatically."))}
     </p>
     <div class="upload-zone" id="uploadZone">
       <input type="file" id="excelFileInput" accept=".xlsx,.xls" onchange="handleFileSelect(event)">
-      <div style="font-size:14px;font-weight:600;color:var(--jade);">${esc("📂 Choose .xlsx file")}</div>
-      <div style="font-size:11px;color:var(--muted);margin-top:5px;">${esc("or drag & drop here")}</div>
+      <div style="font-size:14px;font-weight:600;color:var(--jade);">${esc(window.lifeOsI18n.t("📂 Choose .xlsx file"))}</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:5px;">${esc(window.lifeOsI18n.t("or drag & drop here"))}</div>
     </div>
     <div style="display:flex;gap:10px;margin-top:22px;">
-      <button class="btn-ghost" style="flex:1;padding:13px;" onclick="closeModal()">${esc("Cancel")}</button>
+      <button class="btn-ghost" style="flex:1;padding:13px;" onclick="closeModal()">${esc(window.lifeOsI18n.t("Cancel"))}</button>
     </div>
   `,
     true,
@@ -40,7 +40,7 @@ function openImportModal() {
       if (file && /\.(xlsx|xls)$/i.test(file.name)) {
         readWorkbookFile(file);
       } else {
-        showToast("Please drop an .xlsx or .xls file", "error");
+        showToast(window.lifeOsI18n.t("Please drop an .xlsx or .xls file"), "error");
       }
     });
   }, 0);
@@ -68,7 +68,7 @@ function readWorkbookFile(file) {
       showToast(__t("Could not read file: {err}", { err: err.message }), "error");
     }
   };
-  reader.onerror = () => showToast("Failed to read file", "error");
+  reader.onerror = () => showToast(window.lifeOsI18n.t("Failed to read file"), "error");
   reader.readAsArrayBuffer(file);
 }
 
@@ -83,11 +83,11 @@ function showSheetPicker(sheetNames) {
   const options = sheetNames
     .map((name) => {
       const lower = name.toLowerCase();
-      let tag = `<span class="tag" style="background:var(--ink-line);color:var(--muted);">${esc("Other")}</span>`;
+      let tag = `<span class="tag" style="background:var(--ink-line);color:var(--muted);">${esc(window.lifeOsI18n.t("Other"))}</span>`;
       if (lower.includes("budget"))
-        tag = `<span class="tag tag-jade">${esc("Budget")}</span>`;
+        tag = `<span class="tag tag-jade">${esc(window.lifeOsI18n.t("Budget"))}</span>`;
       else if (lower.includes("accounting"))
-        tag = `<span class="tag" style="background:var(--brass-soft);color:var(--brass);">${esc("Ledger")}</span>`;
+        tag = `<span class="tag" style="background:var(--brass-soft);color:var(--brass);">${esc(window.lifeOsI18n.t("Ledger"))}</span>`;
       return `<div class="sheet-option" onclick="importFromSheet('${esc(name)}')">
       <span style="font-size:13px;font-weight:600;">${esc(name)}</span>
       ${tag}
@@ -97,12 +97,12 @@ function showSheetPicker(sheetNames) {
 
   openModal(
     `
-    <div class="section-label" style="margin-bottom:8px;">${esc("Multiple sheets found")}</div>
+    <div class="section-label" style="margin-bottom:8px;">${esc(window.lifeOsI18n.t("Multiple sheets found"))}</div>
     <p style="font-size:13px;color:var(--muted);margin-bottom:18px;">${esc(__t("Choose which sheet to import from {file}.", { file: pendingFileName }))}</p>
     <div style="max-height:340px;overflow-y:auto;" class="scrollable">${options}</div>
     <div style="display:flex;gap:10px;margin-top:18px;">
-      <button class="btn-ghost" style="flex:1;padding:13px;" onclick="closeModal()">${esc("Cancel")}</button>
-      ${budgetSheetNames.length > 1 ? `<button class="btn-primary" style="flex:1;" onclick="importBudgetSheets('${encodedBudgetSheets}')">${esc("Import all Budget sheets")}</button>` : ""}
+      <button class="btn-ghost" style="flex:1;padding:13px;" onclick="closeModal()">${esc(window.lifeOsI18n.t("Cancel"))}</button>
+      ${budgetSheetNames.length > 1 ? `<button class="btn-primary" style="flex:1;" onclick="importBudgetSheets('${encodedBudgetSheets}')">${esc(window.lifeOsI18n.t("Import all Budget sheets"))}</button>` : ""}
     </div>
   `,
     true,
@@ -187,12 +187,12 @@ function findBudgetHeaderRow(rows) {
 function importFromSheet(sheetName) {
   closeModal();
   if (!pendingWorkbook) {
-    showToast("No file loaded", "error");
+    showToast(window.lifeOsI18n.t("No file loaded"), "error");
     return;
   }
   const ws = pendingWorkbook.Sheets[sheetName];
   if (!ws) {
-    showToast("Sheet not found: " + sheetName, "error");
+    showToast(window.lifeOsI18n.t("Sheet not found: ") + sheetName, "error");
     return;
   }
 
@@ -203,7 +203,7 @@ function importFromSheet(sheetName) {
   const headerIdx = findBudgetHeaderRow(rows);
 
   if (headerIdx < 0) {
-    showToast("This sheet doesn\'t match the expected Budget structure", "error");
+    showToast(window.lifeOsI18n.t("This sheet doesn\'t match the expected Budget structure"), "error");
     return;
   }
 

@@ -4,7 +4,7 @@ function renderPerfStrip() {
   if (!row) return;
   const width = row.parentElement.clientWidth || 1200;
   const count = Math.max(8, Math.floor(width / 16));
-  row.innerHTML = Array(count).fill('<div class="perf-dot"></div>').join("");
+  row.innerHTML = Array(count).fill(window.lifeOsI18n.markup('<div class="perf-dot"></div>')).join("");
 }
 
 // ── SCROLL REVEAL ─────────────────────────────────────────────────────────────
@@ -35,14 +35,14 @@ function render() {
   const il = document.getElementById("incomeList");
   il.innerHTML =
     state.incomes.length === 0
-      ? emptyStateHtml("coins", "No income streams yet", "Add your first source of income to open the ledger.")
+      ? emptyStateHtml("coins", window.lifeOsI18n.t("No income streams yet"), window.lifeOsI18n.t("Add your first source of income to open the ledger."))
       : state.incomes
           .map(
             (inc) => `
       <div class="fade-in row-item income-stream-row" data-income-id="${esc(inc.id)}" onclick="showContextMenu(event,'income','${inc.id}')">
         <span class="income-stream-name" dir="auto">${esc(inc.name)}</span>
         <span class="num income-stream-amount">${fmt(inc.amount)}</span>
-        <button type="button" class="expense-menu-button" aria-label="${esc('Income actions')}" onclick="showContextMenu(event,'income','${inc.id}')">⋯</button>
+        <button type="button" class="expense-menu-button" aria-label="${esc(window.lifeOsI18n.t('Income actions'))}" onclick="showContextMenu(event,'income','${inc.id}')">⋯</button>
       </div>`,
           )
           .join("");
@@ -53,8 +53,8 @@ function render() {
   if (sorted.length === 0) {
     tbody.innerHTML = `<tr><td colspan="4" style="padding:0;">${emptyStateHtml(
       "receipt",
-      "No expenses logged yet",
-      "Log your first expense and it will appear here.",
+      window.lifeOsI18n.t("No expenses logged yet"),
+      window.lifeOsI18n.t("Log your first expense and it will appear here."),
     )}</td></tr>`;
   } else {
     tbody.innerHTML = sorted
@@ -64,7 +64,7 @@ function render() {
         <td style="padding:11px 0;font-size:11px;color:var(--muted);">${cat ? esc(cat.label.substring(0, 14)) : esc(e.categoryId)}</td>
         <td style="padding:11px 4px;font-size:11px;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(e.desc) || "—"}</td>
         <td class="num" style="padding:11px 0;text-align:end;font-size:12px;">${fmt(e.amount)}</td>
-        <td style="padding:11px 0;text-align:end;"><button type="button" class="expense-menu-button" aria-label="${esc('Expense actions')}" onclick="showContextMenu(event,'expense','${e.id}')">⋯</button></td>
+        <td style="padding:11px 0;text-align:end;"><button type="button" class="expense-menu-button" aria-label="${esc(window.lifeOsI18n.t('Expense actions'))}" onclick="showContextMenu(event,'expense','${e.id}')">⋯</button></td>
       </tr>`;
       })
       .join("");
@@ -76,16 +76,16 @@ function render() {
   const budgetRemaining = totalBudget - totalSpent;
   const usedPct = totalBudget > 0 ? Math.round((totalSpent / totalBudget) * 100) : 0;
   budgetSummary.innerHTML = `
-    <div><span>${esc("Monthly plan")}</span><strong class="num">${fmt(totalBudget)}</strong></div>
-    <div><span>${esc("Used")}</span><strong class="num">${usedPct}%</strong></div>
-    <div><span>${esc(budgetRemaining >= 0 ? "Available" : "Over plan")}</span><strong class="num ${budgetRemaining < 0 ? "is-over" : ""}">${fmt(budgetRemaining)}</strong></div>
+    <div><span>${esc(window.lifeOsI18n.t("Monthly plan"))}</span><strong class="num">${fmt(totalBudget)}</strong></div>
+    <div><span>${esc(window.lifeOsI18n.t("Used"))}</span><strong class="num">${usedPct}%</strong></div>
+    <div><span>${esc(window.lifeOsI18n.t(budgetRemaining >= 0 ? "Available" : "Over plan"))}</span><strong class="num ${budgetRemaining < 0 ? "is-over" : ""}">${fmt(budgetRemaining)}</strong></div>
   `;
   bt.innerHTML =
     state.categories.length === 0
       ? emptyStateHtml(
           "layout",
-          "No budget categories yet",
-          "Add a category to start tracking where the money goes.",
+          window.lifeOsI18n.t("No budget categories yet"),
+          window.lifeOsI18n.t("Add a category to start tracking where the money goes."),
         )
       : state.categories
     .map((cat) => {
@@ -102,17 +102,17 @@ function render() {
     <article class="budget-item${over ? " is-over" : ""}">
       <div class="budget-item-head">
         <span class="budget-name">${esc(cat.label)}</span>
-        <button class="icon-btn" type="button" aria-label="Edit ${esc(cat.label)} budget" title="Edit budget" onclick="openEditBudgetModal('${cat.id}')">${esc("✏️ Edit").replace("✏️ ", "")}</button>
+        <button class="icon-btn" type="button" aria-label="Edit ${esc(cat.label)} budget" title="${window.lifeOsI18n.t("Edit budget")}" onclick="openEditBudgetModal('${cat.id}')">${esc(window.lifeOsI18n.t("✏️ Edit")).replace("✏️ ", "")}</button>
       </div>
       <div class="budget-amount-row">
-        <div><span>${esc("Spent")}</span><strong class="num">${fmt(spent)}</strong></div>
-        <div><span>${esc(over ? "Over" : "Remaining")}</span><strong class="num">${fmt(remaining)}</strong></div>
+        <div><span>${esc(window.lifeOsI18n.t("Spent"))}</span><strong class="num">${fmt(spent)}</strong></div>
+        <div><span>${esc(window.lifeOsI18n.t(over ? "Over" : "Remaining"))}</span><strong class="num">${fmt(remaining)}</strong></div>
       </div>
       <div class="progress-track" role="progressbar" aria-label="${esc(cat.label)} budget usage" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.min(pctDisplay, 100)}">
         <div class="progress-fill" style="width:${fillPct}%;background:${over ? "var(--rust)" : "var(--jade)"};"></div>
       </div>
       ${over ? `<div style="display:flex;justify-content:flex-end;margin-top:9px;"><span class="tag tag-rust">${esc(__t("↑ {amount} over", { amount: fmt(ovBy) }))}</span></div>` : ""}
-      <div class="budget-item-foot"><span>${pctDisplay}% ${esc("used")}</span><span class="num">${fmt(cat.target)} ${esc("limit")}</span></div>
+      <div class="budget-item-foot"><span>${pctDisplay}% ${esc(window.lifeOsI18n.t("used"))}</span><span class="num">${fmt(cat.target)} ${esc(window.lifeOsI18n.t("limit"))}</span></div>
     </article>`;
     })
     .join("");
@@ -154,7 +154,7 @@ function setChartEmpty(canvasId, show, icon, title, hint) {
     if (!el) {
       el = document.createElement("div");
       el.className = "chart-empty";
-      el.innerHTML = emptyStateHtml(icon, title, hint);
+      el.innerHTML = emptyStateHtml(icon, window.lifeOsI18n.t(title), window.lifeOsI18n.t(hint));
       wrap.appendChild(el);
     }
   } else if (el) {
@@ -184,8 +184,8 @@ function renderCharts(totalIncome) {
     "incomeChart",
     state.incomes.length === 0,
     "coins",
-    "No income to break down",
-    "Income streams appear here as a donut once you add them.",
+    window.lifeOsI18n.t("No income to break down"),
+    window.lifeOsI18n.t("Income streams appear here as a donut once you add them."),
   );
 
   if (state.incomes.length === 0) {
@@ -257,8 +257,8 @@ function renderCharts(totalIncome) {
     "spendChart",
     catTotals.length === 0,
     "receipt",
-    "Nothing spent yet",
-    "Log an expense to see spending by category.",
+    window.lifeOsI18n.t("Nothing spent yet"),
+    window.lifeOsI18n.t("Log an expense to see spending by category."),
   );
 
   if (catTotals.length === 0) {

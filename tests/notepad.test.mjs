@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 
 const context = vm.createContext({ document: { addEventListener() {} } });
+context.window = {lifeOsI18n: {t: text => text, number: value => String(value)}};
 vm.runInContext(readFileSync(new URL('../public_html/assets/html-escape.js', import.meta.url), 'utf8'), context);
 vm.runInContext(readFileSync(new URL('../public_html/notepad/static/app.js', import.meta.url), 'utf8'), context);
 const direction = source => context.noteDirection(source);

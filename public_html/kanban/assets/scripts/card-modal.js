@@ -21,7 +21,7 @@ function renderLabelOptions() {
     const check = document.createElement('input');
     check.type = 'checkbox';
     check.checked = state.draftLabelIds.includes(label.id);
-    check.setAttribute('aria-label', `Assign ${label.name}`);
+    check.setAttribute('aria-label', window.lifeOsI18n.t("Assign {value0}",{value0:label.name}));
     check.addEventListener('change', () => {
       state.draftLabelIds = check.checked ? [...state.draftLabelIds, label.id] : state.draftLabelIds.filter(id => id !== label.id);
       renderSelectedCardLabels();
@@ -29,18 +29,18 @@ function renderLabelOptions() {
     const color = document.createElement('input');
     color.type = 'color';
     color.value = safeLabelColor(label.color);
-    color.setAttribute('aria-label', `Color for ${label.name}`);
+    color.setAttribute('aria-label', window.lifeOsI18n.t("Color for {value0}",{value0:label.name}));
     color.addEventListener('change', () => { label.color = color.value; saveState(); renderBoardContent(); renderSelectedCardLabels(); });
     const name = document.createElement('input');
     name.className = 'input';
     name.value = label.name;
     name.maxLength = 30;
-    name.setAttribute('aria-label', 'Label name');
+    name.setAttribute('aria-label', window.lifeOsI18n.t('Label name'));
     name.addEventListener('change', () => {
       const next = name.value.trim();
       if (!next || board.labelDefs.some(other => other.id !== label.id && other.name.toLowerCase() === next.toLowerCase())) {
         name.value = label.name;
-        showToast('Label names must be unique', 'error');
+        showToast(window.lifeOsI18n.t('Label names must be unique'), 'error');
         return;
       }
       label.name = next;
@@ -52,9 +52,9 @@ function renderLabelOptions() {
     remove.type = 'button';
     remove.className = 'icon-btn';
     remove.textContent = '×';
-    remove.setAttribute('aria-label', `Delete ${label.name} label`);
+    remove.setAttribute('aria-label', window.lifeOsI18n.t("Delete {value0} label",{value0:label.name}));
     remove.addEventListener('click', () => {
-      if (!confirm(`Delete label "${label.name}" from this board and all cards?`)) return;
+      if (!confirm(window.lifeOsI18n.t("Delete label \"{value0}\" from this board and all cards?",{value0:label.name}))) return;
       board.labelDefs = board.labelDefs.filter(other => other.id !== label.id);
       board.columns.forEach(column => column.cards.forEach(card => { card.labelIds = (card.labelIds || []).filter(id => id !== label.id); }));
       state.draftLabelIds = state.draftLabelIds.filter(id => id !== label.id);
@@ -84,7 +84,7 @@ function addBoardLabel() {
   if (!board) return;
   const name = $('newLabelName').value.trim();
   if (!name || board.labelDefs.some(label => label.name.toLowerCase() === name.toLowerCase())) {
-    showToast('Enter a unique label name', 'error');
+    showToast(window.lifeOsI18n.t('Enter a unique label name'), 'error');
     return;
   }
   const label = {id: crypto.randomUUID(), name, color: safeLabelColor($('newLabelColor').value)};
@@ -104,10 +104,10 @@ function renderChecklist() {
     group.innerHTML = '<div class="trello-section-heading"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="m8 12 3 3 5-6"/></svg><input class="checklist-name" maxlength="60" /><button type="button" class="delete-checklist">Delete</button></div><div class="checklist-progress-row"><span></span><progress max="100" value="0"></progress></div><div class="checklist-items"></div><button type="button" class="checklist-open-add">Add an item</button><div class="checklist-item-composer" hidden><textarea class="input" rows="2" maxlength="120" placeholder="Add an item…"></textarea><div><button type="button" class="btn-primary">Add</button><button type="button" class="btn-ghost">Cancel</button></div></div>';
     const name = group.querySelector('.checklist-name');
     name.value = list.title;
-    name.setAttribute('aria-label', 'Checklist title');
-    name.addEventListener('change', () => { list.title = name.value.trim() || 'Checklist'; name.value = list.title; persistCardChecklists(); });
+    name.setAttribute('aria-label', window.lifeOsI18n.t('Checklist title'));
+    name.addEventListener('change', () => { list.title = name.value.trim() || window.lifeOsI18n.t('Checklist'); name.value = list.title; persistCardChecklists(); });
     group.querySelector('.delete-checklist').addEventListener('click', () => {
-      if (!confirm(`Delete checklist "${list.title}" and its items?`)) return;
+      if (!confirm(window.lifeOsI18n.t("Delete checklist \"{value0}\" and its items?",{value0:list.title}))) return;
       state.draftChecklists = state.draftChecklists.filter(other => other.id !== list.id);
       persistCardChecklists(); renderChecklist();
     });
@@ -116,24 +116,24 @@ function renderChecklist() {
     group.querySelector('.checklist-progress-row span').textContent = `${percent}%`;
     const progress = group.querySelector('progress');
     progress.value = percent;
-    progress.setAttribute('aria-label', `${list.title}: ${done} of ${list.items.length} complete`);
+    progress.setAttribute('aria-label', window.lifeOsI18n.t("{value0}: {value1} of {value2} complete",{value0:list.title,value1:done,value2:list.items.length}));
     const items = group.querySelector('.checklist-items');
     list.items.forEach(item => {
       const row = document.createElement('div');
       row.className = 'checklist-item';
       const check = document.createElement('input');
       check.type = 'checkbox'; check.checked = !!item.done;
-      check.setAttribute('aria-label', `Complete ${item.text}`);
+      check.setAttribute('aria-label', window.lifeOsI18n.t("Complete {value0}",{value0:item.text}));
       check.addEventListener('change', () => { item.done = check.checked; persistCardChecklists(); renderChecklist(); });
       const input = document.createElement('input');
       input.className = 'input'; input.value = item.text; input.maxLength = 120;
-      input.setAttribute('aria-label', 'Checklist item');
+      input.setAttribute('aria-label', window.lifeOsI18n.t('Checklist item'));
       input.addEventListener('input', () => { item.text = input.value; });
       input.addEventListener('change', () => { if (!item.text.trim()) { item.text = 'Untitled item'; input.value = item.text; } persistCardChecklists(); });
       const remove = document.createElement('button');
       remove.type = 'button'; remove.className = 'checklist-remove-item';
       remove.innerHTML = '<svg viewBox="0 0 24 24"><path d="M4 6h16M9 6V3h6v3M6 6l1 15h10l1-15M10 10v7M14 10v7"/></svg>';
-      remove.setAttribute('aria-label', `Remove ${item.text}`);
+      remove.setAttribute('aria-label', window.lifeOsI18n.t("Remove {value0}",{value0:item.text}));
       remove.addEventListener('click', () => { list.items = list.items.filter(entry => entry.id !== item.id); persistCardChecklists(); renderChecklist(); });
       row.append(check, input, remove);
       items.append(row);
@@ -141,7 +141,7 @@ function renderChecklist() {
     const open = group.querySelector('.checklist-open-add');
     const composer = group.querySelector('.checklist-item-composer');
     const text = composer.querySelector('textarea');
-    text.setAttribute('aria-label', `New item in ${list.title}`);
+    text.setAttribute('aria-label', window.lifeOsI18n.t("New item in {value0}",{value0:list.title}));
     open.addEventListener('click', () => { open.hidden = true; composer.hidden = false; text.focus(); });
     composer.querySelector('.btn-primary').addEventListener('click', () => addChecklistItem(list, text));
     composer.querySelector('.btn-ghost').addEventListener('click', () => { composer.hidden = true; open.hidden = false; text.value = ''; open.focus(); });
@@ -196,7 +196,7 @@ function closeChecklistMenu() {
 
 function createCardChecklist() {
   const title = $('newChecklistTitle').value.trim();
-  if (!title) { $('checklistTitleError').textContent = 'Enter a checklist title.'; $('checklistTitleError').hidden = false; $('newChecklistTitle').focus(); return; }
+  if (!title) { $('checklistTitleError').textContent = window.lifeOsI18n.t('Enter a checklist title.'); $('checklistTitleError').hidden = false; $('newChecklistTitle').focus(); return; }
   state.draftChecklists.push({id: crypto.randomUUID(), title, items: []});
   persistCardChecklists(); renderChecklist(); closeChecklistMenu();
   const group = $('cardChecklist').lastElementChild;
@@ -208,7 +208,7 @@ function openMoveCard(context) {
   const card = getColumn(context.boardId, context.columnId)?.cards.find(item => item.id === context.cardId);
   if (!card) return;
   state.moveCard = {...context, busy: false};
-  $('moveCardSummary').textContent = card.title || 'Untitled card';
+  $('moveCardSummary').textContent = card.title || window.lifeOsI18n.t('Untitled card');
   $('moveCardError').hidden = true;
   const projects = state.boards.filter(board => board.id !== context.boardId);
   $('moveCardProject').replaceChildren();
@@ -221,7 +221,7 @@ function openMoveCard(context) {
   if (!projects.length) {
     const option = document.createElement('option');
     option.value = '';
-    option.textContent = 'No other projects yet';
+    option.textContent = window.lifeOsI18n.t('No other projects yet');
     $('moveCardProject').append(option);
   }
   ['closeMoveCard', 'cancelMoveCard'].forEach(id => { $(id).disabled = false; });
@@ -243,7 +243,7 @@ function renderMoveCardLists() {
   if (!columns.length) {
     const option = document.createElement('option');
     option.value = '';
-    option.textContent = 'No lists available';
+    option.textContent = window.lifeOsI18n.t('No lists available');
     $('moveCardList').append(option);
   }
   const source = getColumn(state.moveCard.boardId, state.moveCard.columnId);
@@ -251,9 +251,9 @@ function renderMoveCardLists() {
   if (similar) $('moveCardList').value = similar.id;
   $('moveCardList').disabled = !columns.length;
   $('confirmMoveCard').disabled = !columns.length;
-  $('confirmMoveCard').textContent = 'Move card';
+  $('confirmMoveCard').textContent = window.lifeOsI18n.t('Move card');
   $('moveCardError').hidden = !!columns.length;
-  $('moveCardError').textContent = project ? 'Add a list to this project before moving a card.' : 'Create another project first, then move this card.';
+  $('moveCardError').textContent = project ? window.lifeOsI18n.t('Add a list to this project before moving a card.') : window.lifeOsI18n.t('Create another project first, then move this card.');
 }
 
 async function moveCardToProject(event) {
@@ -270,10 +270,10 @@ async function moveCardToProject(event) {
   }
   // Saving the editor may have changed the card's list within its current project.
   const source = getBoard(context.boardId)?.columns.find(column => column.cards.some(card => card.id === context.cardId));
-  if (!source) { $('moveCardError').textContent = 'Card not found. Reload the board and try again.'; $('moveCardError').hidden = false; return; }
+  if (!source) { $('moveCardError').textContent = window.lifeOsI18n.t('Card not found. Reload the board and try again.'); $('moveCardError').hidden = false; return; }
   context.busy = true;
   ['moveCardProject', 'moveCardList', 'confirmMoveCard', 'cancelMoveCard', 'closeMoveCard'].forEach(id => { $(id).disabled = true; });
-  $('confirmMoveCard').textContent = 'Moving…';
+  $('confirmMoveCard').textContent = window.lifeOsI18n.t('Moving…');
   $('moveCardError').hidden = true;
   try {
     const value = await appStorage.mutateItem(KEY, async ({csrf, revision}) => {
@@ -296,16 +296,16 @@ async function moveCardToProject(event) {
     state.activeBoardId = saved.activeBoardId;
     $('moveCardModal').close();
     render();
-    showToast(`Card moved to ${getBoard(destinationBoardId)?.name || 'project'}`, 'success');
+    showToast(window.lifeOsI18n.t("Card moved to {value0}",{value0:getBoard(destinationBoardId)?.name || 'project'}), 'success');
   } catch (error) {
     $('moveCardError').textContent = ['TimeoutError', 'AbortError', 'TypeError'].includes(error.name)
-      ? 'The move could not be confirmed. Reload to check the card before trying again.'
-      : error.message || 'Unable to move the card.';
+      ? window.lifeOsI18n.t('The move could not be confirmed. Reload to check the card before trying again.')
+      : error.message || window.lifeOsI18n.t('Unable to move the card.');
     $('moveCardError').hidden = false;
   } finally {
     context.busy = false;
     ['moveCardProject', 'moveCardList', 'confirmMoveCard', 'cancelMoveCard', 'closeMoveCard'].forEach(id => { $(id).disabled = false; });
-    $('confirmMoveCard').textContent = 'Move card';
+    $('confirmMoveCard').textContent = window.lifeOsI18n.t('Move card');
   }
 }
 
@@ -321,7 +321,7 @@ function openCardModal({ boardId, columnId, cardId }) {
   $('cardBoardId').value = boardId;
   $('cardColumnId').value = columnId;
   $('cardId').value = cardId;
-  $('cardModalTitle').textContent = 'Edit card';
+  $('cardModalTitle').textContent = window.lifeOsI18n.t('Edit card');
   $('cardTitle').value = card.title || '';
   $('cardDescription').value = card.description || '';
   $('cardPriority').value = card.priority || 'medium';
@@ -350,12 +350,12 @@ function openCardModal({ boardId, columnId, cardId }) {
   $('cardChecklistSection').hidden = !(card.checklist || []).length;
   $('cardDescription').hidden = true;
   $('cardDescriptionPreview').hidden = false;
-  $('cardDescriptionPreview').textContent = card.description || 'Add a more detailed description…';
-  $('editDescriptionBtn').textContent = 'Edit';
+  $('cardDescriptionPreview').textContent = card.description || window.lifeOsI18n.t('Add a more detailed description…');
+  $('editDescriptionBtn').textContent = window.lifeOsI18n.t('Edit');
   $('cardComment').value = '';
   $('saveCommentBtn').hidden = true;
   $('cardActivityDetails').hidden = true;
-  $('toggleActivityDetails').textContent = 'Show details';
+  $('toggleActivityDetails').textContent = window.lifeOsI18n.t('Show details');
   $('toggleActivityDetails').setAttribute('aria-expanded', 'false');
   renderCardActivity(card);
   state.draftLabelIds = [...(card.labelIds || [])];
@@ -456,5 +456,5 @@ function handleCardFormSubmit(e) {
   saveState();
   render();
   closeCardModal();
-  showToast('Card saved', 'success');
+  showToast(window.lifeOsI18n.t('Card saved'), 'success');
 }

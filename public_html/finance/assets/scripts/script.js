@@ -18,5 +18,5 @@ addEventListener('app-storage-change', () => {
     activePeriod = periods[selected] ? selected : Object.keys(periods)[0];
     state = cloneState(normalizeState(periods[activePeriod]));
     render();
-  } catch { showToast('Unable to refresh the ledger. Reload before editing.', 'error'); }
+  } catch { showToast(window.lifeOsI18n.t('Unable to refresh the ledger. Reload before editing.'), 'error'); }
 });

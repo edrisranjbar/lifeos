@@ -12,6 +12,7 @@ const ATTRIBUTE = /\b(?:placeholder|title|aria-label|alt)="([^"<>]*?)"/g;
 
 // Strings passed to t() as variables rather than literals.
 export const EXTRA_KEYS = [
+  'Yearly', 'weeks', 'months', 'years', 'Recorded', 'Undid', 'Restored', 'Deleted',
   // App names used for the page title and mobile header.
   'Overview', 'Growth', 'Focus', 'Finance', 'Habittify', 'Kanban', 'Calendar', 'Goals', 'Notes', 'Notepad', 'Settings',
   // Dashboard greeting, score grade and Kanban flow groups.
@@ -77,7 +78,7 @@ function skipTemplate(source, i) {
 function callKeys(source) {
   const keys = [];
   // Files that already use `t` for something else alias the translator as `tr`.
-  const call = /(?<![\w$.])tr?\(|lifeOsI18n\.t\(/g;
+  const call = /(?<![\w$.])(?:tr?|__t)\(|lifeOsI18n\.t\(/g;
   for (let match; (match = call.exec(source));) {
     let depth = 0;
     for (let i = match.index + match[0].length; i < source.length; i++) {
@@ -161,7 +162,7 @@ function markupKeys(markup) {
 }
 
 const decode = text => text.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&nbsp;/g, ' ');
-const keep = text => /\p{L}/u.test(text) && !/\$\{|\{\{/.test(text);
+const keep = text => /\p{L}/u.test(text) && !/\$\{|\{\{|[<>]|=\"|\[data-|\[aria-|\[role=|\[name=|\[type=|nav a\[|label\[|^[.#[]/.test(text);
 
 export function collectKeys() {
   const found = new Map();

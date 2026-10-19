@@ -1,16 +1,16 @@
 // ── ACTIONS ───────────────────────────────────────────────────────────────────
 function openAddIncomeModal() {
   openModal(`
-    <div class="modal-kicker">${esc("Income stream")}</div>
-    <div class="section-label" style="margin-bottom:8px;">${esc("Add Income")}</div>
-    <p class="modal-copy">${esc("Log a new source of income, or update an existing one by reusing its name.")}</p>
-    <label class="field-label" for="incomeName">${esc("Stream name")}</label>
-    <input type="text" id="incomeName" placeholder="${esc("e.g. Salary")}" class="mb-3">
-    <label class="field-label" for="incomeAmount">${esc(`Amount in ${currencyUnit()}`)}</label>
-    <input type="number" id="incomeAmount" placeholder="${esc(`Amount in ${currencyUnit()}`)}" min="1" step="1" class="mb-5">
+    <div class="modal-kicker">${esc(window.lifeOsI18n.t("Income stream"))}</div>
+    <div class="section-label" style="margin-bottom:8px;">${esc(window.lifeOsI18n.t("Add Income"))}</div>
+    <p class="modal-copy">${esc(window.lifeOsI18n.t("Log a new source of income, or update an existing one by reusing its name."))}</p>
+    <label class="field-label" for="incomeName">${esc(window.lifeOsI18n.t("Stream name"))}</label>
+    <input type="text" id="incomeName" placeholder="${esc(window.lifeOsI18n.t("e.g. Salary"))}" class="mb-3">
+    <label class="field-label" for="incomeAmount">${esc(__t('Amount in {unit}', {unit:currencyUnit()}))}</label>
+    <input type="number" id="incomeAmount" placeholder="${esc(__t('Amount in {unit}', {unit:currencyUnit()}))}" min="1" step="1" class="mb-5">
     <div class="modal-actions">
-      <button class="btn-ghost" onclick="closeModal()">${esc("Cancel")}</button>
-      <button class="btn-primary" onclick="saveNewIncome()">${esc("Save Income")}</button>
+      <button class="btn-ghost" onclick="closeModal()">${esc(window.lifeOsI18n.t("Cancel"))}</button>
+      <button class="btn-primary" onclick="saveNewIncome()">${esc(window.lifeOsI18n.t("Save Income"))}</button>
     </div>
   `);
   setTimeout(() => document.getElementById("incomeName")?.focus(), 0);
@@ -20,7 +20,7 @@ function saveNewIncome() {
   const name = document.getElementById("incomeName").value.trim();
   const amount = parseFloat(document.getElementById("incomeAmount").value);
   if (!name || isNaN(amount) || amount <= 0)
-    return alert("Enter a name and valid amount.");
+    return alert(window.lifeOsI18n.t("Enter a name and valid amount."));
   const id = name.toLowerCase().replace(/\s+/g, "_");
   const existing = state.incomes.find((i) => i.id === id);
   if (existing) {
@@ -45,21 +45,21 @@ function openAddExpenseModal() {
     .map((c) => `<option value="${c.id}">${esc(c.label)}</option>`)
     .join("");
   openModal(`
-    <div class="modal-kicker">${esc("Ledger entry")}</div>
-    <div class="section-label" style="margin-bottom:8px;">${esc("Log Expense")}</div>
-    <p class="modal-copy">${esc("Record what you paid and where it belongs in the budget.")}</p>
-    <label class="field-label" for="expenseCategory">${esc("Category")}</label>
+    <div class="modal-kicker">${esc(window.lifeOsI18n.t("Ledger entry"))}</div>
+    <div class="section-label" style="margin-bottom:8px;">${esc(window.lifeOsI18n.t("Log Expense"))}</div>
+    <p class="modal-copy">${esc(window.lifeOsI18n.t("Record what you paid and where it belongs in the budget."))}</p>
+    <label class="field-label" for="expenseCategory">${esc(window.lifeOsI18n.t("Category"))}</label>
     <select id="expenseCategory" class="mb-3">
-      <option value="">${esc("— Select Category —")}</option>
+      <option value="">${esc(window.lifeOsI18n.t("— Select Category —"))}</option>
       ${catOptions}
     </select>
-    <label class="field-label" for="expenseDesc">${esc("Description")}</label>
-    <input type="text" id="expenseDesc" placeholder="${esc("Description (optional)")}" class="mb-3">
-    <label class="field-label" for="expenseAmount">${esc(`Amount in ${currencyUnit()}`)}</label>
-    <input type="number" id="expenseAmount" placeholder="${esc(`Amount in ${currencyUnit()}`)}" min="1" step="1" class="mb-5">
+    <label class="field-label" for="expenseDesc">${esc(window.lifeOsI18n.t("Description"))}</label>
+    <input type="text" id="expenseDesc" placeholder="${esc(window.lifeOsI18n.t("Description (optional)"))}" class="mb-3">
+    <label class="field-label" for="expenseAmount">${esc(__t('Amount in {unit}', {unit:currencyUnit()}))}</label>
+    <input type="number" id="expenseAmount" placeholder="${esc(__t('Amount in {unit}', {unit:currencyUnit()}))}" min="1" step="1" class="mb-5">
     <div class="modal-actions">
-      <button class="btn-ghost" onclick="closeModal()">${esc("Cancel")}</button>
-      <button class="btn-primary" onclick="saveNewExpense()">${esc("Log Expense")}</button>
+      <button class="btn-ghost" onclick="closeModal()">${esc(window.lifeOsI18n.t("Cancel"))}</button>
+      <button class="btn-primary" onclick="saveNewExpense()">${esc(window.lifeOsI18n.t("Log Expense"))}</button>
     </div>
   `);
   setTimeout(() => document.getElementById("expenseCategory-trigger")?.focus(), 0);
@@ -69,8 +69,8 @@ function saveNewExpense() {
   const catId = document.getElementById("expenseCategory").value;
   const desc = document.getElementById("expenseDesc").value.trim();
   const amount = parseFloat(document.getElementById("expenseAmount").value);
-  if (!catId) return alert("Select a category.");
-  if (isNaN(amount) || amount <= 0) return alert("Enter a valid amount.");
+  if (!catId) return alert(window.lifeOsI18n.t("Select a category."));
+  if (isNaN(amount) || amount <= 0) return alert(window.lifeOsI18n.t("Enter a valid amount."));
   state.expenses.push({
     id: Date.now().toString(),
     categoryId: catId,
@@ -84,7 +84,7 @@ function saveNewExpense() {
   closeModal();
   save();
   render();
-  showToast("✓ Expense logged.", "success");
+  showToast(window.lifeOsI18n.t("✓ Expense logged."), "success");
 }
 
 function deleteExpense(id) {
@@ -99,9 +99,9 @@ function saveNewBudget() {
   const name = document.getElementById("newCatName").value.trim();
   const target = parseFloat(document.getElementById("newCatTarget").value);
   const unlimited = document.getElementById("newCatUnlimited").checked;
-  if (!name) return alert("Enter a category name.");
+  if (!name) return alert(window.lifeOsI18n.t("Enter a category name."));
   if (!unlimited && (!Number.isFinite(target) || target <= 0))
-    return alert("Enter a valid budget amount.");
+    return alert(window.lifeOsI18n.t("Enter a valid budget amount."));
   const id = "cat_" + Date.now().toString(36);
   const label = emoji ? `${emoji} ${name}` : name;
   state.categories.push({ id, label, target: Number.isFinite(target) ? target : 0, unlimited });
@@ -112,7 +112,7 @@ function saveNewBudget() {
 
 function exportToExcel() {
   if (typeof XLSX === "undefined") {
-    return showToast("Excel export library is unavailable.", "error");
+    return showToast(window.lifeOsI18n.t("Excel export library is unavailable."), "error");
   }
 
   const totalIncome = state.incomes.reduce((sum, item) => sum + item.amount, 0);
@@ -172,7 +172,7 @@ function exportToExcel() {
   const stamp = new Date().toISOString().slice(0, 10);
   const periodSlug = activePeriod.replace(/[^a-z0-9_-]+/gi, "-").replace(/^-|-$/g, "");
   XLSX.writeFile(workbook, `EdiFinance-${periodSlug || "period"}-${stamp}.xlsx`);
-  showToast("Excel report exported.");
+  showToast(window.lifeOsI18n.t("Excel report exported."));
 }
 
 function printLedger() {
@@ -199,9 +199,9 @@ function saveEditedBudget(id) {
   const name = document.getElementById("editCatName").value.trim();
   const target = parseFloat(document.getElementById("editCatTarget").value);
   const unlimited = document.getElementById("editCatUnlimited").checked;
-  if (!name) return showToast("Enter a category name.", "error");
+  if (!name) return showToast(window.lifeOsI18n.t("Enter a category name."), "error");
   if (!unlimited && (!Number.isFinite(target) || target <= 0))
-    return showToast("Enter a valid budget amount.", "error");
+    return showToast(window.lifeOsI18n.t("Enter a valid budget amount."), "error");
   const category = state.categories.find((cat) => cat.id === id);
   if (!category) return;
   category.label = emoji ? `${emoji} ${name}` : name;
@@ -210,7 +210,7 @@ function saveEditedBudget(id) {
   closeModal();
   save();
   render();
-  showToast("Budget updated.");
+  showToast(window.lifeOsI18n.t("Budget updated."));
 }
 
 function saveEditedIncome(id) {
@@ -218,7 +218,7 @@ function saveEditedIncome(id) {
   const name = document.getElementById("editIncomeName").value.trim();
   const amount = parseFloat(document.getElementById("editIncomeAmount").value);
   if (!name || isNaN(amount) || amount <= 0)
-    return alert("Enter a name and valid amount.");
+    return alert(window.lifeOsI18n.t("Enter a name and valid amount."));
   const inc = state.incomes.find((i) => i.id === id);
   if (inc) {
     inc.name = name;
@@ -234,8 +234,8 @@ function saveEditedExpense(id) {
   const catId = document.getElementById("editExpenseCategory").value;
   const desc = document.getElementById("editExpenseDesc").value.trim();
   const amount = parseFloat(document.getElementById("editExpenseAmount").value);
-  if (!catId) return alert("Select a category.");
-  if (isNaN(amount) || amount <= 0) return alert("Enter a valid amount.");
+  if (!catId) return alert(window.lifeOsI18n.t("Select a category."));
+  if (isNaN(amount) || amount <= 0) return alert(window.lifeOsI18n.t("Enter a valid amount."));
   const exp = state.expenses.find((e) => e.id === id);
   if (exp) {
     exp.categoryId = catId;
@@ -255,12 +255,12 @@ function protectLinkedExpense(id, kind = 'expense') {
     const linked = Object.entries(decisions).find(([, payment]) => payment.status === 'paid' && payment.period === activePeriod && payment[key] === String(id));
     if (!linked) return false;
     showToast(kind === 'income'
-      ? 'This income records money owed to you. Undo the receipt in Debts & credits before changing it.'
-      : 'This expense records a scheduled payment. Undo the payment in Debts & credits before changing it.', 'error');
+      ? window.lifeOsI18n.t('This income records money owed to you. Undo the receipt in Debts & credits before changing it.')
+      : window.lifeOsI18n.t('This expense records a scheduled payment. Undo the payment in Debts & credits before changing it.'), 'error');
     dispatchEvent(new CustomEvent('finance-open-payment', {detail:{id:linked[0]}}));
     return true;
   } catch {
-    showToast('Unable to check payment links. Reload before changing this expense.', 'error');
+    showToast(window.lifeOsI18n.t('Unable to check payment links. Reload before changing this expense.'), 'error');
     return true;
   }
 }
@@ -274,9 +274,9 @@ function showContextMenu(e, type, id) {
   menu.className = "context-menu";
   menu.id = "activeContextMenu";
   menu.innerHTML = `
-    <div class="context-menu-item" onclick="handleContextEdit()">${esc("✏️ Edit")}</div>
+    <div class="context-menu-item" onclick="handleContextEdit()">${esc(window.lifeOsI18n.t("✏️ Edit"))}</div>
     <div class="context-menu-divider"></div>
-    <div class="context-menu-item danger" onclick="handleContextDelete()">${esc("🗑️ Delete")}</div>
+    <div class="context-menu-item danger" onclick="handleContextDelete()">${esc(window.lifeOsI18n.t("🗑️ Delete"))}</div>
   `;
   document.body.appendChild(menu);
   const pad = 8;

@@ -48,3 +48,34 @@ test('t() substitutes values and falls back to English', () => {
   assert.equal(i18n.t('{count} soon', {count: '3'}), '3 soon');
   assert.equal(i18n.digits('25:00'), '۲۵:۰۰');
 });
+
+test('Persian dictionary loads before application readiness and translates labels and placeholders', async () => {
+  const attributes = new Map([['placeholder', 'Search notes']]);
+  const input = {closest: () => null, getAttribute: name => attributes.get(name), setAttribute: (name, value) => attributes.set(name, value)};
+  const root = {closest: () => null, querySelectorAll: () => [input]};
+  const nodes = [{nodeValue: '  Settings  ', parentElement: {closest: () => null}}];
+  let index = -1;
+  const requests = [];
+  const context = vm.createContext({
+    document: {documentElement: root, nodeType: 9, readyState: 'complete',
+      getElementById: () => ({}), createTreeWalker: () => ({nextNode: () => nodes[++index] || null})},
+    localStorage: {getItem: () => null, setItem() {}},
+    appStorage: {getItem: () => 'fa'}, appStorageReady: Promise.resolve(),
+    fetch: async (url, options) => { requests.push([url, options.redirect]); return {ok: true, json: async () => read('fa')}; },
+    addEventListener() {}, Intl, Node: {DOCUMENT_NODE: 9},
+    NodeFilter: {SHOW_TEXT: 4, FILTER_REJECT: 2, FILTER_ACCEPT: 1}, console,
+  });
+  context.window = context;
+  vm.runInContext(fs.readFileSync(new URL('../public_html/assets/i18n.js', import.meta.url), 'utf8'), context);
+  await context.appStorageReady;
+  assert.match(requests[0][0], /^\/assets\/i18n\/fa\.json\?v=/);
+  assert.equal(requests[0][1], 'error');
+  assert.equal(root.lang, 'fa');
+  assert.equal(root.dir, 'rtl');
+  assert.equal(nodes[0].nodeValue, '  تنظیمات  ');
+  assert.equal(attributes.get('placeholder'), 'جستجوی یادداشت‌ها');
+  assert.equal(context.lifeOsI18n.t('  Save\n changes '), 'ذخیره تغییرات');
+  assert.equal(context.lifeOsI18n.t('DEBTS &amp; CREDITS'), 'بدهی‌ها و طلب‌ها');
+  assert.equal(context.lifeOsI18n.t('Signed in as {name}', {name: 'Save'}), 'واردشده با نام Save');
+  assert.equal(context.lifeOsI18n.t('Unknown custom title'), 'Unknown custom title');
+});

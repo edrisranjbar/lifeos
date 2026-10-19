@@ -83,12 +83,12 @@ function loadState() {
       });
       if (migrated) saveState();
     } else {
-      state.boards.push(createBoard("My Projects"));
+      state.boards.push(createBoard(window.lifeOsI18n.t("My Projects")));
       state.activeBoardId = state.boards[0].id;
     }
   } catch (e) {
     console.error("Failed to load kanban state:", e);
-    state.boards = [createBoard("My Projects")];
+    state.boards = [createBoard(window.lifeOsI18n.t("My Projects"))];
     state.activeBoardId = state.boards[0].id;
   }
 }
@@ -103,10 +103,10 @@ function setupEventListeners() {
   // Delete board
   $('deleteBoardBtn')?.addEventListener('click', () => {
     if (state.boards.length <= 1) {
-      showToast('Cannot delete the last board', 'error');
+      showToast(window.lifeOsI18n.t('Cannot delete the last board'), 'error');
       return;
     }
-    if (!confirm('Delete this board and all its cards?')) return;
+    if (!confirm(window.lifeOsI18n.t('Delete this board and all its cards?'))) return;
     const boardId = $('boardId').value;
     state.boards = state.boards.filter(b => b.id !== boardId);
     if (state.activeBoardId === boardId) {
@@ -115,7 +115,7 @@ function setupEventListeners() {
     saveState();
     render();
     closeModal('boardModal');
-    showToast('Board deleted', 'success');
+    showToast(window.lifeOsI18n.t('Board deleted'), 'success');
   });
 
   // Close modal
@@ -228,16 +228,16 @@ function setupEventListeners() {
     const editing = $('cardDescription').hidden;
     $('cardDescription').hidden = !editing;
     $('cardDescriptionPreview').hidden = editing;
-    $('editDescriptionBtn').textContent = editing ? 'Done' : 'Edit';
+    $('editDescriptionBtn').textContent = editing ? window.lifeOsI18n.t('Done') : window.lifeOsI18n.t('Edit');
     if (editing) $('cardDescription').focus();
-    else $('cardDescriptionPreview').textContent = $('cardDescription').value || 'Add a more detailed description…';
+    else $('cardDescriptionPreview').textContent = $('cardDescription').value || window.lifeOsI18n.t('Add a more detailed description…');
   });
   $('cardComment').addEventListener('input', () => { $('saveCommentBtn').hidden = !$('cardComment').value.trim(); });
   $('saveCommentBtn').addEventListener('click', saveCardComment);
   $('toggleActivityDetails').addEventListener('click', () => {
     const showing = $('cardActivityDetails').hidden;
     $('cardActivityDetails').hidden = !showing;
-    $('toggleActivityDetails').textContent = showing ? 'Hide details' : 'Show details';
+    $('toggleActivityDetails').textContent = showing ? window.lifeOsI18n.t('Hide details') : window.lifeOsI18n.t('Show details');
     $('toggleActivityDetails').setAttribute('aria-expanded', String(showing));
   });
   $('closeCardAttachMenu').addEventListener('click', () => $('cardAttachMenu').hidePopover());
@@ -285,7 +285,7 @@ function saveState() {
     }));
   } catch (e) {
     console.error("Failed to save kanban state:", e);
-    showToast("Unable to save board", "error");
+    showToast(window.lifeOsI18n.t("Unable to save board"), "error");
   }
 }
 

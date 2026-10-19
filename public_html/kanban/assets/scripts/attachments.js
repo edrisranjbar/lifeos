@@ -26,14 +26,14 @@ async function loadCardAttachments() {
     state.fileAttachments.forEach(file => byId.set(file.id, file));
     state.fileAttachments = Array.from(byId.values());
     state.attachmentMaxSize = data.maxSize;
-    $('attachmentSizeLimit').textContent = `Up to ${attachmentSize(data.maxSize)} per file`;
+    $('attachmentSizeLimit').textContent = window.lifeOsI18n.t("Up to {value0} per file",{value0:attachmentSize(data.maxSize)});
     renderFileAttachments();
   } catch (error) {
     if (state.cardModal.boardId !== boardId || state.cardModal.cardId !== cardId) return;
     const message = document.createElement('p');
     message.className = 'attachment-error'; message.textContent = error.message;
     const retry = document.createElement('button');
-    retry.type = 'button'; retry.className = 'btn-ghost'; retry.textContent = 'Retry';
+    retry.type = 'button'; retry.className = 'btn-ghost'; retry.textContent = window.lifeOsI18n.t('Retry');
     retry.addEventListener('click', loadCardAttachments);
     $('cardFileAttachments').replaceChildren(message, retry);
     $('cardAttachmentsSection').hidden = false;
@@ -56,12 +56,12 @@ function renderFileAttachments() {
     download.textContent = file.name;
     download.setAttribute('download', file.name);
     const size = document.createElement('small');
-    size.textContent = `${attachmentSize(file.size)} · Download`;
+    size.textContent = window.lifeOsI18n.t("{value0} · Download",{value0:attachmentSize(file.size)});
     info.append(download, size);
     const remove = document.createElement('button');
-    remove.type = 'button'; remove.className = 'btn-ghost'; remove.textContent = 'Remove';
+    remove.type = 'button'; remove.className = 'btn-ghost'; remove.textContent = window.lifeOsI18n.t('Remove');
     remove.addEventListener('click', async () => {
-      if (!confirm(`Remove attachment "${file.name}"?`)) return;
+      if (!confirm(window.lifeOsI18n.t("Remove attachment \"{value0}\"?",{value0:file.name}))) return;
       remove.disabled = true;
       const {boardId, cardId} = state.cardModal;
       try {
@@ -108,7 +108,7 @@ async function uploadCardFiles(files) {
     for (const file of files) {
       if (state.cardModal.boardId !== boardId || state.cardModal.cardId !== cardId) break;
       if (file.size > (state.attachmentMaxSize || 8 * 1048576)) { failures.push(`${file.name}: file is too large`); continue; }
-      status.textContent = `Uploading ${file.name}…`;
+      status.textContent = window.lifeOsI18n.t("Uploading {value0}…",{value0:file.name});
       progress.value = 0;
       try {
         const attachment = await new Promise((resolve, reject) => {

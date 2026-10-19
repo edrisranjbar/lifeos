@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en" dir="ltr">
   <head>
-    <script src="/assets/storage.js?v=multi-user-1"></script><script src="/assets/i18n.js?v=i18n-1"></script>
+    <script src="/assets/storage.js?v=multi-user-1"></script><script src="/assets/i18n.js?v=persian-1"></script>
     <script src="/assets/currency.js?v=currency-4"></script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -27,9 +27,9 @@
     </script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <link href="assets/styles/style.css?v=issue19-1" rel="stylesheet" />
-    <link href="assets/styles/obligations.css?v=issue19-1" rel="stylesheet" />
-  <script src="/assets/html-escape.js?v=issue19-1"></script>
+    <link href="assets/styles/style.css?v=persian-1" rel="stylesheet" />
+    <link href="assets/styles/obligations.css?v=persian-1" rel="stylesheet" />
+  <script src="/assets/html-escape.js?v=persian-1"></script>
 </head>
   <body>
     <div class="aurora" aria-hidden="true"><span></span><span></span><span></span></div>
@@ -343,7 +343,7 @@
         for (const name of ["state.js", "ui.js", "import.js", "actions.js", "modals.js", "render.js", "script.js"]) {
           await new Promise((resolve, reject) => {
             const script = document.createElement('script');
-            script.src = `assets/scripts/${name}?v=issue19-1`;
+            script.src = `assets/scripts/${name}?v=persian-1`;
             script.onload = resolve; script.onerror = reject; document.body.append(script);
           });
         }
@@ -354,6 +354,6 @@
         document.body.prepend(error);
       });
     </script>
-    <script type="module" src="assets/scripts/obligations.js?v=issue19-1"></script>
+    <script type="module" src="assets/scripts/obligations.js?v=persian-1"></script>
   </body>
 </html>

@@ -1,23 +1,25 @@
 import '../../../assets/html-escape.js?v=issue19-1';
+await window.appStorageReady;
+const tr = window.lifeOsI18n.t;
 // Debts (money you owe) and credits (money owed to you), one-time or recurring.
 // Paying a debt records an expense; receiving a credit records income.
 const KEY='edi_obligations_v1', PERIODS='daramd_periods_v1', LEGACY='daramd_v1';
 const $=id=>document.getElementById(id);
 const esc = globalThis.lifeOsHtml.escapeHtml;
-const money=value=>new Intl.NumberFormat('en-US').format(value||0);
+const money=value=>window.lifeOsI18n.number(value||0);
 // Unit label from the currency chosen in Settings (amounts are never converted).
 const unit=()=>window.lifeOsCurrency?.unit()??'Toman';
 const today=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Tehran',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
-const fmt=(date,options)=>new Intl.DateTimeFormat('en-GB',{timeZone:'UTC',...options}).format(new Date(date+'T12:00:00Z'));
+const fmt=(date,options)=>new Intl.DateTimeFormat(window.lifeOsI18n.locale('en-GB'),{timeZone:'UTC',...options}).format(new Date(date+'T12:00:00Z'));
 const longDate=date=>fmt(date,{day:'numeric',month:'short',year:'numeric'});
 const parse=key=>JSON.parse(appStorage.getItem(key)||'null');
 function periods(){return parse(PERIODS)||{Current:parse(LEGACY)||{categories:[],expenses:[],incomes:[]}};}
 const UNITS={daily:['day','days'],weekly:['week','weeks'],monthly:['month','months'],yearly:['year','years']};
-const repeatLabel=(frequency,interval)=>interval===1?{daily:'Daily',weekly:'Weekly',monthly:'Monthly',yearly:'Yearly'}[frequency]:`Every ${interval} ${UNITS[frequency][1]}`;
+const repeatLabel=(frequency,interval)=>interval===1?tr({daily:'Daily',weekly:'Weekly',monthly:'Monthly',yearly:'Yearly'}[frequency]):tr('Every {count} {unit}',{count:money(interval),unit:tr(UNITS[frequency][1])});
 // Words that change with direction, so every screen reads naturally.
 const WORDS={
-  debt:{tab:'I owe',kicker:'You owe',pay:'Pay',paid:'Paid',done:'paid',party:'Pay to',partyHint:'Person, bank or company',name:'Rent, loan, phone plan…',left:'Still to pay',record:'Record payment',defer:'Defer',empty:'Nothing you owe in this view.'},
-  credit:{tab:'Owed to me',kicker:'Owed to you',pay:'Mark received',paid:'Received',done:'received',party:'From',partyHint:'Who pays you',name:'Loan to a friend, rent from tenant…',left:'Still to collect',record:'Record money received',defer:'Mark late',empty:'Nobody owes you anything in this view.'}
+  debt:{tab:window.lifeOsI18n.t('I owe'),kicker:window.lifeOsI18n.t('You owe'),pay:window.lifeOsI18n.t('Pay'),paid:window.lifeOsI18n.t('Paid'),done:window.lifeOsI18n.t('paid'),party:window.lifeOsI18n.t('Pay to'),partyHint:window.lifeOsI18n.t('Person, bank or company'),name:window.lifeOsI18n.t('Rent, loan, phone plan…'),left:window.lifeOsI18n.t('Still to pay'),record:window.lifeOsI18n.t('Record payment'),defer:window.lifeOsI18n.t('Defer'),empty:window.lifeOsI18n.t('Nothing you owe in this view.')},
+  credit:{tab:window.lifeOsI18n.t('Owed to me'),kicker:window.lifeOsI18n.t('Owed to you'),pay:window.lifeOsI18n.t('Mark received'),paid:window.lifeOsI18n.t('Received'),done:window.lifeOsI18n.t('received'),party:window.lifeOsI18n.t('From'),partyHint:window.lifeOsI18n.t('Who pays you'),name:window.lifeOsI18n.t('Loan to a friend, rent from tenant…'),left:window.lifeOsI18n.t('Still to collect'),record:window.lifeOsI18n.t('Record money received'),defer:window.lifeOsI18n.t('Mark late'),empty:window.lifeOsI18n.t('Nobody owes you anything in this view.')}
 };
 const params=new URLSearchParams(location.search);
 let requested=params.get('payment'), payment=null, view=null, sequence=0, mutating=false, refreshTimer, action=null, editing=null;
@@ -26,62 +28,62 @@ let month=/^\d{4}-(0[1-9]|1[0-2])/.test(params.get('due')||'')?params.get('due')
 
 const root=document.createElement('section');root.id='obligations';root.className='obligations ledger-card';root.setAttribute('aria-labelledby','obHeading');
 root.innerHTML=`<header class="ob-head">
-  <div><span class="eyebrow">DEBTS &amp; CREDITS</span><h2 id="obHeading">Who owes what</h2><p>Money you owe and money owed to you, one-time or recurring. Paying or receiving updates your ledger.</p></div>
-  <div class="ob-head-actions"><label class="ob-month"><span class="sr-only">Month</span><input id="obMonth" type="month" value="${month}" required aria-label="Month"></label><button id="obRefresh" class="ob-icon-btn" aria-label="Refresh" title="Refresh"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg></button><button id="obNew" class="btn-primary" disabled>＋ New</button></div>
+  <div><span class="eyebrow">${window.lifeOsI18n.t("DEBTS &amp; CREDITS")}</span><h2 id="obHeading">${window.lifeOsI18n.t("Who owes what")}</h2><p>${window.lifeOsI18n.t("Money you owe and money owed to you, one-time or recurring. Paying or receiving updates your ledger.")}</p></div>
+  <div class="ob-head-actions"><label class="ob-month"><span class="sr-only">${window.lifeOsI18n.t("Month")}</span><input id="obMonth" type="month" value="${month}" required aria-label="${window.lifeOsI18n.t("Month")}"></label><button id="obRefresh" class="ob-icon-btn" aria-label="${window.lifeOsI18n.t("Refresh")}" title="${window.lifeOsI18n.t("Refresh")}"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg></button><button id="obNew" class="btn-primary" disabled>${window.lifeOsI18n.t("＋ New")}</button></div>
 </header>
-<p id="obStatus" role="status" aria-live="polite">Loading…</p>
-<div class="ob-sides" role="tablist" aria-label="Debts and credits">
+<p id="obStatus" role="status" aria-live="polite">${window.lifeOsI18n.t("Loading…")}</p>
+<div class="ob-sides" role="tablist" aria-label="${window.lifeOsI18n.t("Debts and credits")}">
   <button role="tab" id="obTab-debt" data-tab="debt" aria-controls="obPanel" class="ob-side ob-side-debt"></button>
   <button role="tab" id="obTab-credit" data-tab="credit" aria-controls="obPanel" class="ob-side ob-side-credit"></button>
 </div>
 <div id="obPanel" role="tabpanel" class="ob-panel">
   <div class="ob-stats" id="obStats"></div>
-  <div class="ob-filters"><div class="ob-segment" role="group" aria-label="Show"><button data-filter="open">To do</button><button data-filter="paid" id="obFilterPaid">Done</button><button data-filter="rejected" id="obFilterRejected">Deferred</button><button data-filter="all">All</button></div><input id="obSearch" type="search" aria-label="Search" placeholder="Search name or person"></div>
+  <div class="ob-filters"><div class="ob-segment" role="group" aria-label="${window.lifeOsI18n.t("Show")}"><button data-filter="open">${window.lifeOsI18n.t("To do")}</button><button data-filter="paid" id="obFilterPaid">${window.lifeOsI18n.t("Done")}</button><button data-filter="rejected" id="obFilterRejected">${window.lifeOsI18n.t("Deferred")}</button><button data-filter="all">${window.lifeOsI18n.t("All")}</button></div><input id="obSearch" type="search" aria-label="${window.lifeOsI18n.t("Search")}" placeholder="${window.lifeOsI18n.t("Search name or person")}"></div>
   <div id="obList" class="ob-list"></div>
-  <section class="ob-plans" aria-labelledby="obPlansHeading"><header><h3 id="obPlansHeading">Plans</h3><span class="ob-muted" id="obPlansCount"></span></header><div id="obPlans"></div></section>
+  <section class="ob-plans" aria-labelledby="obPlansHeading"><header><h3 id="obPlansHeading">${window.lifeOsI18n.t("Plans")}</h3><span class="ob-muted" id="obPlansCount"></span></header><div id="obPlans"></div></section>
 </div>
-<details class="ob-history"><summary>Recent activity</summary><div id="obHistory"></div></details>`;
+<details class="ob-history"><summary>${window.lifeOsI18n.t("Recent activity")}</summary><div id="obHistory"></div></details>`;
 document.querySelector('#pageRoot .main-grid').before(root);
 
 function dialog(id,html){const d=document.createElement('dialog');d.id=id;d.className='ob-dialog';d.innerHTML=html;document.body.append(d);return d;}
-const closeBtn='<button type="button" class="ob-close" data-close aria-label="Close">✕</button>';
-const planDialog=dialog('obPlanDialog',`<form id="obPlanForm"><header class="ob-dialog-head"><h2 id="obPlanHeading">New entry</h2>${closeBtn}</header>
-  <div class="ob-choice" role="radiogroup" aria-label="Direction"><label><input type="radio" name="direction" value="debt" checked><span><b>I owe</b><small>Money I need to pay</small></span></label><label><input type="radio" name="direction" value="credit"><span><b>Owed to me</b><small>Money I should receive</small></span></label></div>
-  <div class="ob-tabs" role="radiogroup" aria-label="Schedule"><label><input type="radio" name="schedule" value="once" checked><span>One-time</span></label><label><input type="radio" name="schedule" value="recurring"><span>Recurring</span></label></div>
-  <label>Name<input name="title" id="obTitle" required maxlength="180" dir="auto"></label>
-  <label><span id="obPartyLabel">Pay to</span><input name="payee" id="obParty" maxlength="180" dir="auto"></label>
-  <fieldset id="obRecurringMode" class="ob-tabs ob-tabs-sub" hidden><legend class="sr-only">Amount type</legend><label><input type="radio" name="mode" value="fixed" checked><span>Same amount each time</span></label><label><input type="radio" name="mode" value="split"><span>Split a total</span></label></fieldset>
-  <div class="ob-fields"><label><span id="obAmountLabel">Amount · <span data-currency-unit>Toman</span></span><input name="amount" id="obAmount" type="number" inputmode="numeric" min="1" max="1000000000000" step="1" required></label><label><span id="obStartLabel">Due date</span><input name="startDate" id="obStart" type="date" min="2000-01-01" required></label></div>
+const closeBtn=window.lifeOsI18n.markup('<button type="button" class="ob-close" data-close aria-label="Close">✕</button>');
+const planDialog=dialog('obPlanDialog',`<form id="obPlanForm"><header class="ob-dialog-head"><h2 id="obPlanHeading">${window.lifeOsI18n.t("New entry")}</h2>${closeBtn}</header>
+  <div class="ob-choice" role="radiogroup" aria-label="${window.lifeOsI18n.t("Direction")}"><label><input type="radio" name="direction" value="debt" checked><span><b>${window.lifeOsI18n.t("I owe")}</b><small>${window.lifeOsI18n.t("Money I need to pay")}</small></span></label><label><input type="radio" name="direction" value="credit"><span><b>${window.lifeOsI18n.t("Owed to me")}</b><small>${window.lifeOsI18n.t("Money I should receive")}</small></span></label></div>
+  <div class="ob-tabs" role="radiogroup" aria-label="${window.lifeOsI18n.t("Schedule")}"><label><input type="radio" name="schedule" value="once" checked><span>${window.lifeOsI18n.t("One-time")}</span></label><label><input type="radio" name="schedule" value="recurring"><span>${window.lifeOsI18n.t("Recurring")}</span></label></div>
+  <label>${window.lifeOsI18n.t("Name")}<input name="title" id="obTitle" required maxlength="180" dir="auto"></label>
+  <label><span id="obPartyLabel">${window.lifeOsI18n.t("Pay to")}</span><input name="payee" id="obParty" maxlength="180" dir="auto"></label>
+  <fieldset id="obRecurringMode" class="ob-tabs ob-tabs-sub" hidden><legend class="sr-only">${window.lifeOsI18n.t("Amount type")}</legend><label><input type="radio" name="mode" value="fixed" checked><span>${window.lifeOsI18n.t("Same amount each time")}</span></label><label><input type="radio" name="mode" value="split"><span>${window.lifeOsI18n.t("Split a total")}</span></label></fieldset>
+  <div class="ob-fields"><label><span id="obAmountLabel">${window.lifeOsI18n.t("Amount ·")} <span data-currency-unit>${window.lifeOsI18n.t("Toman")}</span></span><input name="amount" id="obAmount" type="number" inputmode="numeric" min="1" max="1000000000000" step="1" required></label><label><span id="obStartLabel">${window.lifeOsI18n.t("Due date")}</span><input name="startDate" id="obStart" type="date" min="2000-01-01" required></label></div>
   <div id="obRepeat" hidden>
-    <div class="ob-fields"><label>Repeats every<span class="ob-inline"><input name="interval" id="obInterval" type="number" min="1" max="12" step="1" value="1" required><select name="frequency" id="obFrequency"><option value="monthly">month</option><option value="weekly">week</option><option value="yearly">year</option><option value="daily">day</option></select></span></label>
-    <label id="obEndsLabel">Ends<select id="obEnds"><option value="never">Never</option><option value="count">After a number of payments</option><option value="date">On a date</option></select></label></div>
-    <div class="ob-fields"><label id="obCountLabel" hidden>Number of payments<input name="count" id="obCount" type="number" min="1" max="600" step="1"></label><label id="obEndLabel" hidden>Last date<input name="endDate" id="obEnd" type="date"></label></div>
-    <label class="ob-check" id="obOptionalLabel"><input id="obOptional" type="checkbox"> Optional subscription: I may skip a period</label>
+    <div class="ob-fields"><label>${window.lifeOsI18n.t("Repeats every")}<span class="ob-inline"><input name="interval" id="obInterval" type="number" min="1" max="12" step="1" value="1" required><select name="frequency" id="obFrequency"><option value="monthly">${window.lifeOsI18n.t("month")}</option><option value="weekly">${window.lifeOsI18n.t("week")}</option><option value="yearly">${window.lifeOsI18n.t("year")}</option><option value="daily">${window.lifeOsI18n.t("day")}</option></select></span></label>
+    <label id="obEndsLabel">${window.lifeOsI18n.t("Ends")}<select id="obEnds"><option value="never">${window.lifeOsI18n.t("Never")}</option><option value="count">${window.lifeOsI18n.t("After a number of payments")}</option><option value="date">${window.lifeOsI18n.t("On a date")}</option></select></label></div>
+    <div class="ob-fields"><label id="obCountLabel" hidden>${window.lifeOsI18n.t("Number of payments")}<input name="count" id="obCount" type="number" min="1" max="600" step="1"></label><label id="obEndLabel" hidden>${window.lifeOsI18n.t("Last date")}<input name="endDate" id="obEnd" type="date"></label></div>
+    <label class="ob-check" id="obOptionalLabel"><input id="obOptional" type="checkbox"> ${window.lifeOsI18n.t("Optional subscription: I may skip a period")}</label>
   </div>
   <p id="obPreview" class="ob-preview"></p>
-  <label>Notes<textarea name="notes" rows="2" maxlength="3000" dir="auto" placeholder="Optional"></textarea></label>
-  <p class="ob-note">Amounts and dates are fixed once saved, so past dues never change. You can still rename an entry or delete it before anything is paid.</p>
+  <label>${window.lifeOsI18n.t("Notes")}<textarea name="notes" rows="2" maxlength="3000" dir="auto" placeholder="${window.lifeOsI18n.t("Optional")}"></textarea></label>
+  <p class="ob-note">${window.lifeOsI18n.t("Amounts and dates are fixed once saved, so past dues never change. You can still rename an entry or delete it before anything is paid.")}</p>
   <p id="obPlanError" class="ob-error" role="alert"></p>
-  <footer class="ob-dialog-actions"><button type="button" data-close class="btn-ghost">Cancel</button><button class="btn-primary" id="obSavePlan">Save</button></footer></form>`);
-const editDialog=dialog('obEditDialog',`<form id="obEditForm"><header class="ob-dialog-head"><h2>Edit details</h2>${closeBtn}</header><label>Name<input id="obEditTitle" required maxlength="180" dir="auto"></label><label><span id="obEditPartyLabel">Pay to</span><input id="obEditParty" maxlength="180" dir="auto"></label><label>Notes<textarea id="obEditNotes" rows="3" maxlength="3000" dir="auto"></textarea></label><p class="ob-note">Amounts and dates stay as scheduled.</p><p id="obEditError" class="ob-error" role="alert"></p><footer class="ob-dialog-actions"><button type="button" data-close class="btn-ghost">Cancel</button><button class="btn-primary" id="obSaveEdit">Save</button></footer></form>`);
-const payDialog=dialog('obPayDialog',`<form id="obPayForm"><header class="ob-dialog-head"><h2 id="obPayHeading">Record payment</h2>${closeBtn}</header><div class="ob-pay-summary" id="obPaySummary"></div><div class="ob-fields"><label>Ledger period<select id="obPayPeriod" required></select></label><label>Date<input id="obPayDate" type="date" required></label></div><label>In the ledger<select id="obPayMode"><option value="create" id="obPayCreate">Add a new expense</option><option value="link" id="obPayLink">Link an existing expense</option></select></label><label id="obCategoryLabel">Expense category<select id="obPayCategory"></select></label><label id="obEntryLabel" hidden><span id="obEntryText">Existing expense with the same amount</span><select id="obPayEntry"></select></label><label>Note<textarea id="obPayNote" rows="2" maxlength="1000" dir="auto" placeholder="Optional"></textarea></label><p id="obPayError" class="ob-error" role="alert"></p><footer class="ob-dialog-actions"><button type="button" data-close class="btn-ghost">Cancel</button><button class="btn-primary" id="obSavePayment">Confirm</button></footer></form>`);
-const actionDialog=dialog('obActionDialog',`<form id="obActionForm"><header class="ob-dialog-head"><h2 id="obActionHeading"></h2>${closeBtn}</header><p id="obActionCopy" class="ob-dialog-copy"></p><label id="obStopLabel" hidden>Stop from<input id="obStopDate" type="date"></label><label id="obActionNoteLabel">Note<textarea id="obActionNote" rows="2" maxlength="1000" dir="auto" placeholder="Optional"></textarea></label><p id="obActionError" class="ob-error" role="alert"></p><footer class="ob-dialog-actions"><button type="button" data-close class="btn-ghost">Cancel</button><button class="btn-primary" id="obConfirmAction">Confirm</button></footer></form>`);
+  <footer class="ob-dialog-actions"><button type="button" data-close class="btn-ghost">${window.lifeOsI18n.t("Cancel")}</button><button class="btn-primary" id="obSavePlan">${window.lifeOsI18n.t("Save")}</button></footer></form>`);
+const editDialog=dialog('obEditDialog',`<form id="obEditForm"><header class="ob-dialog-head"><h2>${window.lifeOsI18n.t("Edit details")}</h2>${closeBtn}</header><label>${window.lifeOsI18n.t("Name")}<input id="obEditTitle" required maxlength="180" dir="auto"></label><label><span id="obEditPartyLabel">${window.lifeOsI18n.t("Pay to")}</span><input id="obEditParty" maxlength="180" dir="auto"></label><label>${window.lifeOsI18n.t("Notes")}<textarea id="obEditNotes" rows="3" maxlength="3000" dir="auto"></textarea></label><p class="ob-note">${window.lifeOsI18n.t("Amounts and dates stay as scheduled.")}</p><p id="obEditError" class="ob-error" role="alert"></p><footer class="ob-dialog-actions"><button type="button" data-close class="btn-ghost">${window.lifeOsI18n.t("Cancel")}</button><button class="btn-primary" id="obSaveEdit">${window.lifeOsI18n.t("Save")}</button></footer></form>`);
+const payDialog=dialog('obPayDialog',`<form id="obPayForm"><header class="ob-dialog-head"><h2 id="obPayHeading">${window.lifeOsI18n.t("Record payment")}</h2>${closeBtn}</header><div class="ob-pay-summary" id="obPaySummary"></div><div class="ob-fields"><label>${window.lifeOsI18n.t("Ledger period")}<select id="obPayPeriod" required></select></label><label>${window.lifeOsI18n.t("Date")}<input id="obPayDate" type="date" required></label></div><label>${window.lifeOsI18n.t("In the ledger")}<select id="obPayMode"><option value="create" id="obPayCreate">${window.lifeOsI18n.t("Add a new expense")}</option><option value="link" id="obPayLink">${window.lifeOsI18n.t("Link an existing expense")}</option></select></label><label id="obCategoryLabel">${window.lifeOsI18n.t("Expense category")}<select id="obPayCategory"></select></label><label id="obEntryLabel" hidden><span id="obEntryText">${window.lifeOsI18n.t("Existing expense with the same amount")}</span><select id="obPayEntry"></select></label><label>${window.lifeOsI18n.t("Note")}<textarea id="obPayNote" rows="2" maxlength="1000" dir="auto" placeholder="${window.lifeOsI18n.t("Optional")}"></textarea></label><p id="obPayError" class="ob-error" role="alert"></p><footer class="ob-dialog-actions"><button type="button" data-close class="btn-ghost">${window.lifeOsI18n.t("Cancel")}</button><button class="btn-primary" id="obSavePayment">${window.lifeOsI18n.t("Confirm")}</button></footer></form>`);
+const actionDialog=dialog('obActionDialog',`<form id="obActionForm"><header class="ob-dialog-head"><h2 id="obActionHeading"></h2>${closeBtn}</header><p id="obActionCopy" class="ob-dialog-copy"></p><label id="obStopLabel" hidden>${window.lifeOsI18n.t("Stop from")}<input id="obStopDate" type="date"></label><label id="obActionNoteLabel">${window.lifeOsI18n.t("Note")}<textarea id="obActionNote" rows="2" maxlength="1000" dir="auto" placeholder="${window.lifeOsI18n.t("Optional")}"></textarea></label><p id="obActionError" class="ob-error" role="alert"></p><footer class="ob-dialog-actions"><button type="button" data-close class="btn-ghost">${window.lifeOsI18n.t("Cancel")}</button><button class="btn-primary" id="obConfirmAction">${window.lifeOsI18n.t("Confirm")}</button></footer></form>`);
 const dialogs=[planDialog,editDialog,payDialog,actionDialog];
 
 const totalsFor=dir=>dir==='credit'?view.creditTotals:view.totals;
 function statusOf(o){
   const w=WORDS[o.direction];
-  if(o.paymentIssue)return['Check ledger','late'];
+  if(o.paymentIssue)return[tr('Check ledger'),'late'];
   if(o.status==='paid')return[w.paid,'done'];
-  if(o.skipped)return['Skipped','muted'];
-  if(o.status==='rejected')return[o.overdue?'Late · overdue':o.direction==='credit'?'Late':'Deferred','late'];
-  if(o.overdue)return['Overdue','late'];
-  return[o.date===today()?'Due today':'Upcoming','soon'];
+  if(o.skipped)return[tr('Skipped'),'muted'];
+  if(o.status==='rejected')return[tr(o.overdue?'Late · overdue':o.direction==='credit'?'Late':'Deferred'),'late'];
+  if(o.overdue)return[tr('Overdue'),'late'];
+  return[tr(o.date===today()?'Due today':'Upcoming'),'soon'];
 }
 function scheduleLabel(o){
-  if(o.type==='once')return 'One-time';
+  if(o.type==='once')return tr('One-time');
   const repeat=repeatLabel(o.frequency,o.interval);
-  return o.count?`${repeat} · ${o.index+1} of ${o.count}`:repeat;
+  return o.count?tr('{repeat} · {current} of {total}',{repeat,current:money(o.index+1),total:money(o.count)}):repeat;
 }
 function render(){
   if(!view)return;
@@ -89,38 +91,38 @@ function render(){
     const t=totalsFor(dir),w=WORDS[dir],tab=$('obTab-'+dir);
     tab.setAttribute('aria-selected',String(dir===direction));tab.tabIndex=dir===direction?0:-1;
     const due=t.remaining+t.carryOver;
-    tab.innerHTML=`<span class="ob-side-label">${w.tab}</span><strong>${money(due)} <small>${esc(unit())}</small></strong><span class="ob-side-meta">${t.overdue+t.carryOver?`<em>${money(t.overdue+t.carryOver)} overdue</em>`:`${w.left.toLowerCase()} by month end`}</span>`;
+    tab.innerHTML=`<span class="ob-side-label">${w.tab}</span><strong>${money(due)} <small>${esc(unit())}</small></strong><span class="ob-side-meta">${t.overdue+t.carryOver?`<em>${tr('{amount} overdue',{amount:money(t.overdue+t.carryOver)})}</em>`:tr('{label} by month end',{label:w.left})}</span>`;
   }
   const t=totalsFor(direction),w=WORDS[direction];
-  $('obStats').innerHTML=[[`Due in ${fmt(month+'-15',{month:'long'})}`,t.committed,''],[w.paid,t.paid,'good'],[w.left,t.remaining,t.remaining?'warn':''],...(t.carryOver?[['From earlier months',t.carryOver,'bad']]:[])].map(([label,value,tone])=>`<div class="ob-stat ${tone}"><span>${label}</span><strong>${money(value)}</strong></div>`).join('');
-  $('obFilterPaid').textContent=direction==='credit'?'Received':'Paid';
-  $('obFilterRejected').textContent=direction==='credit'?'Late':'Deferred';
+  $('obStats').innerHTML=[[tr('Due in {month}',{month:fmt(month+'-15',{month:'long'})}),t.committed,''],[w.paid,t.paid,'good'],[w.left,t.remaining,t.remaining?'warn':''],...(t.carryOver?[[tr('From earlier months'),t.carryOver,'bad']]:[])].map(([label,value,tone])=>`<div class="ob-stat ${tone}"><span>${label}</span><strong>${money(value)}</strong></div>`).join('');
+  $('obFilterPaid').textContent=direction==='credit'?window.lifeOsI18n.t('Received'):window.lifeOsI18n.t('Paid');
+  $('obFilterRejected').textContent=direction==='credit'?window.lifeOsI18n.t('Late'):window.lifeOsI18n.t('Deferred');
   root.querySelectorAll('[data-filter]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.filter===filter)));
   const q=$('obSearch').value.toLowerCase();
   const list=view.occurrences.filter(o=>o.direction===direction&&(filter==='all'||(filter==='open'?o.status!=='paid'&&!o.skipped:o.status===filter))&&`${o.title} ${o.payee}`.toLowerCase().includes(q));
   $('obList').innerHTML=list.length?list.map(o=>{
     const [label,tone]=statusOf(o),paid=o.decision.status==='paid';
-    const more=paid?`<button data-ledger="${esc(o.decision.period)}" data-entry="${esc(o.decision.incomeId??o.decision.expenseId)}" data-kind="${o.direction==='credit'?'income':'expense'}">View in ledger</button><button data-action="undo" data-occurrence="${esc(o.id)}">Undo</button>`
-      :o.status==='rejected'?`<button data-action="restore" data-occurrence="${esc(o.id)}">Mark as expected again</button>`
-      :`<button data-action="reject" data-occurrence="${esc(o.id)}">${o.optional?'Skip this period':w.defer}</button>`;
+    const more=paid?`<button data-ledger="${esc(o.decision.period)}" data-entry="${esc(o.decision.incomeId??o.decision.expenseId)}" data-kind="${o.direction==='credit'?'income':'expense'}">${window.lifeOsI18n.t("View in ledger")}</button><button data-action="undo" data-occurrence="${esc(o.id)}">${window.lifeOsI18n.t("Undo")}</button>`
+      :o.status==='rejected'?`<button data-action="restore" data-occurrence="${esc(o.id)}">${window.lifeOsI18n.t("Mark as expected again")}</button>`
+      :`<button data-action="reject" data-occurrence="${esc(o.id)}">${o.optional?tr('Skip this period'):w.defer}</button>`;
     return `<article class="ob-row tone-${tone}${o.id===requested?' ob-selected':''}" data-id="${esc(o.id)}">
       <div class="ob-when" aria-label="${esc(longDate(o.date))}"><strong>${fmt(o.date,{day:'numeric'})}</strong><span>${fmt(o.date,{month:'short'})}${o.date.slice(0,4)!==month.slice(0,4)?' '+o.date.slice(0,4):''}</span></div>
-      <div class="ob-info"><h4 dir="auto">${esc(o.title)}</h4><p>${o.payee?`<span dir="auto">${esc(o.payee)}</span> · `:''}${esc(scheduleLabel(o))}${o.optional?' · optional':''}</p>${o.decision.note?`<p class="ob-row-note" dir="auto">${esc(o.decision.note)}</p>`:''}${paid?`<p class="ob-row-note">${esc(w.paid)} ${esc(longDate(o.decision.paymentDate))} · ${esc(o.decision.period)}</p>`:''}</div>
+      <div class="ob-info"><h4 dir="auto">${esc(o.title)}</h4><p>${o.payee?`<span dir="auto">${esc(o.payee)}</span> · `:''}${esc(scheduleLabel(o))}${o.optional?' · '+tr('optional'):''}</p>${o.decision.note?`<p class="ob-row-note" dir="auto">${esc(o.decision.note)}</p>`:''}${paid?`<p class="ob-row-note">${esc(w.paid)} ${esc(longDate(o.decision.paymentDate))} · ${esc(o.decision.period)}</p>`:''}</div>
       <div class="ob-amount"><strong>${money(o.amount)}</strong><span class="ob-pill ${tone}">${label}</span></div>
       <div class="ob-row-actions">${paid?'':`<button class="btn-primary ob-pay" data-pay="${esc(o.id)}">${w.pay}</button>`}<details class="ob-more"><summary aria-label="More actions for ${esc(o.title)}">⋯</summary><div class="ob-menu">${more}</div></details></div>
     </article>`;
-  }).join(''):`<div class="ob-empty"><strong>${filter==='open'?'All clear.':'Nothing here.'}</strong><span>${w.empty} Use <b>＋ New</b> to add one, or pick another month.</span></div>`;
+  }).join(''):`<div class="ob-empty"><strong>${tr(filter==='open'?'All clear.':'Nothing here.')}</strong><span>${w.empty} ${tr('Use')} <b>${window.lifeOsI18n.t("＋ New")}</b> ${window.lifeOsI18n.t("to add one, or pick another month.")}</span></div>`;
   const plans=view.plans.filter(p=>p.direction===direction);
   $('obPlansCount').textContent=plans.length?`${plans.length}`:'';
   $('obPlans').innerHTML=plans.length?plans.map(p=>{
     const finite=p.type!=='recurring'&&p.count>1,pct=finite&&p.totalAmount?Math.round(p.progress.paid/p.totalAmount*100):0;
-    const terms=p.type==='once'?`One-time · due ${longDate(p.startDate)}`:`${repeatLabel(p.frequency,p.interval)} · from ${longDate(p.startDate)}${p.count&&p.type==='recurring'?` · ${p.count} payments`:''}${p.endDate?` · until ${longDate(p.endDate)}`:''}${p.cancelFrom?` · stopped from ${longDate(p.cancelFrom)}`:''}`;
-    const amount=p.type==='recurring'?`${money(p.amount)} <small>each</small>`:`${money(p.totalAmount)} <small>total</small>`;
-    return `<article class="ob-plan"><div class="ob-plan-main"><h4 dir="auto">${esc(p.title)}</h4><p>${p.payee?`<span dir="auto">${esc(p.payee)}</span> · `:''}${terms}</p>${finite?`<div class="ob-progress" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100" aria-label="${esc(p.title)} progress"><span style="width:${pct}%"></span></div><p class="ob-progress-text">${money(p.progress.paid)} ${w.done} · ${money(p.progress.remaining)} left${p.count>1?` · ${p.progress.paidCount} of ${p.count}`:''}</p>`:''}${p.notes?`<p class="ob-row-note" dir="auto">${esc(p.notes)}</p>`:''}</div><div class="ob-plan-side"><strong>${amount}</strong><details class="ob-more"><summary aria-label="Plan actions for ${esc(p.title)}">⋯</summary><div class="ob-menu"><button data-edit="${esc(p.id)}">Edit details</button>${p.type==='recurring'&&!p.cancelFrom?`<button data-cancel="${esc(p.id)}">Stop future dues</button>`:''}<button data-delete="${esc(p.id)}" class="danger">Delete</button></div></details></div></article>`;
-  }).join(''):`<p class="ob-muted">No plans yet.</p>`;
+    const terms=p.type==='once'?tr('One-time · due {date}',{date:longDate(p.startDate)}):tr('{repeat} · from {date}',{repeat:repeatLabel(p.frequency,p.interval),date:longDate(p.startDate)})+(p.count&&p.type==='recurring'?tr(' · {count} payments',{count:money(p.count)}):'')+(p.endDate?tr(' · until {date}',{date:longDate(p.endDate)}):'')+(p.cancelFrom?tr(' · stopped from {date}',{date:longDate(p.cancelFrom)}):'');
+    const amount=p.type==='recurring'?`${money(p.amount)} <small>${window.lifeOsI18n.t("each")}</small>`:`${money(p.totalAmount)} <small>${window.lifeOsI18n.t("total")}</small>`;
+    return `<article class="ob-plan"><div class="ob-plan-main"><h4 dir="auto">${esc(p.title)}</h4><p>${p.payee?`<span dir="auto">${esc(p.payee)}</span> · `:''}${terms}</p>${finite?`<div class="ob-progress" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100" aria-label="${esc(p.title)} progress"><span style="width:${pct}%"></span></div><p class="ob-progress-text">${money(p.progress.paid)} ${w.done} · ${tr('{amount} left',{amount:money(p.progress.remaining)})}${p.count>1?tr(' · {current} of {total}',{current:money(p.progress.paidCount),total:money(p.count)}):''}</p>`:''}${p.notes?`<p class="ob-row-note" dir="auto">${esc(p.notes)}</p>`:''}</div><div class="ob-plan-side"><strong>${amount}</strong><details class="ob-more"><summary aria-label="Plan actions for ${esc(p.title)}">⋯</summary><div class="ob-menu"><button data-edit="${esc(p.id)}">${window.lifeOsI18n.t("Edit details")}</button>${p.type==='recurring'&&!p.cancelFrom?`<button data-cancel="${esc(p.id)}">${window.lifeOsI18n.t("Stop future dues")}</button>`:''}<button data-delete="${esc(p.id)}" class="danger">${window.lifeOsI18n.t("Delete")}</button></div></details></div></article>`;
+  }).join(''):`<p class="ob-muted">${window.lifeOsI18n.t("No plans yet.")}</p>`;
   const names=Object.fromEntries(view.plans.map(p=>[p.id,p.title]));
   const verbs={pay:'Recorded',undo:'Undid',reject:'Deferred',restore:'Restored',delete:'Deleted'};
-  $('obHistory').innerHTML=view.history?.length?[...view.history].reverse().map(h=>`<p><span>${esc(new Date(h.at).toLocaleString('en-GB',{timeZone:'Asia/Tehran',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}))}</span>${esc(verbs[h.action]||h.action)} · ${esc(names[h.occurrenceId.split(':')[0]]||(h.action==='delete'?h.note:'')||'Removed entry')}${h.note&&h.action!=='delete'?` · <i dir="auto">${esc(h.note)}</i>`:''}</p>`).join(''):'<p class="ob-muted">No activity yet.</p>';
+  $('obHistory').innerHTML=view.history?.length?[...view.history].reverse().map(h=>`<p><span>${esc(new Date(h.at).toLocaleString(window.lifeOsI18n.locale('en-GB'),{timeZone:'Asia/Tehran',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}))}</span>${esc(tr(verbs[h.action]||h.action))} · ${esc(names[h.occurrenceId.split(':')[0]]||(h.action==='delete'?h.note:'')||tr('Removed entry'))}${h.note&&h.action!=='delete'?` · <i dir="auto">${esc(h.note)}</i>`:''}</p>`).join(''):window.lifeOsI18n.markup('<p class="ob-muted">No activity yet.</p>');
   // Static controls (tabs, filters) outlive re-renders, so restore them after a save too.
   root.querySelectorAll('button').forEach(b=>b.disabled=mutating);
 }
@@ -156,11 +158,11 @@ async function mutate(payload){
 const choice=name=>planDialog.querySelector(`input[name="${name}"]:checked`).value;
 function planFields(){
   const dir=choice('direction'),w=WORDS[dir],recurring=choice('schedule')==='recurring',split=recurring&&choice('mode')==='split',ends=$('obEnds').value;
-  $('obPlanHeading').textContent=dir==='credit'?'Money owed to me':'Money I owe';
+  $('obPlanHeading').textContent=dir==='credit'?window.lifeOsI18n.t('Money owed to me'):window.lifeOsI18n.t('Money I owe');
   $('obTitle').placeholder=w.name;$('obPartyLabel').textContent=w.party;$('obParty').placeholder=w.partyHint;
   $('obRecurringMode').hidden=!recurring;$('obRepeat').hidden=!recurring;
-  $('obAmountLabel').textContent=split?`Total amount · ${unit()}`:recurring?`Amount each time · ${unit()}`:`Amount · ${unit()}`;
-  $('obStartLabel').textContent=recurring?'First due date':'Due date';
+  $('obAmountLabel').textContent=split?window.lifeOsI18n.t("Total amount · {value0}",{value0:unit()}):recurring?window.lifeOsI18n.t("Amount each time · {value0}",{value0:unit()}):window.lifeOsI18n.t("Amount · {value0}",{value0:unit()});
+  $('obStartLabel').textContent=recurring?window.lifeOsI18n.t('First due date'):window.lifeOsI18n.t('Due date');
   // A split total always needs a payment count; a fixed amount can run forever.
   $('obEndsLabel').hidden=split;
   $('obCountLabel').hidden=!recurring||!(split||ends==='count');$('obCount').required=!$('obCountLabel').hidden;$('obCount').disabled=$('obCountLabel').hidden;
@@ -168,10 +170,12 @@ function planFields(){
   $('obOptionalLabel').hidden=!recurring||split||dir!=='debt';if($('obOptionalLabel').hidden)$('obOptional').checked=false;
   const amount=Number($('obAmount').value),count=Number($('obCount').value),start=$('obStart').value,every=repeatLabel($('obFrequency').value,Number($('obInterval').value)||1).toLowerCase();
   let text='';
-  if(!amount||!start)text='';
-  else if(!recurring)text=`${money(amount)} ${unit()} ${dir==='credit'?'to receive':'to pay'} on ${longDate(start)}.`;
-  else if(split)text=count>0&&amount>=count?`${count} payments of ${money(Math.floor(amount/count))} ${unit()}, ${every}, starting ${longDate(start)}${amount%count?` (last one ${money(Math.floor(amount/count)+amount%count)})`:''}.`:'Enter how many payments to split the total into.';
-  else text=`${money(amount)} ${unit()} ${every}, starting ${longDate(start)}${ends==='count'&&count?`, ${count} times`:ends==='date'&&$('obEnd').value?`, until ${longDate($('obEnd').value)}`:', with no end date'}.`;
+  const startLabel=start?longDate(start):'';
+  if(amount&&start){
+    if(!recurring)text=tr('{amount} {unit} {direction} on {date}.',{amount:money(amount),unit:unit(),direction:tr(dir==='credit'?'to receive':'to pay'),date:startLabel});
+    else if(split)text=count>0&&amount>=count?tr('{count} payments of {amount} {unit}, {repeat}, starting {date}{last}.',{count:money(count),amount:money(Math.floor(amount/count)),unit:unit(),repeat:every,date:startLabel,last:amount%count?tr(' (last one {amount})',{amount:money(Math.floor(amount/count)+amount%count)}):''}):tr('Enter how many payments to split the total into.');
+    else text=tr('{amount} {unit} {repeat}, starting {date}{end}.',{amount:money(amount),unit:unit(),repeat:every,date:startLabel,end:ends==='count'&&count?tr(', {count} times',{count:money(count)}):ends==='date'&&$('obEnd').value?tr(', until {date}',{date:longDate($('obEnd').value)}):tr(', with no end date')});
+  }
   $('obPreview').textContent=text;
 }
 function openNew(){
@@ -216,11 +220,11 @@ function openPay(id){
   payment=view.occurrences.find(o=>o.id===id);if(!payment)return;
   const credit=payment.direction==='credit',w=WORDS[payment.direction];
   $('obPayHeading').textContent=w.record;
-  $('obPaySummary').innerHTML=`<strong>${money(payment.amount)} <small>${esc(unit())}</small></strong><span dir="auto">${esc(payment.title)}${payment.payee?' · '+esc(payment.payee):''}</span><span>Due ${esc(longDate(payment.date))}</span>`;
-  $('obPayCreate').textContent=credit?'Add it as new income':'Add a new expense';
-  $('obPayLink').textContent=credit?'Link an income already in the ledger':'Link an expense already in the ledger';
-  $('obEntryText').textContent=credit?'Income with the same amount':'Expense with the same amount';
-  $('obSavePayment').textContent=credit?'Mark received':'Confirm payment';
+  $('obPaySummary').innerHTML=`<strong>${money(payment.amount)} <small>${esc(unit())}</small></strong><span dir="auto">${esc(payment.title)}${payment.payee?' · '+esc(payment.payee):''}</span><span>${esc(tr('Due {date}',{date:longDate(payment.date)}))}</span>`;
+  $('obPayCreate').textContent=credit?window.lifeOsI18n.t('Add it as new income'):window.lifeOsI18n.t('Add a new expense');
+  $('obPayLink').textContent=credit?window.lifeOsI18n.t('Link an income already in the ledger'):window.lifeOsI18n.t('Link an expense already in the ledger');
+  $('obEntryText').textContent=credit?window.lifeOsI18n.t('Income with the same amount'):window.lifeOsI18n.t('Expense with the same amount');
+  $('obSavePayment').textContent=credit?window.lifeOsI18n.t('Mark received'):window.lifeOsI18n.t('Confirm payment');
   $('obPayPeriod').innerHTML=Object.keys(periods()).map(p=>`<option value="${esc(p)}">${esc(p)}</option>`).join('');
   const active=appStorage.getItem('daramd_active_period_v1');if(periods()[active])$('obPayPeriod').value=active;
   $('obPayMode').value='create';$('obPayDate').value=today();$('obPayDate').max=today();$('obPayNote').value='';$('obPayError').textContent='';paymentOptions();payDialog.showModal();
@@ -237,15 +241,15 @@ $('obPayForm').onsubmit=async event=>{
 function openAction(name,id){
   const item=view.occurrences.find(o=>o.id===id),plan=view.plans.find(p=>p.id===id),credit=(item||plan)?.direction==='credit';
   action={action:name,...(['cancel','delete'].includes(name)?{planId:id}:{occurrenceId:id})};
-  $('obActionHeading').textContent={cancel:'Stop future dues',delete:'Delete this entry?',undo:credit?'Undo receipt':'Undo payment',reject:item?.optional?'Skip this period':credit?'Mark as late':'Defer payment',restore:'Mark as expected again'}[name];
+  $('obActionHeading').textContent={cancel:window.lifeOsI18n.t('Stop future dues'),delete:window.lifeOsI18n.t('Delete this entry?'),undo:credit?window.lifeOsI18n.t('Undo receipt'):window.lifeOsI18n.t('Undo payment'),reject:item?.optional?window.lifeOsI18n.t('Skip this period'):credit?window.lifeOsI18n.t('Mark as late'):window.lifeOsI18n.t('Defer payment'),restore:window.lifeOsI18n.t('Mark as expected again')}[name];
   $('obActionCopy').textContent={
-    cancel:'No new dues are created from the chosen date. Earlier dues and anything already recorded stay as they are.',
-    delete:`“${plan?.title||''}” and all of its upcoming dues will be removed. This is meant for mistakes; it only works while nothing has been ${credit?'received':'paid'}.`,
-    undo:`The ${credit?'income':'expense'} created for this ${credit?'receipt':'payment'} is removed from the ledger (if you haven’t edited it). A linked existing entry is kept and just unlinked.`,
-    reject:item?.optional?'Only this period is skipped. The next one stays scheduled.':credit?'The amount is still owed to you. It stays expected and shows as overdue after the due date.':'The amount is still owed. Deferring does not move the due date; it shows as overdue after it.',
-    restore:'This due becomes expected again.'
+    cancel:window.lifeOsI18n.t('No new dues are created from the chosen date. Earlier dues and anything already recorded stay as they are.'),
+    delete:window.lifeOsI18n.t("“{value0}” and all of its upcoming dues will be removed. This is meant for mistakes; it only works while nothing has been {value1}.",{value0:plan?.title||'',value1:tr(credit?'received':'paid')}),
+    undo:window.lifeOsI18n.t("The {value0} created for this {value1} is removed from the ledger (if you haven’t edited it). A linked existing entry is kept and just unlinked.",{value0:tr(credit?'income':'expense'),value1:tr(credit?'receipt':'payment')}),
+    reject:item?.optional?window.lifeOsI18n.t('Only this period is skipped. The next one stays scheduled.'):credit?window.lifeOsI18n.t('The amount is still owed to you. It stays expected and shows as overdue after the due date.'):window.lifeOsI18n.t('The amount is still owed. Deferring does not move the due date; it shows as overdue after it.'),
+    restore:window.lifeOsI18n.t('This due becomes expected again.')
   }[name];
-  $('obConfirmAction').textContent=name==='delete'?'Delete':'Confirm';$('obConfirmAction').classList.toggle('ob-danger',name==='delete');
+  $('obConfirmAction').textContent=name==='delete'?window.lifeOsI18n.t('Delete'):window.lifeOsI18n.t('Confirm');$('obConfirmAction').classList.toggle('ob-danger',name==='delete');
   $('obStopLabel').hidden=name!=='cancel';$('obStopDate').required=name==='cancel';$('obStopDate').value=today();$('obStopDate').min=today();
   $('obActionNoteLabel').hidden=!['reject','restore'].includes(name);$('obActionNote').value='';$('obActionError').textContent='';actionDialog.showModal();
 }
@@ -298,4 +302,4 @@ addEventListener('finance-open-payment',async event=>{
 });
 addEventListener('message',event=>{if(event.origin===location.origin&&event.source===parent&&event.data?.type==='finance-refresh')refresh();});
 setInterval(()=>{if(document.visibilityState==='visible'&&!window.frameElement?.hidden&&!mutating)refresh();},60000);
-try{await window.appStorageReady;await refresh();}catch{$('obStatus').textContent='Unable to load debts and credits. Reload to retry.';}
+try{await window.appStorageReady;await refresh();}catch{$('obStatus').textContent=window.lifeOsI18n.t('Unable to load debts and credits. Reload to retry.');}

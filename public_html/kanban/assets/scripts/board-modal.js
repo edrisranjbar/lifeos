@@ -8,14 +8,14 @@ function openBoardModal(boardId = null) {
   if (boardId) {
     const board = getBoard(boardId);
     if (!board) return;
-    $('boardModalTitle').textContent = 'Edit Board';
+    $('boardModalTitle').textContent = window.lifeOsI18n.t('Edit Board');
     $('boardId').value = board.id;
     $('boardName').value = board.name;
     $('boardDescriptionInput').value = board.description || '';
     $('boardForm').elements.boardBackground.value = safeBoardBackground(board.background);
     $('deleteBoardBtn').hidden = false;
   } else {
-    $('boardModalTitle').textContent = 'New Board';
+    $('boardModalTitle').textContent = window.lifeOsI18n.t('New Board');
     $('boardForm').reset();
     $('boardId').value = '';
     $('deleteBoardBtn').hidden = true;
@@ -30,7 +30,7 @@ function handleBoardSubmit(e) {
   const description = $('boardDescriptionInput').value.trim();
   const background = safeBoardBackground($('boardForm').elements.boardBackground.value);
   if (!name) {
-    showToast('Please enter a board name', 'error');
+    showToast(window.lifeOsI18n.t('Please enter a board name'), 'error');
     return;
   }
   if (boardId) {
@@ -39,14 +39,14 @@ function handleBoardSubmit(e) {
       board.name = name;
       board.description = description;
       board.background = background;
-      showToast('Board settings saved', 'success');
+      showToast(window.lifeOsI18n.t('Board settings saved'), 'success');
     } else {
-      showToast('Board not found', 'error');
+      showToast(window.lifeOsI18n.t('Board not found'), 'error');
     }
   } else {
     state.boards.push({...createBoard(name), description, background});
     state.activeBoardId = state.boards[state.boards.length - 1].id;
-    showToast('Board created', 'success');
+    showToast(window.lifeOsI18n.t('Board created'), 'success');
   }
   saveState();
   render();

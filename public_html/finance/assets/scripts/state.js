@@ -25,8 +25,7 @@ let state = {
 
 // ── Tiny template helper (replaces former t() with {var} interpolation) ──
 function __t(str, vars) {
-  if (!vars) return str;
-  return str.replace(/\{(\w+)\}/g, (m, k) => (k in vars ? String(vars[k]) : m));
+  return window.lifeOsI18n.t(str, vars);
 }
 let periods = {};
 let activePeriod = "Current";
