@@ -5,10 +5,10 @@
 #   docker compose -f docker-compose.image.yml up -d
 # Open http://localhost:8080
 # Upgrade later with:  docker compose -f docker-compose.image.yml pull && docker compose -f docker-compose.image.yml up -d
-# To pin a version, add LIFEOS_VERSION=1.2.0 to .env (default: edge)
+# To pin a version, add LIFEOS_VERSION=1.2.0 to .env (default: latest)
 services:
   app:
-    image: ghcr.io/edrisranjbar/lifeos:${LIFEOS_VERSION:-edge}
+    image: ghcr.io/edrisranjbar/lifeos:${LIFEOS_VERSION:-latest}
     restart: unless-stopped
     ports:
       - "${LIFEOS_PORT:-8080}:80"
