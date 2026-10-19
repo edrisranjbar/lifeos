@@ -25,42 +25,56 @@
         }
       })();
     </script>
-    <link rel="stylesheet" href="static/style.css" />
+    <link rel="stylesheet" href="static/style.css?v=notes-ui-1" />
   <script src="/assets/html-escape.js?v=issue19-1"></script>
 </head>
   <body>
     <header class="notes-toolbar">
       <div class="toolbar-left">
         <span class="eyebrow">Markdown workspace</span>
-        <h1>Notes</h1>
-        <span class="small-note" id="notesCount">0 notes</span>
+        <div class="title-line">
+          <h1>Notes</h1>
+          <span class="count-pill" id="notesCount">0 notes</span>
+        </div>
+        <p class="toolbar-hint">Double-click a note to edit · drag to move · link two notes to connect ideas</p>
       </div>
       <div class="toolbar-right">
-        <input
-          class="input search"
-          id="searchInput"
-          placeholder="Search…"
-          aria-label="Search notes"
-        />
+        <label class="search-field">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input
+            class="search"
+            id="searchInput"
+            type="search"
+            placeholder="Search notes"
+            aria-label="Search notes"
+          />
+          <kbd>/</kbd>
+        </label>
         <button
           class="btn-primary"
           id="newNoteBtn"
           title="Add a new sticky note (⌘N)"
         >
-          ＋ New note
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+          New note
         </button>
       </div>
     </header>
 
     <main class="canvas" id="canvas" aria-label="Sticky notes canvas">
       <svg class="connections-layer" id="connectionsLayer" aria-label="Note connections"></svg>
-      <p class="empty-state" id="emptyState" hidden>
-        No notes yet. Press ＋ to add a note.
-      </p>
+      <div class="empty-state" id="emptyState" hidden>
+        <div class="empty-card">
+          <span class="empty-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M15.5 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8.5Z"/><path d="M15 3v6h6"/></svg></span>
+          <strong>Your canvas is empty</strong>
+          <span>Capture a thought, a list or an idea. Notes support Markdown and can be linked together.</span>
+          <button class="btn-primary" type="button" id="emptyNewNote">Create your first note</button>
+        </div>
+      </div>
     </main>
 
     <div class="toast" id="toast"></div>
     <script src="../assets/voice-input.js" defer></script>
-    <script src="static/app.js" defer></script>
+    <script src="static/app.js?v=persian-1" defer></script>
   </body>
 </html>

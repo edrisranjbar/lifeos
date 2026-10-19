@@ -102,7 +102,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   function updateWritingStats() {
     const text = input.value;
     const words = text.trim() ? text.trim().split(/\s+/u).length : 0;
-    $('writingStats').textContent = t('{words} words · {characters} characters', { words: number(words), characters: number(Array.from(text).length) });
+    // Reading time at ~220 words per minute, shown once there is something to read.
+    const minutes = Math.max(1, Math.round(words / 220));
+    $('writingStats').textContent = t('{words} words · {characters} characters',{words:number(words),characters:number(Array.from(text).length)})+(words?t(' · {minutes} min read',{minutes:number(minutes)}):'');
     const before = text.slice(0, input.selectionStart).split('\n');
     $('cursorPosition').textContent = t('Ln {line}, Col {column}', { line: number(before.length), column: number(Array.from(before.at(-1)).length + 1) });
   }
@@ -113,13 +115,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (note) note.body = input.value;
     try {
       appStorage.setItem(KEY, JSON.stringify(data));
-      status.textContent = t('Saved');
+      status.textContent = t('Saved'); status.dataset.state = 'saved';
     } catch {
-      status.textContent = t('Save failed');
+      status.textContent = t('Save failed'); status.dataset.state = 'failed';
     }
   };
   const queueSave = () => {
-    status.textContent = t('Saving…');
+    status.textContent = t('Saving…'); status.dataset.state = 'saving';
     clearTimeout(saveTimer);
     saveTimer = setTimeout(save, 220);
   };
@@ -130,11 +132,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     return notes;
   };
   const displayTitle = note => note.title.trim() || t('Untitled note');
+  // First line with the Markdown markers stripped, so the list reads like prose.
+  // Lines that only repeat the note's name are skipped.
+  const plainLine = line => line.replace(/^\s*(?:#{1,6}\s+|>\s*|[-*+]\s+(?:\[[ xX]\]\s+)?|\d+\.\s+)/, '').replace(/[*_~`]/g, '').trim();
+  const previewLine = note => note.body.split(/\r?\n/).map(plainLine).find(line => line && line.toLowerCase() !== note.title.trim().toLowerCase()) || t('Empty note');
+  const editedAgo = timestamp => {
+    const seconds = (Date.now() - Number(timestamp)) / 1000;
+    if (!Number.isFinite(seconds)) return '';
+    if (seconds < 45) return t('Just now');
+    const relative = new Intl.RelativeTimeFormat(window.lifeOsI18n.locale(), {numeric: 'auto'});
+    if (seconds < 3600) return relative.format(-Math.round(seconds / 60), 'minute');
+    if (seconds < 86400) return relative.format(-Math.round(seconds / 3600), 'hour');
+    if (seconds < 604800) return relative.format(-Math.round(seconds / 86400), 'day');
+    return new Date(Number(timestamp)).toLocaleDateString(window.lifeOsI18n.locale(), {month: 'short', day: 'numeric'});
+  };
   const renderTabs = () => {
     tabs.innerHTML = orderedNotes().map((note, index, notes) => `
       <li class="note-tab ${note.id === data.activeId ? 'active' : ''}" data-note-id="${escapeHtml(note.id)}" draggable="${data.sort === 'manual'}">
         <button type="button" class="note-tab-open" data-open-note="${escapeHtml(note.id)}" aria-current="${note.id === data.activeId ? 'page' : 'false'}" title="${escapeHtml(displayTitle(note))}">
-          <span class="note-tab-name" dir="${noteDirection(displayTitle(note))}">${escapeHtml(displayTitle(note))}</span><span class="note-tab-preview" dir="${noteDirection(note.body)}">${escapeHtml(note.body.split(/\r?\n/).find(line => line.trim()) || t('Empty note'))}</span>
+          <span class="note-tab-name" dir="${noteDirection(displayTitle(note))}">${escapeHtml(displayTitle(note))}</span><span class="note-tab-preview" dir="${noteDirection(note.body)}">${escapeHtml(previewLine(note))}</span><span class="note-tab-meta">${escapeHtml(editedAgo(note.updatedAt))}</span>
         </button>
         <span class="note-tab-actions">
           <button type="button" data-move-note="up" data-note-id="${escapeHtml(note.id)}" aria-label="${escapeHtml(t('Move {name} up', { name: displayTitle(note) }))}" ${data.sort !== 'manual' || index === 0 ? 'disabled' : ''}>↑</button>
@@ -155,7 +171,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderPreview();
     updateWritingStats();
     renderTabs();
-    status.textContent = t('Saved');
+    status.textContent = t('Saved'); status.dataset.state = 'saved';
     try { appStorage.setItem(KEY, JSON.stringify(data)); } catch {}
   };
   const reorderNote = (id, direction) => {
@@ -306,7 +322,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     divider: { wrap: ['\n', '\n'], ph: '---' },
   };
 
-  document.querySelector('.md-toolbar').insertAdjacentHTML('beforeend', '<span class="md-toolbar-separator" aria-hidden="true"></span><button type="button" data-md="task" title="Task checklist">☑</button><button type="button" data-md="table" title="Insert table">▦</button><button type="button" data-md="divider" title="Horizontal divider">―</button>');
 
   function applyMdFormat(kind) {
     const format = MD_FORMATS[kind];

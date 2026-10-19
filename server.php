@@ -94,13 +94,18 @@ $extensions = [
     'woff' => 'font/woff', 'woff2' => 'font/woff2', 'ttf' => 'font/ttf',
     'mp3' => 'audio/mpeg', 'm4a' => 'audio/mp4', 'ogg' => 'audio/ogg', 'wav' => 'audio/wav',
 ];
+// Only public interface dictionaries may be served as JSON. Other JSON files
+// remain unavailable through the static-file handler.
+if (preg_match('#^assets/i18n/(?:fa|ar)\.json$#D', $relativePath) === 1) {
+    $extensions['json'] = 'application/json';
+}
 $extension = strtolower(pathinfo($resolved, PATHINFO_EXTENSION));
 if (!isset($extensions[$extension]) || str_contains($resolved, DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR)) {
     http_response_code(404);
     echo 'Not found';
     return true;
 }
-header('Content-Type: ' . $extensions[$extension] . ($extension === 'html' || $extension === 'css' || $extension === 'js' || $extension === 'mjs' ? '; charset=utf-8' : ''));
+header('Content-Type: ' . $extensions[$extension] . (in_array($extension, ['html', 'css', 'js', 'mjs', 'json'], true) ? '; charset=utf-8' : ''));
 header('Cache-Control: ' . life_os_static_cache($extension, $_GET));
 header('X-Content-Type-Options: nosniff');
 readfile($resolved);

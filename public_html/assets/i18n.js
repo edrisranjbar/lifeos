@@ -48,7 +48,7 @@
     if (current.code === 'en') return;
     const base = scope.nodeType === Node.DOCUMENT_NODE ? scope.documentElement : scope;
     const walker = document.createTreeWalker(base, NodeFilter.SHOW_TEXT, {
-      acceptNode: node => (node.parentElement?.closest(SKIP) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT),
+      acceptNode: node => (node.parentElement?.closest(SKIP + ',[dir=auto]') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT),
     });
     for (let node = walker.nextNode(); node; node = walker.nextNode()) {
       const text = node.nodeValue.trim();

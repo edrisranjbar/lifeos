@@ -8,6 +8,26 @@ const FONT_FACES = {
   serif: 'Georgia, "Times New Roman", serif',
   mono: '"JetBrains Mono", ui-monospace, monospace'
 };
+// Small stroke icons for the card actions (Lucide-style, 24px grid).
+const ICONS = {
+  connect: '<path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/>',
+  lock: '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+  unlock: '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.6-1.7"/>',
+  hide: '<path d="M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4.2M6.6 6.6A17 17 0 0 0 2 12s3.5 7 10 7a9.6 9.6 0 0 0 5.4-1.6M9.9 9.9a3 3 0 0 0 4.2 4.2"/>',
+  delete: '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/>',
+};
+const icon = name => `<svg viewBox="0 0 24 24" aria-hidden="true">${ICONS[name]}</svg>`;
+// Compact "3 days ago"; falls back to a short date after a week.
+function editedAgo(timestamp) {
+  const seconds = (Date.now() - Number(timestamp)) / 1000;
+  if (!Number.isFinite(seconds)) return "";
+  if (seconds < 45) return t("Just now");
+  const relative = new Intl.RelativeTimeFormat(window.lifeOsI18n.locale(), { numeric: "auto", style: "short" });
+  if (seconds < 3600) return relative.format(-Math.round(seconds / 60), "minute");
+  if (seconds < 86400) return relative.format(-Math.round(seconds / 3600), "hour");
+  if (seconds < 604800) return relative.format(-Math.round(seconds / 86400), "day");
+  return new Date(Number(timestamp)).toLocaleDateString(window.lifeOsI18n.locale(), { month: "short", day: "numeric" });
+}
 const NOTE_W = 220;
 const NOTE_H = 200;
 const GRID = 32;
@@ -169,7 +189,10 @@ function renderAll() {
   for (const node of canvas.querySelectorAll(".sticky")) node.remove();
 
   const filteredIds = new Set(getFiltered().map((n) => n.id));
-  $("notesCount").textContent = t(state.notes.length === 1 ? "{count} note · Markdown" : "{count} notes · Markdown", { count: window.lifeOsI18n.number(state.notes.length) });
+  const searching = state.search.trim() !== "";
+  $("notesCount").textContent = searching
+    ? t('{count} of {total} match',{count:window.lifeOsI18n.number(filteredIds.size),total:window.lifeOsI18n.number(state.notes.length)})
+    : t(state.notes.length===1?'{count} note':'{count} notes',{count:window.lifeOsI18n.number(state.notes.length)});
   $("emptyState").hidden = state.notes.length > 0;
 
   for (const note of state.notes) {
@@ -276,8 +299,44 @@ function renderSticky(note) {
   el.style.setProperty("--note-font", FONT_FACES[note.fontFace]);
   el.style.setProperty("--note-size", `${note.fontSize}px`);
 
+  // Visible title; edited through the field in the edit bar below.
+  const heading = document.createElement("header");
+  heading.className = "sticky-head";
+  const titleText = document.createElement("h3");
+  titleText.className = "sticky-title";
+  titleText.dir = "auto";
+  const edited = document.createElement("time");
+  edited.className = "sticky-edited";
+  const syncHeading = () => {
+    titleText.textContent = note.title;
+    titleText.hidden = !note.title.trim();
+    edited.textContent = editedAgo(note.updated);
+    edited.title = t('Last edited {date}',{date:new Date(Number(note.updated)||Date.now()).toLocaleString(window.lifeOsI18n.locale())});
+    edited.dateTime = new Date(Number(note.updated) || Date.now()).toISOString();
+  };
+  heading.append(titleText, edited);
+  syncHeading();
+
   const format = document.createElement("div");
   format.className = "note-format";
+  const titleInput = document.createElement("input");
+  titleInput.className = "sticky-title-input";
+  titleInput.dir = "auto";
+  titleInput.maxLength = 500;
+  titleInput.placeholder = t("Title");
+  titleInput.setAttribute("aria-label", t("Note title"));
+  titleInput.value = note.title;
+  titleInput.addEventListener("input", () => {
+    note.title = titleInput.value;
+    note.updated = Date.now();
+    persist();
+  });
+  titleInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") { event.preventDefault(); body.focus(); }
+    if (event.key === "Escape") { event.preventDefault(); el._exitEdit?.(); el.focus(); }
+  });
+  const formatRow = document.createElement("div");
+  formatRow.className = "note-format-row";
   const face = document.createElement("select");
   face.setAttribute("aria-label", t("Note font face"));
   for (const [value, label] of [["sans", t("Sans")], ["serif", t("Serif")], ["mono", t("Mono")]]) {
@@ -306,12 +365,13 @@ function renderSticky(note) {
     note.updated = Date.now();
     persist();
   });
-  format.append(face, size);
+  formatRow.append(face, size);
+  format.append(titleInput, formatRow);
 
   const body = document.createElement("textarea");
   body.className = "sticky-body";
   body.spellcheck = true;
-  body.value = note.body || (note.title || "");
+  body.value = note.body || "";
   body.placeholder = t("Write Markdown…");
   body.setAttribute("aria-label", t("Markdown source"));
   const voiceButton = window.addVoiceInputButton(body, "sticky-voice-input");
@@ -322,13 +382,14 @@ function renderSticky(note) {
   const revealBtn = document.createElement("button");
   revealBtn.type = "button";
   revealBtn.className = "reveal-note";
-  revealBtn.textContent = t("🔒 Reveal note");
+  revealBtn.innerHTML = `${icon("lock")}<span>${t("Reveal note")}</span>`;
   const privacyBtn = document.createElement("button");
   privacyBtn.type = "button";
   privacyBtn.title = t("Toggle secret note");
   const hideBtn = document.createElement("button");
   hideBtn.type = "button";
-  hideBtn.textContent = t("Hide");
+  hideBtn.innerHTML = icon("hide");
+  hideBtn.title = t("Hide secret note");
   hideBtn.setAttribute("aria-label", t("Hide secret note"));
   let revealed = false;
   const updatePrivacy = () => {
@@ -336,11 +397,13 @@ function renderSticky(note) {
     el.classList.toggle("secret-locked", locked);
     el.setAttribute("aria-label", t(locked ? "Secret note, content hidden" : "Note, double-click or press Enter to edit"));
     preview.setAttribute("aria-hidden", String(locked));
+    titleText.setAttribute("aria-hidden", String(locked));
     preview.inert = locked;
     revealBtn.hidden = !locked;
     hideBtn.hidden = !note.secret || locked;
-    privacyBtn.textContent = note.secret ? "🔒" : "🔓";
-    privacyBtn.setAttribute("aria-label", t(note.secret ? "Turn off secret mode" : "Make note secret"));
+    privacyBtn.innerHTML = icon(note.secret ? "lock" : "unlock");
+    privacyBtn.title = t(note.secret ? "Turn off secret mode" : "Make note secret");
+    privacyBtn.setAttribute("aria-label", privacyBtn.title);
     privacyBtn.setAttribute("aria-pressed", String(note.secret));
   };
   revealBtn.onclick = () => { revealed = true; updatePrivacy(); };
@@ -380,9 +443,9 @@ function renderSticky(note) {
   const connectBtn = document.createElement("button");
   connectBtn.type = "button";
   connectBtn.className = "connect-note";
-  connectBtn.textContent = "↗";
+  connectBtn.innerHTML = icon("connect");
   connectBtn.title = t("Connect this note to another");
-  connectBtn.setAttribute("aria-label", connectBtn.title);
+  connectBtn.setAttribute("aria-label", t("Connect this note to another"));
   connectBtn.setAttribute("aria-pressed", "false");
   connectBtn.onclick = () => {
     document.querySelectorAll(".sticky.editing").forEach(card => card._exitEdit?.());
@@ -393,8 +456,9 @@ function renderSticky(note) {
   const delBtn = document.createElement("button");
   delBtn.type = "button";
   delBtn.title = t("Delete note");
-  delBtn.textContent = "×";
-  delBtn.setAttribute("aria-label", delBtn.title);
+  delBtn.className = "delete-note";
+  delBtn.innerHTML = icon("delete");
+  delBtn.setAttribute("aria-label", t("Delete note"));
   delBtn.onclick = (e) => {
     e.stopPropagation();
     deleteNote(note.id);
@@ -406,7 +470,13 @@ function renderSticky(note) {
   resize.setAttribute("aria-label", t("Resize note"));
   resize.title = t("Resize");
 
-  el.append(format, preview, body, voiceButton, revealBtn, swatch, actions, resize);
+  // Colors on the left, note actions on the right.
+  const footer = document.createElement("footer");
+  footer.className = "sticky-footer";
+  footer.append(swatch, actions);
+
+  el.append(heading, format, preview, body, voiceButton, revealBtn, footer, resize);
+  el._syncHeading = syncHeading;
   bindDrag(el, note);
   bindResize(el, note, resize);
   bindEdit(el, note, body, preview, format);
@@ -564,6 +634,7 @@ function bindEdit(el, note, body, preview, format) {
       persist();
     }
     el.classList.remove("editing");
+    el._syncHeading?.();
     preview.innerHTML = renderMarkdown(body.value);
     body.hidden = true;
     preview.hidden = false;
@@ -581,7 +652,7 @@ function bindEdit(el, note, body, preview, format) {
 
   el.addEventListener("dblclick", (e) => {
     if (state.connectFrom) return;
-    if (e.target.closest(".actions, .swatch, .note-format, .reveal-note, .voice-input, a")) return;
+    if (e.target.closest(".actions, .swatch, .sticky-footer, .note-format, .reveal-note, .voice-input, a")) return;
     if (!el.classList.contains("editing")) enter();
   });
 
@@ -623,6 +694,7 @@ function placeCaretAtEnd(el) {
 let searchTimer;
 function bindEvents() {
   $("newNoteBtn").addEventListener("click", createNote);
+  $("emptyNewNote").addEventListener("click", createNote);
 
   $("searchInput").addEventListener("input", (e) => {
     clearTimeout(searchTimer);
@@ -644,7 +716,7 @@ function bindEvents() {
     if (meta && e.key.toLowerCase() === "n") {
       e.preventDefault();
       createNote();
-    } else if (meta && e.key === "/") {
+    } else if (e.key === "/") {
       e.preventDefault();
       $("searchInput").focus();
     }

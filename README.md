@@ -124,6 +124,16 @@ docker compose up -d
 
 Open [localhost:8080](http://localhost:8080) and sign in. MySQL, the app and your attachments each live in their own volume, so `docker compose up -d --build` after a `git pull` upgrades without losing data.
 
+**No git, no build:** run the published image (amd64 and arm64, so it works on a Raspberry Pi too).
+
+```sh
+curl -fsSLO https://raw.githubusercontent.com/edrisranjbar/lifeos/main/docker-compose.image.yml
+curl -fsSL https://raw.githubusercontent.com/edrisranjbar/lifeos/main/.env.example -o .env   # then set your sign-in and passwords
+docker compose -f docker-compose.image.yml up -d
+```
+
+Upgrade later with `docker compose -f docker-compose.image.yml pull && docker compose -f docker-compose.image.yml up -d`.
+
 ### On shared hosting
 
 Download `lifeos-<version>.zip` from the [latest release](https://github.com/edrisranjbar/lifeos/releases/latest) and extract it into your hosting **home directory**, so `public_html/` becomes your web root and the backend sits safely above it. Copy `config.example.php` to `config.php`, fill in your MySQL details, and open your site. See the [deployment guide](docs/deployment.md) for details.
@@ -228,6 +238,7 @@ Built with PHP, MySQL and vanilla JavaScript — no frontend build step, no fram
 - [API reference](docs/api.md) — authentication, routes, data formats and concurrency
 - [MCP guide](mcp/README.md) — tools, environment settings and client setup
 - [Deployment guide](docs/deployment.md) — Apache, shared hosting, backups and migration
+- [Troubleshooting](docs/troubleshooting.md) — common first-run issues, causes and solutions
 - [Development guide](docs/development.md) — local checks and disposable integration fixtures
 - [Growth workspace](docs/growth.md) · [Debts and credits](docs/financial-commitments.md)
 

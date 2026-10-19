@@ -35,3 +35,33 @@ jobs:
       - name: Show logs on failure
         if: failure()
         run: docker compose logs
+
+  # Follows the README's "no git, no build" instructions against the published image,
+  # so a broken image, tag or compose file is caught before a new user hits it.
+  published-image:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download the compose file and .env like the README says
+        run: |
+          curl -fsSLO https://raw.githubusercontent.com/edrisranjbar/lifeos/main/docker-compose.image.yml
+          curl -fsSL https://raw.githubusercontent.com/edrisranjbar/lifeos/main/.env.example -o .env
+      - name: Start the published image
+        run: |
+          # Throwaway credentials, generated per run.
+          CI_PASS=$(openssl rand -hex 16)
+          echo "CI_PASS=$CI_PASS" >> "$GITHUB_ENV"
+          sed -i "s/^LIFEOS_USERNAME=.*/LIFEOS_USERNAME=ci-user/; s/^LIFEOS_PASSWORD=.*/LIFEOS_PASSWORD=$CI_PASS/" .env
+          docker compose -f docker-compose.image.yml up -d --wait --wait-timeout 240
+      - name: Sign in and load state
+        run: |
+          base=http://localhost:8080
+          curl -fsS -o /dev/null "$base/login.php"
+          status=$(curl -s -o /dev/null -w '%{http_code}' -c jar -b jar             --data-urlencode username=ci-user --data-urlencode "password=$CI_PASS" "$base/login.php")
+          echo "login status: $status"
+          [ "$status" = 302 ] || [ "$status" = 303 ]
+          curl -fsS -b jar "$base/state.php" | grep -q '"csrf"'
+          curl -fsS -b jar "$base/" | grep -q 'Edi Life OS'
+          echo "Published image started, signed in and loaded state"
+      - name: Show logs on failure
+        if: failure()
+        run: docker compose -f docker-compose.image.yml logs

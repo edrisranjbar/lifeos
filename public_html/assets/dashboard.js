@@ -2,7 +2,7 @@ import './html-escape.js?v=issue19-1';
 import './goal-progress.js?v=goal-measures-2';
 import { refreshWeatherCard } from './weather.js?v=issue19-1';
 import { remainingSeconds } from './timer.mjs';
-import { mountGrowthOverview, refreshGrowthOverview } from './growth-overview.js?v=goal-measures-2';
+import { mountGrowthOverview, refreshGrowthOverview } from './growth-overview.js?v=persian-1';
 
 const readJson = (key) => {
   try { return JSON.parse(appStorage.getItem(key) || 'null'); } catch { return null; }
