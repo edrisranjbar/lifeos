@@ -21,7 +21,7 @@ curl -fsSL https://raw.githubusercontent.com/edrisranjbar/lifeos/main/.env.examp
 docker compose -f docker-compose.image.yml up -d
 ```
 
-- **Tags:** `latest` is the newest release, `1.2.0` and `1.2` are fixed versions, and `edge` is the current `main`. Pin one with `LIFEOS_VERSION=1.2.0` in `.env`.
+- **Tags:** `edge` is the current `main` and is what you get by default. Each release tag also publishes fixed versions (`1.2.0`, `1.2`) and `latest`; pin one with `LIFEOS_VERSION=1.2.0` in `.env` once that release exists.
 - **Upgrade:** `docker compose -f docker-compose.image.yml pull && docker compose -f docker-compose.image.yml up -d`. Data lives in the same named volumes, so nothing is lost.
 - **Backups** below work the same way. Add `-f docker-compose.image.yml` to the compose commands if you started the stack from that file.
 
