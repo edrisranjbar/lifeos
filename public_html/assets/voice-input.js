@@ -7,7 +7,8 @@
     button.type = 'button';
     button.className = `voice-input ${className}`.trim();
     button.innerHTML = icon;
-    button.title = Recognition ? 'Dictate text' : 'Voice input is not supported in this browser';
+    const { t } = window.lifeOsI18n;
+    button.title = t(Recognition ? 'Dictate text' : 'Voice input is not supported in this browser');
     button.setAttribute('aria-label', button.title);
     button.disabled = !Recognition;
     button.addEventListener('pointerdown', event => event.preventDefault());
@@ -22,7 +23,7 @@
       const updateButton = () => {
         button.classList.toggle('recording', recording);
         button.setAttribute('aria-pressed', String(recording));
-        button.title = recording ? 'Stop dictation' : 'Dictate text';
+        button.title = t(recording ? 'Stop dictation' : 'Dictate text');
         button.setAttribute('aria-label', button.title);
       };
 
@@ -55,11 +56,11 @@
       };
       recognition.onerror = event => {
         if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-          button.title = 'Allow microphone access to dictate';
+          button.title = t('Allow microphone access to dictate');
           button.setAttribute('aria-label', button.title);
           stop();
         } else if (event.error !== 'no-speech' && event.error !== 'aborted') {
-          button.title = 'Voice input encountered an error';
+          button.title = t('Voice input encountered an error');
           button.setAttribute('aria-label', button.title);
         }
       };

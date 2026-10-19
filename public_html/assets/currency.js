@@ -42,7 +42,8 @@
     return CURRENCIES.find(currency => currency.code === code) || CURRENCIES[0];
   }
 
-  const unit = () => current().unit;
+  // Toman and Rial have local names; ISO codes stay as they are.
+  const unit = () => window.lifeOsI18n ? window.lifeOsI18n.t(current().unit) : current().unit;
 
   // Static markup marks unit labels with data-currency-unit.
   function apply(root = document) {

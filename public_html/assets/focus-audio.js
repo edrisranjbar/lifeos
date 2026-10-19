@@ -19,13 +19,14 @@ export function mountFocusAudio(saved, persist) {
 
   function save() { persist({tracks: selected.filter(id => builtinIds.has(id)), volume}); }
   function render() {
-    $('soundSelectionCount').textContent = `${selected.length} track${selected.length === 1 ? '' : 's'} selected`;
-    $('soundQueueHint').textContent = selected.length ? 'Plays in selection order · repeats continuously' : 'Choose tracks to build your loop';
-    $('soundNowPlaying').textContent = currentId ? tracks.get(currentId)?.name || '' : 'Your focus soundtrack';
-    $('soundPlaybackStatus').textContent = message || (playing ? 'Playing' : currentId ? 'Paused' : 'Ready when you are');
-    $('play').textContent = playing ? 'Ⅱ Pause' : '▶ Play';
+    const { t, number } = window.lifeOsI18n;
+    $('soundSelectionCount').textContent = t(selected.length === 1 ? '{count} track selected' : '{count} tracks selected', { count: number(selected.length) });
+    $('soundQueueHint').textContent = t(selected.length ? 'Plays in selection order · repeats continuously' : 'Choose tracks to build your loop');
+    $('soundNowPlaying').textContent = currentId ? tracks.get(currentId)?.name || '' : t('Your focus soundtrack');
+    $('soundPlaybackStatus').textContent = t(message || (playing ? 'Playing' : currentId ? 'Paused' : 'Ready when you are'));
+    $('play').textContent = t(playing ? 'Ⅱ Pause' : '▶ Play');
     $('play').disabled = !selected.length;
-    $('play').setAttribute('aria-label', playing ? 'Pause soundtrack' : 'Play soundtrack');
+    $('play').setAttribute('aria-label', t(playing ? 'Pause soundtrack' : 'Play soundtrack'));
     $('soundNext').disabled = selected.length < 2;
     $('soundVolume').value = String(Math.round(volume * 100));
     for (const input of $('soundTracks').querySelectorAll('input')) input.checked = selected.includes(input.value);
@@ -39,8 +40,8 @@ export function mountFocusAudio(saved, persist) {
     if (attempt !== generation || !playing) return;
     failed.add(id);
     const next = selected.find(candidate => !failed.has(candidate));
-    if (next) { message = 'Unavailable track skipped'; start(next); }
-    else { playing = false; message = 'Audio could not play. Check your files or connection and press Play to retry.'; release(); render(); }
+    if (next) { message = window.lifeOsI18n.t('Unavailable track skipped'); start(next); }
+    else { playing = false; message = window.lifeOsI18n.t('Audio could not play. Check your files or connection and press Play to retry.'); release(); render(); }
   }
   async function start(id) {
     release(); currentId = id;
@@ -61,7 +62,7 @@ export function mountFocusAudio(saved, persist) {
     catch (error) {
       if (attempt !== generation || request !== playRequest || !playing) return;
       if (error.name === 'NotAllowedError') {
-        playing = false; message = 'Press Play to allow audio playback.'; player.pause(); render();
+        playing = false; message = window.lifeOsI18n.t('Press Play to allow audio playback.'); player.pause(); render();
       } else fail(id, attempt);
     }
   }
@@ -70,7 +71,7 @@ export function mountFocusAudio(saved, persist) {
     const input = document.createElement('input'); input.type = 'checkbox'; input.value = id;
     const name = document.createElement('span'); name.textContent = track.name;
     label.append(input, name);
-    if (local) { const badge = document.createElement('small'); badge.textContent = 'Local'; label.append(badge); }
+    if (local) { const badge = document.createElement('small'); badge.textContent = window.lifeOsI18n.t('Local'); label.append(badge); }
     input.addEventListener('change', () => {
       const previous = [...selected], wasPlaying = playing;
       selected = input.checked ? [...selected, id] : selected.filter(item => item !== id);
@@ -94,7 +95,7 @@ export function mountFocusAudio(saved, persist) {
       try { await audio.play(); }
       catch (error) {
         if (attempt !== generation || request !== playRequest || !playing) return;
-        if (error.name === 'NotAllowedError') { playing = false; message = 'Press Play to allow audio playback.'; render(); }
+        if (error.name === 'NotAllowedError') { playing = false; message = window.lifeOsI18n.t('Press Play to allow audio playback.'); render(); }
         else fail(currentId, attempt);
       }
     } else start(selected.includes(currentId) ? currentId : selected[0]);
@@ -120,7 +121,7 @@ export function mountFocusAudio(saved, persist) {
       tracks.set(id, track); selected.push(id); addChoice(id, track, true); added++;
     }
     $('musicFile').value = ''; failed.clear();
-    message = added ? 'Local audio added for this session' : 'Choose audio files to add.';
+    message = added ? window.lifeOsI18n.t('Local audio added for this session') : window.lifeOsI18n.t('Choose audio files to add.');
     save(); render();
   });
   window.addEventListener('pagehide', event => {

@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Settings · Edi Life OS</title>
-  <script src="/assets/storage.js?v=multi-user-1"></script><script src="/assets/currency.js?v=currency-4"></script>
-  <link rel="stylesheet" href="../assets/base.css"><link rel="stylesheet" href="style.css?v=multi-user-3"><script src="app.js?v=multi-user-3" defer></script>
+  <script src="/assets/storage.js?v=multi-user-1"></script><script src="/assets/i18n.js?v=i18n-1"></script><script src="/assets/currency.js?v=currency-4"></script>
+  <link rel="stylesheet" href="../assets/base.css"><link rel="stylesheet" href="style.css?v=i18n-1"><script src="app.js?v=i18n-1" defer></script>
 </head>
 <body><main class="settings-shell">
   <header class="page-header"><div><p class="eyebrow">MAKE IT YOURS</p><h1>Settings</h1><p class="lead">Your preferences, your account, your space.</p></div><div class="account-pill"><span class="avatar" id="accountAvatar" aria-hidden="true">·</span><div><strong id="accountName">Loading account…</strong><span id="accountRole">Private workspace</span></div></div></header>
@@ -12,6 +12,7 @@
     <nav class="settings-nav" aria-label="Settings sections"><a href="#preferences" aria-current="location">Preferences</a><a href="#account">My account</a><a href="#people" id="peopleNav">Accounts</a><a href="#about">About LifeOS</a></nav>
     <div class="settings-content">
       <section class="settings-card" id="preferences" aria-labelledby="preferencesTitle"><header class="section-heading"><span class="section-number" aria-hidden="true">01</span><div><h2 id="preferencesTitle">Preferences</h2><p>A familiar space, wherever you sign in.</p></div></header>
+        <div class="preference-row"><div><h3>Language</h3><p>Sets the interface language and text direction.</p></div><label class="sr-only" for="language">Language</label><select id="language" disabled></select></div>
         <div class="preference-row"><div><h3>Appearance</h3><p>Choose the look that feels right.</p></div><div class="theme-options" role="group" aria-label="Appearance"><button type="button" data-theme-choice="dark" aria-pressed="false" disabled>Dark</button><button type="button" data-theme-choice="light" aria-pressed="false" disabled>Light</button></div></div>
         <div class="preference-row"><div><h3>Display currency</h3><p>Labels change across LifeOS. Amounts are not converted.</p></div><label class="sr-only" for="currency">Display currency</label><select id="currency" disabled></select></div><p class="status" id="preferenceMessage" role="status" aria-live="polite"></p>
       </section>

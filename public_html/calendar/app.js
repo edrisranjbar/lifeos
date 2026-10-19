@@ -1,4 +1,6 @@
 const $ = id => document.getElementById(id);
+const { t, number: formatNumber, digits } = window.lifeOsI18n;
+const displayDate = (date, options) => window.lifeOsI18n.date(date, options);
 const KEY = 'kanban_boards_v1';
 const colors = ['#39e6ad', '#7da5ee', '#d5a66b', '#b69ce0', '#e9918c', '#6bc6ce'];
 const tehran = () => {
@@ -47,12 +49,12 @@ function readBoards(raw) {
       for (const card of column.cards || []) {
         if (!parseDate(card.dueDate)) { undated++; continue; }
         const time = /^([01]\d|2[0-3]):[0-5]\d$/.test(card.dueTime || '') ? card.dueTime : '';
-        events.push({id: card.id, boardId: board.id, boardName: board.name, columnName: column.name, title: card.title || 'Untitled card', date: card.dueDate, time, completed: !!card.completed || /^(done|complete|completed)$/i.test(column.name.trim()), color: boardColor(board.id)});
+        events.push({id: card.id, boardId: board.id, boardName: board.name, columnName: column.name, title: card.title || t('Untitled card'), date: card.dueDate, time, completed: !!card.completed || /^(done|complete|completed)$/i.test(column.name.trim()), color: boardColor(board.id)});
       }
     }
   }
   if (financialPlans) {
-    boards.push({id:financeBoardId,name:'Financial commitments'});
+    boards.push({id:financeBoardId,name:t('Financial commitments')});
     if(!enabledBoards.has(financeBoardId))enabledBoards.set(financeBoardId,true);
   }
   events.push(...financialEvents);
@@ -79,20 +81,20 @@ function taskButton(event, kind) {
   button.type = 'button';
   button.className = `${kind} ${event.completed ? 'completed' : ''} ${isOverdue(event) ? 'overdue' : ''}`;
   button.style.setProperty('--board-color', event.color);
-  button.title = `${event.title} · ${event.boardName} / ${event.columnName} · ${event.date} ${event.time || 'All day'}`;
-  button.setAttribute('aria-label', `Open ${button.title}`);
+  button.title = `${event.title} · ${event.boardName} / ${event.columnName} · ${digits(event.date)} ${event.time ? digits(event.time) : t('All day')}`;
+  button.setAttribute('aria-label', t('Open {item}', { item: button.title }));
   if (kind === 'calendar-event') {
-    if (event.time) { const time = document.createElement('span'); time.className = 'event-time'; time.textContent = event.time; button.append(time); }
+    if (event.time) { const time = document.createElement('span'); time.className = 'event-time'; time.textContent = digits(event.time); button.append(time); }
     const title = document.createElement('span'); title.className = 'event-title'; title.textContent = event.title; button.append(title);
   } else {
     const leading = document.createElement(kind === 'day-task' ? 'span' : 'time');
     if (kind === 'day-task') leading.className = 'board-dot';
-    else { leading.textContent = event.time || 'All day'; leading.dateTime = event.date + (event.time ? `T${event.time}+03:30` : ''); }
+    else { leading.textContent = event.time ? digits(event.time) : t('All day'); leading.dateTime = event.date + (event.time ? `T${event.time}+03:30` : ''); }
     const info = document.createElement('div');
     const title = document.createElement('strong'); title.textContent = event.title;
-    const board = document.createElement('small'); board.textContent = `${event.boardName} · ${kind === 'day-task' ? (event.time || 'All day') : event.columnName}`;
+    const board = document.createElement('small'); board.textContent = `${event.boardName} · ${kind === 'day-task' ? (event.time ? digits(event.time) : t('All day')) : event.columnName}`;
     info.append(title, board); button.append(leading, info);
-    if (kind === 'schedule-task') { const status = document.createElement('span'); status.className = 'task-status'; status.textContent = event.completed ? 'Completed' : isOverdue(event) ? 'Overdue' : 'Due'; button.append(status); }
+    if (kind === 'schedule-task') { const status = document.createElement('span'); status.className = 'task-status'; status.textContent = t(event.completed ? 'Completed' : isOverdue(event) ? 'Overdue' : 'Due'); button.append(status); }
   }
   button.addEventListener('click', () => openCard(event));
   return button;
@@ -117,7 +119,7 @@ function renderBoardFilters() {
     label.append(check, text); container.append(label);
     if (focusedBoard === String(board.id)) check.focus();
   });
-  if (!boards.length) container.textContent = 'Your Kanban boards will appear here.';
+  if (!boards.length) container.textContent = t('Your Kanban boards will appear here.');
 }
 function renderDays(filtered) {
   const grid = $('monthGrid'); const mini = $('miniDays'); grid.replaceChildren(); mini.replaceChildren();
@@ -127,13 +129,13 @@ function renderDays(filtered) {
   for (let index = 0; index < 42; index++) {
     const date = new Date(first.getFullYear(), first.getMonth(), first.getDate() + index);
     const key = dateKey(date); const outside = date.getMonth() !== month.getMonth();
-    const label = date.toLocaleDateString('en-US', {weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'});
-    const miniButton = document.createElement('button'); miniButton.type = 'button'; miniButton.textContent = date.getDate(); miniButton.className = `${outside ? 'outside' : ''} ${key === today ? 'today' : ''} ${key === selectedDay ? 'selected' : ''}`; miniButton.setAttribute('aria-label', label); miniButton.setAttribute('aria-pressed', String(key === selectedDay)); miniButton.addEventListener('click', () => selectDay(date)); mini.append(miniButton);
+    const label = displayDate(date, {weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'});
+    const miniButton = document.createElement('button'); miniButton.type = 'button'; miniButton.textContent = formatNumber(date.getDate()); miniButton.className = `${outside ? 'outside' : ''} ${key === today ? 'today' : ''} ${key === selectedDay ? 'selected' : ''}`; miniButton.setAttribute('aria-label', label); miniButton.setAttribute('aria-pressed', String(key === selectedDay)); miniButton.addEventListener('click', () => selectDay(date)); mini.append(miniButton);
     const cell = document.createElement('div'); cell.className = `month-cell ${outside ? 'outside' : ''} ${key === selectedDay ? 'selected' : ''}`;
-    const number = document.createElement('button'); number.type = 'button'; number.className = `day-number ${key === today ? 'today' : ''}`; number.textContent = date.getDate(); number.setAttribute('aria-label', `Show tasks for ${label}`); if (key === today) number.setAttribute('aria-current', 'date'); number.addEventListener('click', () => selectDay(date, true)); cell.append(number);
+    const number = document.createElement('button'); number.type = 'button'; number.className = `day-number ${key === today ? 'today' : ''}`; number.textContent = formatNumber(date.getDate()); number.setAttribute('aria-label', t('Show tasks for {date}', { date: label })); if (key === today) number.setAttribute('aria-current', 'date'); number.addEventListener('click', () => selectDay(date, true)); cell.append(number);
     const dayEvents = byDate.get(key) || [];
     dayEvents.slice(0, 3).forEach(event => cell.append(taskButton(event, 'calendar-event')));
-    if (dayEvents.length > 3) { const more = document.createElement('button'); more.className = 'more-events'; more.textContent = `+${dayEvents.length - 3} more`; more.setAttribute('aria-label', `Show all ${dayEvents.length} tasks for ${label}`); more.addEventListener('click', () => selectDay(date, true)); cell.append(more); }
+    if (dayEvents.length > 3) { const more = document.createElement('button'); more.className = 'more-events'; more.textContent = t('+{count} more', { count: formatNumber(dayEvents.length - 3) }); more.setAttribute('aria-label', t('Show all {count} tasks for {date}', { count: formatNumber(dayEvents.length), date: label })); more.addEventListener('click', () => selectDay(date, true)); cell.append(more); }
     grid.append(cell);
   }
 }
@@ -150,32 +152,32 @@ function renderSchedule(filtered) {
   grouped.forEach((tasks, key) => {
     const group = document.createElement('section'); group.className = 'schedule-day';
     const date = parseDate(key); const heading = document.createElement('div'); heading.className = 'schedule-date';
-    const number = document.createElement('strong'); number.textContent = date.getDate();
-    const labels = document.createElement('div'); const weekday = document.createElement('span'); weekday.textContent = date.toLocaleDateString('en-US', {weekday: 'short'}).toUpperCase(); const monthLabel = document.createElement('span'); monthLabel.textContent = date.toLocaleDateString('en-US', {month: 'short', year: 'numeric'}); labels.append(weekday, monthLabel); heading.append(number, labels);
+    const number = document.createElement('strong'); number.textContent = formatNumber(date.getDate());
+    const labels = document.createElement('div'); const weekday = document.createElement('span'); weekday.textContent = displayDate(date, {weekday: 'short'}).toUpperCase(); const monthLabel = document.createElement('span'); monthLabel.textContent = displayDate(date, {month: 'short', year: 'numeric'}); labels.append(weekday, monthLabel); heading.append(number, labels);
     const cards = document.createElement('div'); tasks.forEach(event => cards.append(taskButton(event, 'schedule-task'))); group.append(heading, cards); container.append(group);
   });
-  if (!list.length) container.append(emptyState(overdueOnly ? 'All caught up' : query ? 'No matching items' : 'A little room to breathe', overdueOnly ? 'No overdue items in the selected calendars.' : query ? 'Try another title, board name, or list name.' : 'No items are due here. Add a Kanban due date or a Finance payment plan.'));
+  if (!list.length) container.append(emptyState(t(overdueOnly ? 'All caught up' : query ? 'No matching items' : 'A little room to breathe'), t(overdueOnly ? 'No overdue items in the selected calendars.' : query ? 'Try another title, board name, or list name.' : 'No items are due here. Add a Kanban due date or a Finance payment plan.')));
 }
 function render() {
   currentTime = tehran(); today = currentTime.date;
   const filtered = visibleEvents();
-  const monthName = month.toLocaleDateString('en-US', {month: 'long', year: 'numeric'});
-  $('monthTitle').textContent = overdueOnly ? 'Overdue items' : query ? 'Search results' : dayOnly ? parseDate(selectedDay).toLocaleDateString('en-US', {month: 'long', day: 'numeric'}) : view === 'schedule' ? 'Schedule' : monthName;
+  const monthName = displayDate(month, {month: 'long', year: 'numeric'});
+  $('monthTitle').textContent = overdueOnly ? t('Overdue items') : query ? t('Search results') : dayOnly ? displayDate(parseDate(selectedDay), {month: 'long', day: 'numeric'}) : view === 'schedule' ? t('Schedule') : monthName;
   $('miniMonthTitle').textContent = monthName;
   $('viewSelect').value = view;
   const schedule = view === 'schedule' || !!query || overdueOnly || dayOnly;
   $('monthView').hidden = schedule; $('scheduleView').hidden = !schedule;
-  $('overdueCount').textContent = filtered.filter(isOverdue).length;
+  $('overdueCount').textContent = formatNumber(filtered.filter(isOverdue).length);
   $('overdueBtn').setAttribute('aria-pressed', String(overdueOnly));
   renderBoardFilters(); renderDays(filtered); renderSchedule(filtered);
-  $('selectedDayTitle').textContent = parseDate(selectedDay).toLocaleDateString('en-US', {month: 'short', day: 'numeric', weekday: 'short'});
+  $('selectedDayTitle').textContent = displayDate(parseDate(selectedDay), {month: 'short', day: 'numeric', weekday: 'short'});
   const dayTasks = filtered.filter(event => event.date === selectedDay);
-  $('selectedDayCount').textContent = dayTasks.length;
+  $('selectedDayCount').textContent = formatNumber(dayTasks.length);
   $('dayTasks').replaceChildren(...dayTasks.map(event => taskButton(event, 'day-task')));
-  if (!dayTasks.length) { const empty = document.createElement('p'); empty.className = 'day-empty'; empty.textContent = 'No tasks or financial dues on this day.'; $('dayTasks').append(empty); }
-  $('calendarNote').textContent = `${events.length} dated items, including ${financialEvents.length} financial dues in the loaded range and earlier unpaid dues.${undated ? ` ${undated} cards have no due date.` : ''} ${financialError}`;
+  if (!dayTasks.length) { const empty = document.createElement('p'); empty.className = 'day-empty'; empty.textContent = t('No tasks or financial dues on this day.'); $('dayTasks').append(empty); }
+  $('calendarNote').textContent = `${t('{count} dated items, including {finance} financial dues in the loaded range and earlier unpaid dues.', { count: formatNumber(events.length), finance: formatNumber(financialEvents.length) })}${undated ? ' ' + t('{count} cards have no due date.', { count: formatNumber(undated) }) : ''} ${financialError}`;
   const inMonth = filtered.filter(event => event.date.startsWith(dateKey(month).slice(0, 7))).length;
-  $('calendarStatus').textContent = financialError || (!schedule && !inMonth ? 'No items due this month. Choose another month or add a Kanban date or Finance payment plan.' : '');
+  $('calendarStatus').textContent = financialError || (!schedule && !inMonth ? t('No items due this month. Choose another month or add a Kanban date or Finance payment plan.') : '');
 }
 async function refresh() {
   const token=++refreshToken;
@@ -188,16 +190,16 @@ async function refresh() {
       fetch(`/finance-obligations.php?start=${dateKey(first)}&end=${dateKey(last)}`,{cache:'no-store',redirect:'error'})
     ]);
     if(token!==refreshToken)return;
-    if(boardResult.status==='rejected')throw Error('Unable to load board tasks.');
+    if(boardResult.status==='rejected')throw Error(t('Unable to load board tasks.'));
     const response=boardResult.value;
-    if (!response.ok) throw new Error('Unable to load board tasks. Refresh or sign in again.');
+    if (!response.ok) throw new Error(t('Unable to load board tasks. Refresh or sign in again.'));
     try{
-      if(financeResult.status==='rejected'||!financeResult.value.ok)throw Error('Financial dues unavailable. Refresh to retry.');
+      if(financeResult.status==='rejected'||!financeResult.value.ok)throw Error(t('Financial dues unavailable. Refresh to retry.'));
       const finance=(await financeResult.value.json()).data;
       if(token!==refreshToken)return;
       financialPlans=finance.plans.length>0;
       // Credits (money owed to you) read as "Receive" and use green; debts read as "Pay".
-      financialEvents=finance.occurrences.filter(o=>!o.skipped).map(o=>{const credit=o.direction==='credit';return {id:o.id,source:'finance',boardId:financeBoardId,boardName:'Finance',columnName:o.paymentIssue?'Needs reconciliation':o.status==='rejected'?(credit?'Late':'Deferred'):o.status==='paid'?(credit?'Received':'Paid'):(credit?'To receive':'To pay'),title:`${credit?'Receive':'Pay'} · ${o.title}${o.count>1?' · '+(o.index+1)+'/'+o.count:''} · ${new Intl.NumberFormat('en-US').format(o.amount)} ${window.lifeOsCurrency?.unit()??'Toman'}`,date:o.date,time:'',completed:o.status==='paid',color:credit?'#39e6ad':'#f3c969'};});
+      financialEvents=finance.occurrences.filter(o=>!o.skipped).map(o=>{const credit=o.direction==='credit';return {id:o.id,source:'finance',boardId:financeBoardId,boardName:t('Finance'),columnName:t(o.paymentIssue?'Needs reconciliation':o.status==='rejected'?(credit?'Late':'Deferred'):o.status==='paid'?(credit?'Received':'Paid'):(credit?'To receive':'To pay')),title:`${t(credit?'Receive':'Pay')} · ${o.title}${o.count>1?' · '+formatNumber(o.index+1)+'/'+formatNumber(o.count):''} · ${formatNumber(o.amount)} ${window.lifeOsCurrency?.unit()??t('Toman')}`,date:o.date,time:'',completed:o.status==='paid',color:credit?'#39e6ad':'#f3c969'};});
       financialError='';
     }catch(error){if(token!==refreshToken)return;financialEvents=[];financialPlans=false;financialError=error.message;}
     const payload = await response.json();if(token!==refreshToken)return;lastStorageRaw = appStorage.getItem(KEY); readBoards(payload.data[KEY]); render();
@@ -213,7 +215,7 @@ $('overdueBtn').addEventListener('click', () => { overdueOnly = !overdueOnly; da
 $('searchInput').addEventListener('input', () => { query = $('searchInput').value.trim().toLocaleLowerCase(); overdueOnly = false; dayOnly = false; if (query) view = 'schedule'; render(); });
 $('refreshBtn').addEventListener('click', refresh);
 let financialRefreshTimer;
-addEventListener('app-storage-change', () => { try { const raw = appStorage.getItem(KEY); if (raw !== lastStorageRaw) { lastStorageRaw = raw; readBoards(raw); render(); } clearTimeout(financialRefreshTimer);financialRefreshTimer=setTimeout(refresh,250); } catch { $('calendarStatus').textContent = 'Unable to read board tasks. Try refreshing.'; } });
+addEventListener('app-storage-change', () => { try { const raw = appStorage.getItem(KEY); if (raw !== lastStorageRaw) { lastStorageRaw = raw; readBoards(raw); render(); } clearTimeout(financialRefreshTimer);financialRefreshTimer=setTimeout(refresh,250); } catch { $('calendarStatus').textContent = t('Unable to read board tasks. Try refreshing.'); } });
 addEventListener('message', e => { if (e.origin === location.origin && e.source === window.parent && e.data?.type === 'calendar-refresh') refresh(); });
 addEventListener('focus', refresh);
 setInterval(() => { if (document.visibilityState === 'visible') render(); }, 60000);
@@ -221,4 +223,4 @@ try {
   await window.appStorageReady;
   document.documentElement.dataset.theme = appStorage.getItem('edi_os_theme') || 'dark';
   lastStorageRaw = appStorage.getItem(KEY); readBoards(lastStorageRaw); render(); await refresh();
-} catch { $('calendarStatus').textContent = 'Unable to load board tasks. Check your connection and refresh.'; }
+} catch { $('calendarStatus').textContent = t('Unable to load board tasks. Check your connection and refresh.'); }

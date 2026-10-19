@@ -7,7 +7,10 @@ import { mountGrowthOverview, refreshGrowthOverview } from './growth-overview.js
 const readJson = (key) => {
   try { return JSON.parse(appStorage.getItem(key) || 'null'); } catch { return null; }
 };
-const number = (value) => new Intl.NumberFormat('en-US').format(Number(value) || 0);
+const { t } = window.lifeOsI18n;
+const number = (value) => window.lifeOsI18n.number(Number(value) || 0);
+// Percentages carry the language's own percent sign.
+const pctText = (value) => t('{value}%', { value: number(value) });
 const $ = (id) => document.getElementById(id);
 // Escape stored text before it goes into innerHTML templates.
 const esc = globalThis.lifeOsHtml.escapeHtml;
@@ -19,8 +22,8 @@ const ARROW_UP = '<svg class="darr" viewBox="0 0 12 12" aria-hidden="true"><path
 const ARROW_DOWN = '<svg class="darr" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 10L1.5 3h9z" fill="currentColor"/></svg>';
 
 const tehranKeyNow = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Tehran', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
-const tehranDayOfWeek = () => new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Tehran', weekday: 'long' }).format(new Date());
-const tehranLongDate = () => new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Tehran', month: 'long', day: 'numeric', year: 'numeric' }).format(new Date());
+const tehranDayOfWeek = () => window.lifeOsI18n.date(new Date(), { timeZone: 'Asia/Tehran', weekday: 'long' });
+const tehranLongDate = () => window.lifeOsI18n.date(new Date(), { timeZone: 'Asia/Tehran', month: 'long', day: 'numeric', year: 'numeric' });
 const tehranHour = () => Number(new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Tehran', hour: 'numeric', hourCycle: 'h23' }).format(new Date()));
 
 function addDaysISO(key, delta) {
@@ -31,7 +34,7 @@ function addDaysISO(key, delta) {
 }
 function weekdayShort(key) {
   const [y, m, d] = key.split('-').map(Number);
-  return new Intl.DateTimeFormat('en-US', { weekday: 'short', timeZone: 'UTC' }).format(new Date(Date.UTC(y, m - 1, d) + 43200000));
+  return window.lifeOsI18n.date(new Date(Date.UTC(y, m - 1, d) + 43200000), { weekday: 'short', timeZone: 'UTC' });
 }
 function roundDownTo(value, step) {
   const rounded = Math.floor((Number(value) || 0) / step) * step;
@@ -66,13 +69,13 @@ export function mountDashboard() {
   const nav = document.querySelector('.os-nav nav');
   const overview = document.createElement('a');
   overview.href = '#dashboard';
-  overview.innerHTML = '<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> Overview';
+  overview.innerHTML = '<svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> ' + t('Overview');
   nav.prepend(overview);
   document.querySelector('.brand').href = '#dashboard';
   const skip = document.createElement('a');
   skip.className = 'skip-link';
   skip.href = '#dashboard-heading';
-  skip.textContent = 'Skip to main content';
+  skip.textContent = t('Skip to main content');
   document.body.prepend(skip);
 
   const main = document.createElement('main');
@@ -150,6 +153,7 @@ export function mountDashboard() {
     <p class="dash-privacy">Your data is saved in MySQL on this server.</p>`;
 
   document.getElementById('focus').before(main);
+  window.lifeOsI18n.apply(main);
   mountGrowthOverview(main);
   addEventListener('storage', () => { if (!main.hidden) refreshDashboard(); });
   addEventListener('app-storage-change', () => { if (!main.hidden) refreshDashboard(); });
@@ -168,8 +172,8 @@ export async function refreshDashboard() {
   const today = tehranKeyNow();
   const hour = tehranHour();
   const greeting = hour < 6 ? 'Working late' : hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : hour < 21 ? 'Good evening' : 'Winding down';
-  $('dashboard-heading').textContent = greeting + '.';
-  $('dashboard-heading').nextElementSibling.textContent = 'Live analytics across everything that moves your life and work forward.';
+  $('dashboard-heading').textContent = t(greeting) + '.';
+  $('dashboard-heading').nextElementSibling.textContent = t('Live analytics across everything that moves your life and work forward.');
   $('dashboard-date').textContent = tehranLongDate();
   $('dashboard-weekday').textContent = tehranDayOfWeek();
 
@@ -205,9 +209,11 @@ export async function refreshDashboard() {
   const todaySessions = history.filter(item => item?.day === today).length;
   const weekSessions = history.filter(item => { const k = item?.day; return k >= addDaysISO(today, -7) && k <= today; }).length;
   const focusPct = clamp(todayMin / 90 * 100); // Today's progress toward 90 focused minutes, including the current interval.
-  renderMetricDelta('focus-delta', todayMin, avg7, 'min');
+  renderMetricDelta('focus-delta', todayMin, avg7);
   set('m-focus', number(todayMin));
-  set('m-focus-foot', `${number(todaySessions)} session${todaySessions === 1 ? '' : 's'} today${liveMin ? ` (+${number(liveMin)} min in progress)` : ''} · week avg ${number(Math.round(avg7))} min`);
+  const sessionsToday = t(todaySessions === 1 ? '{count} session today' : '{count} sessions today', { count: number(todaySessions) });
+  const inProgress = liveMin ? ' ' + t('(+{minutes} min in progress)', { minutes: number(liveMin) }) : '';
+  set('m-focus-foot', `${sessionsToday}${inProgress} · ${t('week avg {minutes} min', { minutes: number(Math.round(avg7)) })}`);
 
   // ── goals ──────────────────────────────────────────────────────────
   const goalsData = readJson('edi_goals_v1');
@@ -226,10 +232,10 @@ export async function refreshDashboard() {
     return (new Date(g.deadline + 'T00:00:00') - new Date(today + 'T00:00:00')) <= 7 * 86400000;
   }).length;
   const goalDelta = $('goal-delta');
-  if (goalDelta) { goalDelta.textContent = dueSoon ? `${number(dueSoon)} soon` : 'on track'; goalDelta.className = 'metric-delta flat'; }
+  if (goalDelta) { goalDelta.textContent = dueSoon ? t('{count} soon', { count: number(dueSoon) }) : t('on track'); goalDelta.className = 'metric-delta flat'; }
   set('m-goals', number(activeGoals.length));
-  set('m-goals-foot', dueSoon ? `${number(dueSoon)} due within a week · avg ${number(Math.round(goalAvg))}%` : `avg progress ${number(Math.round(goalAvg))}%`);
-  set('part-goals', `${number(Math.round(goalAvg))}%`);
+  set('m-goals-foot', dueSoon ? t('{count} due within a week · avg {percent}', { count: number(dueSoon), percent: pctText(Math.round(goalAvg)) }) : t('avg progress {percent}', { percent: pctText(Math.round(goalAvg)) }));
+  set('part-goals', pctText(Math.round(goalAvg)));
   animateFill('fill-goals', goalAvg);
 
   // ── kanban ─────────────────────────────────────────────────────────
@@ -240,12 +246,12 @@ export async function refreshDashboard() {
   const inFlight = allCards.filter(item => !/done/i.test(item.column)).length;
   const doneShare = allCards.length ? doneCards / allCards.length * 100 : 0;
   const taskDelta = $('task-delta');
-  if (taskDelta) { taskDelta.textContent = `${number(allCards.length ? Math.round(doneShare) : 0)}% done`; taskDelta.className = 'metric-delta flat'; }
+  if (taskDelta) { taskDelta.textContent = t('{percent} done', { percent: pctText(allCards.length ? Math.round(doneShare) : 0) }); taskDelta.className = 'metric-delta flat'; }
   set('m-tasks', number(inFlight));
-  set('m-tasks-foot', `${number(doneCards)} done · ${number(allCards.length)} total across ${number(boards.length)} board${boards.length === 1 ? '' : 's'}`);
+  set('m-tasks-foot', t(boards.length === 1 ? '{done} done · {total} total across {boards} board' : '{done} done · {total} total across {boards} boards', { done: number(doneCards), total: number(allCards.length), boards: number(boards.length) }));
   animateFill('m-tasks-track', doneShare);
   const donePulse = allCards.length ? Math.round(doneShare) : 0;
-  set('part-work', `${number(donePulse)}%`);
+  set('part-work', pctText(donePulse));
   animateFill('fill-work', doneShare);
 
   // ── habit data (async) ─────────────────────────────────────────────
@@ -287,9 +293,9 @@ export async function refreshDashboard() {
   renderMetricDelta('habit-delta', todayPct, habitAvg);
   set('m-habits', habitsOk ? number(todayDone) : '—');
   set('m-habits-unit', habitsOk ? `/ ${number(totalHabits)}` : '');
-  set('m-habits-foot', habitsOk ? `${number(Math.round(todayPct))}% of daily habits` : 'Unable to load habits. Refresh to retry.');
+  set('m-habits-foot', habitsOk ? t('{percent} of daily habits', { percent: pctText(Math.round(todayPct)) }) : t('Unable to load habits. Refresh to retry.'));
   animateFill('m-habits-track', todayPct);
-  set('part-habits', `${number(Math.round(habitAvg))}%`);
+  set('part-habits', pctText(Math.round(habitAvg)));
   animateFill('fill-habits', habitAvg);
 
   // ── productivity score ─────────────────────────────────────────────
@@ -298,14 +304,14 @@ export async function refreshDashboard() {
   const prevParts = [clamp(avgPrev / 90 * 100), habitPrev, 0, doneShare].filter(v => v > 0);
   const prevScore = prevParts.length ? Math.round(prevParts.reduce((a, b) => a + b, 0) / prevParts.length) : 0;
   const grade = score >= 90 ? 'Exceptional' : score >= 75 ? 'Strong' : score >= 60 ? 'Steady' : score >= 40 ? 'Building' : score >= 20 ? 'Starting' : 'Warming up';
-  set('score-grade', grade);
+  set('score-grade', t(grade));
   set('score-copy', scoreMessage(score, todayMin, todayPct));
   animateRing(score);
   animateNumber('score-value', score);
-  set('part-focus', `${number(Math.round(focusPct))}%`);
-  set('part-goals', `${number(Math.round(goalAvg))}%`);
-  set('part-habits', `${number(Math.round(habitAvg))}%`);
-  set('part-work', `${number(donePulse)}%`);
+  set('part-focus', pctText(Math.round(focusPct)));
+  set('part-goals', pctText(Math.round(goalAvg)));
+  set('part-habits', pctText(Math.round(habitAvg)));
+  set('part-work', pctText(donePulse));
   animateFill('fill-focus', focusPct);
   animateFill('fill-goals', goalAvg);
   animateFill('fill-habits', habitAvg);
@@ -337,28 +343,30 @@ export async function refreshDashboard() {
 }
 
 function scoreMessage(score, todayMin, todayPct) {
-  if (score >= 75) return 'Strong output today — the compound is working. Keep the cadence and protect the next block.';
-  if (score >= 50) return `Solid rhythm. ${todayMin > 0 ? number(todayMin) + ' min focused' : 'No focus yet'} and ${number(Math.round(todayPct))}% of habits handled.`;
-  if (score >= 25) return 'Your score combines progress across focus, habits, goals and work.';
-  return 'Everything starts somewhere. Set one goal, run one session, complete one habit.';
+  if (score >= 75) return t('Strong output today — the compound is working. Keep the cadence and protect the next block.');
+  if (score >= 50) return todayMin > 0
+    ? t('Solid rhythm. {minutes} min focused and {percent} of habits handled.', { minutes: number(todayMin), percent: pctText(Math.round(todayPct)) })
+    : t('Solid rhythm. No focus yet and {percent} of habits handled.', { percent: pctText(Math.round(todayPct)) });
+  if (score >= 25) return t('Your score combines progress across focus, habits, goals and work.');
+  return t('Everything starts somewhere. Set one goal, run one session, complete one habit.');
 }
 
-function renderMetricDelta(id, current, baseline, unit = '') {
+function renderMetricDelta(id, current, baseline) {
   const node = $(id);
   if (!node) return;
   if (baseline <= 0 || current <= 0) { node.textContent = '—'; node.className = 'metric-delta flat'; return; }
   const pct = Math.round((current - baseline) / baseline * 100);
-  if (Math.abs(pct) < 1) { node.textContent = '0%'; node.className = 'metric-delta flat'; return; }
-  node.innerHTML = `${pct > 0 ? ARROW_UP : ARROW_DOWN}<span>${Math.abs(pct)}%</span>`;
+  if (Math.abs(pct) < 1) { node.textContent = pctText(0); node.className = 'metric-delta flat'; return; }
+  node.innerHTML = `${pct > 0 ? ARROW_UP : ARROW_DOWN}<span>${esc(pctText(Math.abs(pct)))}</span>`;
   node.className = `metric-delta ${pct > 0 ? 'up' : 'down'}`;
 }
 
 function renderScoreDelta(score, prev) {
   const node = $('score-delta');
   if (!node) return;
-  if (prev <= 0) { node.textContent = 'vs last week — establishing baseline'; node.className = 'score-delta'; return; }
+  if (prev <= 0) { node.textContent = t('vs last week — establishing baseline'); node.className = 'score-delta'; return; }
   const diff = score - prev;
-  node.innerHTML = `${diff >= 0 ? ARROW_UP : ARROW_DOWN}<span>${Math.abs(diff)} pts vs last week</span>`;
+  node.innerHTML = `${diff >= 0 ? ARROW_UP : ARROW_DOWN}<span>${esc(t('{points} pts vs last week', { points: number(Math.abs(diff)) }))}</span>`;
   node.className = `score-delta ${diff >= 0 ? 'up' : 'down'}`;
 }
 
@@ -413,7 +421,7 @@ function renderFocusChart(today, focusByDay) {
   for (let level = 0; level <= 4; level++) {
     const value = max * level / 4;
     const yy = y(value).toFixed(1);
-    grid += `<line class="sv-gridline" x1="${padL}" y1="${yy}" x2="${W - padR}" y2="${yy}"/><text class="sv-y" x="${padL - 8}" y="${Number(yy) + 3}">${level === 0 ? 0 : Math.round(value)}</text>`;
+    grid += `<line class="sv-gridline" x1="${padL}" y1="${yy}" x2="${W - padR}" y2="${yy}"/><text class="sv-y" x="${padL - 8}" y="${Number(yy) + 3}">${number(level === 0 ? 0 : Math.round(value))}</text>`;
   }
   let labels = '';
   days.forEach((d, i) => {
@@ -423,20 +431,20 @@ function renderFocusChart(today, focusByDay) {
   let dots = '';
   days.forEach((d, i) => {
     if (d.minutes <= 0) return;
-    dots += `<circle class="sv-dot" cx="${x(i).toFixed(1)}" cy="${y(d.minutes).toFixed(1)}" r="3"><title>${weekdayShort(d.key)} ${number(d.minutes)} min</title></circle>`;
+    dots += `<circle class="sv-dot" cx="${x(i).toFixed(1)}" cy="${y(d.minutes).toFixed(1)}" r="3"><title>${esc(weekdayShort(d.key))} ${esc(t('{minutes} min', { minutes: number(d.minutes) }))}</title></circle>`;
   });
   wrap.innerHTML = days.some(d => d.minutes > 0) ? `
     <svg class="sv-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Focused minutes per day for the last fourteen days">
       <defs><linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--accent)" stop-opacity=".28"/><stop offset="1" stop-color="var(--accent)" stop-opacity="0"/></linearGradient></defs>
       ${grid}<path class="sv-area" d="${area}"/><path class="sv-line" d="${line}"/>${dots}${labels}
-    </svg>` : `<div class="chart-empty rise">No focus sessions in the last 14 days.<br>Start one from the Focus app to see the curve grow.</div>`;
+    </svg>` : `<div class="chart-empty rise">${esc(t('No focus sessions in the last 14 days.'))}<br>${esc(t('Start one from the Focus app to see the curve grow.'))}</div>`;
 }
 
 function renderHabitChart(today, completion, totalHabits, habitAvg, habitsOk) {
   const wrap = $('habit-chart');
-  set('habit-14-avg', habitsOk ? `${number(Math.round(habitAvg))}%` : '—');
+  set('habit-14-avg', habitsOk ? pctText(Math.round(habitAvg)) : '—');
   if (!habitsOk) {
-    wrap.innerHTML = '<div class="chart-empty">Unable to load habit completions.<br>Refresh the page to retry.</div>';
+    wrap.innerHTML = `<div class="chart-empty">${esc(t('Unable to load habit completions.'))}<br>${esc(t('Refresh the page to retry.'))}</div>`;
     return;
   }
   const days = [];
@@ -454,18 +462,18 @@ function renderHabitChart(today, completion, totalHabits, habitAvg, habitsOk) {
     const yy = padT + plotH - bh;
     const fill = d.pct > 0 ? `var(--accent)` : `var(--surface-2)`;
     const stroke = d.pct > 0 ? `var(--accent)` : `var(--border)`;
-    bars += `<rect class="sv-bar" x="${(cx - barW / 2).toFixed(1)}" y="${yy.toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" rx="3" fill="${fill}" stroke="${stroke}" stroke-width="${d.pct > 0 ? 0 : 1}"><title>${weekdayShort(d.key)} ${number(Math.round(d.pct))}% complete</title></rect>`;
+    bars += `<rect class="sv-bar" x="${(cx - barW / 2).toFixed(1)}" y="${yy.toFixed(1)}" width="${barW.toFixed(1)}" height="${bh.toFixed(1)}" rx="3" fill="${fill}" stroke="${stroke}" stroke-width="${d.pct > 0 ? 0 : 1}"><title>${esc(weekdayShort(d.key))} ${esc(t('{percent} complete', { percent: pctText(Math.round(d.pct)) }))}</title></rect>`;
     if (i % 2 === 1 && i !== days.length - 1) return;
     labels += `<text class="sv-x" x="${cx}" y="${H - 8}" text-anchor="middle">${weekdayShort(d.key)}</text>`;
   });
   for (let level = 0; level <= 4; level++) {
     const yy = padT + plotH - plotH * level / 4;
-    bars = `<line class="sv-gridline" x1="${padL}" y1="${yy.toFixed(1)}" x2="${W - padR}" y2="${yy.toFixed(1)}"/><text class="sv-y" x="${padL - 14}" y="${yy + 3}">${level === 0 ? 0 : level * 25}</text>` + bars;
+    bars = `<line class="sv-gridline" x1="${padL}" y1="${yy.toFixed(1)}" x2="${W - padR}" y2="${yy.toFixed(1)}"/><text class="sv-y" x="${padL - 14}" y="${yy + 3}">${number(level === 0 ? 0 : level * 25)}</text>` + bars;
   }
   wrap.innerHTML = totalHabits ? `
     <svg class="sv-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Daily habit completion percentage for the last fourteen days">
       ${bars}${labels}
-    </svg>` : `<div class="chart-empty rise">No habits yet.<br>Add your first habit in Habittify to unlock the completion curve.</div>`;
+    </svg>` : `<div class="chart-empty rise">${esc(t('No habits yet.'))}<br>${esc(t('Add your first habit in Habittify to unlock the completion curve.'))}</div>`;
 }
 
 function renderHeatmap(today, completion, totalHabits, habitsOk) {
@@ -488,11 +496,11 @@ function renderHeatmap(today, completion, totalHabits, habitsOk) {
       if (key > today) { cells += `<span class="heat-cell level-0"></span>`; continue; }
       const level = edit(key);
       if (level > 0) made++;
-      cells += `<span class="heat-cell level-${level}${key === today ? ' today' : ''}" title="${key}: ${number(Math.round(completion(key)))}% complete"></span>`;
+      cells += `<span class="heat-cell level-${level}${key === today ? ' today' : ''}" title="${esc(window.lifeOsI18n.digits(key))}: ${esc(t('{percent} complete', { percent: pctText(Math.round(completion(key))) }))}"></span>`;
     }
   }
-  grid.innerHTML = habitsOk ? cells : `<div class="empty-sm" style="grid-column:1/-1">Unable to load habit history. Refresh to retry.</div>`;
-  set('heat-extra', made ? `${number(made)} strong days` : '');
+  grid.innerHTML = habitsOk ? cells : `<div class="empty-sm" style="grid-column:1/-1">${esc(t('Unable to load habit history. Refresh to retry.'))}</div>`;
+  set('heat-extra', made ? t('{count} strong days', { count: number(made) }) : '');
 }
 
 function renderInsights(today, focusByDay, habitsOk, todayDone, totalHabits, history) {
@@ -506,20 +514,20 @@ function renderInsights(today, focusByDay, habitsOk, todayDone, totalHabits, his
   let cursor = today;
   if (!(focusByDay[cursor] > 0)) cursor = addDaysISO(today, -1);
   while (focusByDay[cursor] > 0) { streak++; cursor = addDaysISO(cursor, -1); }
-  if (streak > 0) insights.push({ icon: icoClock, title: `${number(streak)}-day focus streak`, text: `Focus on ${streak > 1 ? 'every one of the last ' + number(streak) + ' days' : 'yesterday and counting today'} — momentum is your multiplier.` });
-  else insights.push({ icon: icoClock, title: 'No active streak', text: 'A single 25-minute session today starts a fresh focus streak.' });
+  if (streak > 0) insights.push({ icon: icoClock, title: t('{count}-day focus streak', { count: number(streak) }), text: streak > 1 ? t('Focus on every one of the last {count} days — momentum is your multiplier.', { count: number(streak) }) : t('Focus on yesterday and counting today — momentum is your multiplier.') });
+  else insights.push({ icon: icoClock, title: t('No active streak'), text: t('A single 25-minute session today starts a fresh focus streak.') });
 
   const best = history.reduce((acc, item) => (Number(item?.minutes) || 0) > (Number(acc?.minutes) || 0) ? item : acc, null);
   if (best?.day) {
-    insights.push({ icon: icoStar, title: `Best day · ${number(best.minutes)} min`, text: `${best.day} — your personal record in the log so far.` });
+    insights.push({ icon: icoStar, title: t('Best day · {minutes} min', { minutes: number(best.minutes) }), text: t('{day} — your personal record in the log so far.', { day: window.lifeOsI18n.digits(best.day) }) });
   }
 
   const totalMin = history.reduce((sum, item) => sum + (Number(item?.minutes) || 0), 0);
   const totalSessions = history.filter(item => Number(item?.minutes) > 0).length;
-  insights.push({ icon: icoBolt, title: `${number(totalMin)} min deep work`, text: `${number(totalSessions)} session${totalSessions === 1 ? '' : 's'} logged in total · ${number(Math.round(totalMin / 60))} hours of deliberate focus.` });
+  insights.push({ icon: icoBolt, title: t('{minutes} min deep work', { minutes: number(totalMin) }), text: t(totalSessions === 1 ? '{count} session logged in total · {hours} hours of deliberate focus.' : '{count} sessions logged in total · {hours} hours of deliberate focus.', { count: number(totalSessions), hours: number(Math.round(totalMin / 60)) }) });
 
   if (habitsOk) {
-    insights.push({ icon: icoCheck, title: `${number(todayDone)} of ${number(totalHabits)} habits today`, text: todayDone === totalHabits && totalHabits > 0 ? 'Perfect day — every habit checked. Bank it.' : 'Small, repeatable wins compound faster than occasional grand gestures.' });
+    insights.push({ icon: icoCheck, title: t('{done} of {total} habits today', { done: number(todayDone), total: number(totalHabits) }), text: t(todayDone === totalHabits && totalHabits > 0 ? 'Perfect day — every habit checked. Bank it.' : 'Small, repeatable wins compound faster than occasional grand gestures.') });
   }
 
   list.innerHTML = insights.slice(0, 4).map((item, i) =>
@@ -539,20 +547,20 @@ function renderGoalList(goalProgress, today) {
     return new Date(a.goal.deadline) - new Date(b.goal.deadline);
   }).slice(0, 4);
   if (!sorted.length) {
-    wrap.innerHTML = `<div class="empty-sm">No active goals yet.<br>Set a SMART goal to start tracking real outcomes.</div>`;
+    wrap.innerHTML = `<div class="empty-sm">${esc(t('No active goals yet.'))}<br>${esc(t('Set a SMART goal to start tracking real outcomes.'))}</div>`;
     return;
   }
   wrap.innerHTML = sorted.map(({ goal, total, done, pct }) => {
-    let chip = '<span class="chip flat">no deadline</span>';
+    let chip = `<span class="chip flat">${esc(t('no deadline'))}</span>`;
     if (goal.deadline) {
       const days = Math.round((new Date(goal.deadline + 'T00:00:00') - new Date(today + 'T00:00:00')) / 86400000);
-      if (days < 0) chip = `<span class="chip overdue">${Math.abs(days)}d overdue</span>`;
-      else if (days === 0) chip = `<span class="chip soon">due today</span>`;
-      else if (days <= 7) chip = `<span class="chip soon">${days}d left</span>`;
-      else chip = `<span class="chip ok">${days}d left</span>`;
+      if (days < 0) chip = `<span class="chip overdue">${esc(t('{days}d overdue', { days: number(Math.abs(days)) }))}</span>`;
+      else if (days === 0) chip = `<span class="chip soon">${esc(t('due today'))}</span>`;
+      else if (days <= 7) chip = `<span class="chip soon">${esc(t('{days}d left', { days: number(days) }))}</span>`;
+      else chip = `<span class="chip ok">${esc(t('{days}d left', { days: number(days) }))}</span>`;
     }
     return `<div class="goal-row">
-      <div class="goal-head"><span class="goal-name">${esc(goal.title)}<span class="goal-cat">${esc(goal.category || 'General')}${total ? ` · ${done ?? "—"}/${total} ${goal.progressSource === "habit" ? "days" : "tasks"}` : ''}</span></span><span class="goal-pct">${pct===null?"—":number(Math.round(pct))+"%"}</span></div>
+      <div class="goal-head"><span class="goal-name">${esc(goal.title)}<span class="goal-cat">${esc(goal.category || t('General'))}${total ? ` · ${esc(t(goal.progressSource === "habit" ? '{done}/{total} days' : '{done}/{total} tasks', { done: done === null || done === undefined ? '—' : number(done), total: number(total) }))}` : ''}</span></span><span class="goal-pct">${pct===null?"—":esc(pctText(Math.round(pct)))}</span></div>
       <span class="goal-track"><span class="goal-fill" data-w="${clamp(pct)}"></span></span>
       <span class="goal-meta"><span>${esc(goal.metric)}</span>${chip}</span>
     </div>`;
@@ -563,7 +571,7 @@ function renderGoalList(goalProgress, today) {
 function renderFlow(allCards, boards) {
   const wrap = $('flow-body');
   if (!allCards.length) {
-    wrap.innerHTML = `<div class="empty-sm">No cards yet.<br>Open Kanban and add your first task to see the pipeline.</div>`;
+    wrap.innerHTML = `<div class="empty-sm">${esc(t('No cards yet.'))}<br>${esc(t('Open Kanban and add your first task to see the pipeline.'))}</div>`;
     return;
   }
   const groups = ['Backlog', 'To Do', 'In Progress', 'To Review', 'Done'];
@@ -575,18 +583,18 @@ function renderFlow(allCards, boards) {
     return /backlog/i.test(item.column);
   }).length);
   const total = allCards.length;
-  const stack = counts.map((count, i) => `<i class="fc-${i}" style="width:${(count / total * 100).toFixed(1)}%" title="${count} ${groups[i]}"></i>`).join('');
-  const legend = groups.map((name, i) => counts[i] ? `<span class="flow-item"><span><i class="fc-${i}"></i>${name}</span><b>${number(counts[i])}</b></span>` : '').join('');
+  const stack = counts.map((count, i) => `<i class="fc-${i}" style="width:${(count / total * 100).toFixed(1)}%" title="${esc(number(count))} ${esc(t(groups[i]))}"></i>`).join('');
+  const legend = groups.map((name, i) => counts[i] ? `<span class="flow-item"><span><i class="fc-${i}"></i>${esc(t(name))}</span><b>${number(counts[i])}</b></span>` : '').join('');
   const inFlight = counts[1] + counts[2] + counts[3];
   const done = counts[4];
   wrap.innerHTML = `
-    <div class="flow-stack" aria-label="Card distribution">${stack}</div>
+    <div class="flow-stack" aria-label="${esc(t('Card distribution'))}">${stack}</div>
     <div class="flow-legend">${legend}</div>
     <div class="flow-stats">
-      <span class="flow-stat"><small>Total cards</small><strong>${number(total)}</strong></span>
-      <span class="flow-stat"><small>In flight</small><strong>${number(inFlight)}</strong></span>
-      <span class="flow-stat"><small>Completed</small><strong>${number(done)}</strong></span>
-      <span class="flow-stat"><small>Boards</small><strong>${number(boards.length)}</strong></span>
+      <span class="flow-stat"><small>${esc(t('Total cards'))}</small><strong>${number(total)}</strong></span>
+      <span class="flow-stat"><small>${esc(t('In flight'))}</small><strong>${number(inFlight)}</strong></span>
+      <span class="flow-stat"><small>${esc(t('Completed'))}</small><strong>${number(done)}</strong></span>
+      <span class="flow-stat"><small>${esc(t('Boards'))}</small><strong>${number(boards.length)}</strong></span>
     </div>`;
 }
 
@@ -609,17 +617,17 @@ function renderFinance() {
     .sort((a, b) => b.amount - a.amount)
     .slice(0, 3);
   if (!expenses.length && !income) {
-    wrap.innerHTML = `<div class="empty-sm">No entries in this period.<br>Track a transaction in Finance to light up the spend watch.</div>`;
+    wrap.innerHTML = `<div class="empty-sm">${esc(t('No entries in this period.'))}<br>${esc(t('Track a transaction in Finance to light up the spend watch.'))}</div>`;
     return;
   }
   wrap.innerHTML = `
     <div class="fin-row"><strong class="fin-balance">${number(balance)}<span>${esc(window.lifeOsCurrency?.unit() ?? 'Toman')}</span></strong></div>
-    <div class="fin-sub"><span class="fin-pill in">+${number(income)} in</span><span class="fin-pill out">−${number(spent)} out</span></div>
+    <div class="fin-sub"><span class="fin-pill in">${esc(t('+{amount} in', { amount: number(income) }))}</span><span class="fin-pill out">${esc(t('−{amount} out', { amount: number(spent) }))}</span></div>
     <div class="fin-cats">${top.map(({ category, amount }) => {
       const pct = category.target > 0 ? clamp(amount / category.target * 100) : 100;
       const over = category.target > 0 && amount > category.target;
       return `<div class="fin-cat">
-        <div class="fin-cat-head"><span>${esc(category.label)}${over ? ' · over' : ''}</span><b>${pct===null?"—":number(Math.round(pct))+"%"} of budget</b></div>
+        <div class="fin-cat-head"><span>${esc(category.label)}${over ? ' · ' + esc(t('over')) : ''}</span><b>${pct===null?"—":esc(t('{percent} of budget', { percent: pctText(Math.round(pct)) }))}</b></div>
         <span class="fin-cat-track"><span class="fin-cat-fill" data-w="${pct}" style="${over ? 'background:var(--danger)' : ''}"></span></span>
       </div>`;
     }).join('')}</div>`;

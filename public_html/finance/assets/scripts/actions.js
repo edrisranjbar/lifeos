@@ -98,12 +98,13 @@ function saveNewBudget() {
   const emoji = document.getElementById("newCatEmoji").value.trim();
   const name = document.getElementById("newCatName").value.trim();
   const target = parseFloat(document.getElementById("newCatTarget").value);
+  const unlimited = document.getElementById("newCatUnlimited").checked;
   if (!name) return alert("Enter a category name.");
-  if (isNaN(target) || target <= 0)
+  if (!unlimited && (!Number.isFinite(target) || target <= 0))
     return alert("Enter a valid budget amount.");
   const id = "cat_" + Date.now().toString(36);
   const label = emoji ? `${emoji} ${name}` : name;
-  state.categories.push({ id, label, target });
+  state.categories.push({ id, label, target: Number.isFinite(target) ? target : 0, unlimited });
   closeModal();
   save();
   render();
@@ -115,7 +116,8 @@ function exportToExcel() {
   }
 
   const totalIncome = state.incomes.reduce((sum, item) => sum + item.amount, 0);
-  const totalBudget = state.categories.reduce((sum, item) => sum + item.target, 0);
+  const budgets = financeBudgetTotals();
+  const totalBudget = budgets.total;
   const totalSpent = state.expenses.reduce((sum, item) => sum + item.amount, 0);
   const categoryName = (id) =>
     state.categories.find((category) => category.id === id)?.label || id;
@@ -126,10 +128,10 @@ function exportToExcel() {
       .reduce((sum, expense) => sum + expense.amount, 0);
     return {
       Category: category.label,
-      [`Budget (${unit})`]: category.target,
+      [`Budget (${unit})`]: budgetIsUnlimited(category) ? "Unlimited" : category.target,
       [`Spent (${unit})`]: spent,
-      [`Remaining (${unit})`]: category.target - spent,
-      "Used (%)": category.target > 0 ? Math.round((spent / category.target) * 100) : 0,
+      [`Remaining (${unit})`]: budgetIsUnlimited(category) ? "" : category.target - spent,
+      "Used (%)": budgetIsUnlimited(category) ? "" : category.target > 0 ? Math.round((spent / category.target) * 100) : 0,
     };
   });
   const expenseRows = state.expenses.map((expense) => ({
@@ -147,7 +149,8 @@ function exportToExcel() {
     { Metric: "Allocated budget", [`Amount (${unit})`]: totalBudget },
     { Metric: "Spent", [`Amount (${unit})`]: totalSpent },
     { Metric: "Balance", [`Amount (${unit})`]: totalIncome - totalSpent },
-    { Metric: "Budget available", [`Amount (${unit})`]: totalBudget - totalSpent },
+    { Metric: "Capped budget available", [`Amount (${unit})`]: budgets.remaining },
+    { Metric: "Unlimited category spending", [`Amount (${unit})`]: budgets.unlimitedSpent },
   ];
 
   const workbook = XLSX.utils.book_new();
@@ -195,13 +198,15 @@ function saveEditedBudget(id) {
   const emoji = document.getElementById("editCatEmoji").value.trim();
   const name = document.getElementById("editCatName").value.trim();
   const target = parseFloat(document.getElementById("editCatTarget").value);
+  const unlimited = document.getElementById("editCatUnlimited").checked;
   if (!name) return showToast("Enter a category name.", "error");
-  if (isNaN(target) || target <= 0)
+  if (!unlimited && (!Number.isFinite(target) || target <= 0))
     return showToast("Enter a valid budget amount.", "error");
   const category = state.categories.find((cat) => cat.id === id);
   if (!category) return;
   category.label = emoji ? `${emoji} ${name}` : name;
-  category.target = target;
+  category.target = Number.isFinite(target) ? target : 0;
+  category.unlimited = unlimited;
   closeModal();
   save();
   render();

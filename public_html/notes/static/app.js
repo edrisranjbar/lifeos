@@ -1,6 +1,7 @@
 const $ = (id) => document.getElementById(id);
 
 const KEY = "edi_notes_v1";
+const { t } = window.lifeOsI18n;
 const COLORS = ["yellow", "pink", "blue", "green", "lavender", "peach"];
 const FONT_FACES = {
   sans: 'Inter, system-ui, sans-serif',
@@ -37,9 +38,9 @@ function loadState() {
   state.zCounter = maxZ + 1;
 
   if (state.notes.length === 0) {
-    const seed1 = makeNote("Today list", "Capture your first thought.\n\n• What did you ship?\n• What's next?", { x: 80, y: 80 });
-    const seed2 = makeNote("Reading", "Atomic Habits — ch. 3 takeaways\n\n1) Habit stacking\n2) Environment design", { x: 340, y: 60 });
-    const seed3 = makeNote("Idea 💡", "What if the timer app linked to notes so you could dump stray thoughts mid-session?", { x: 600, y: 140 });
+    const seed1 = makeNote(t("Today list"), t("Capture your first thought.\n\n• What did you ship?\n• What's next?"), { x: 80, y: 80 });
+    const seed2 = makeNote(t("Reading"), t("Atomic Habits — ch. 3 takeaways\n\n1) Habit stacking\n2) Environment design"), { x: 340, y: 60 });
+    const seed3 = makeNote(t("Idea 💡"), t("What if the timer app linked to notes so you could dump stray thoughts mid-session?"), { x: 600, y: 140 });
     state.notes.push(seed1, seed2, seed3);
     persist();
   }
@@ -91,7 +92,7 @@ function persist() {
   try {
     appStorage.setItem(KEY, JSON.stringify({ notes: state.notes, connections: state.connections }));
   } catch (e) {
-    showToast("Unable to save note.", "error");
+    showToast(t("Unable to save note."), "error");
   }
 }
 
@@ -108,7 +109,7 @@ function renderInline(value) {
 }
 
 function renderMarkdown(source) {
-  if (!source.trim()) return '<p class="preview-empty">Double-click to write Markdown.</p>';
+  if (!source.trim()) return `<p class="preview-empty">${escapeHtml(t("Double-click to write Markdown."))}</p>`;
   const lines = source.replace(/\r\n?/g, "\n").split("\n");
   const output = [];
   let list = "", code = false, codeLines = [];
@@ -168,7 +169,7 @@ function renderAll() {
   for (const node of canvas.querySelectorAll(".sticky")) node.remove();
 
   const filteredIds = new Set(getFiltered().map((n) => n.id));
-  $("notesCount").textContent = `${state.notes.length} note${state.notes.length === 1 ? "" : "s"} · Markdown`;
+  $("notesCount").textContent = t(state.notes.length === 1 ? "{count} note · Markdown" : "{count} notes · Markdown", { count: window.lifeOsI18n.number(state.notes.length) });
   $("emptyState").hidden = state.notes.length > 0;
 
   for (const note of state.notes) {
@@ -195,9 +196,9 @@ function connectNotes(a, b) {
     state.connections.push({a, b});
     persist();
     renderConnections();
-    showToast("Notes connected");
+    showToast(t("Notes connected"));
   } else {
-    showToast("These notes are already connected");
+    showToast(t("These notes are already connected"));
   }
   state.connectFrom = null;
   syncConnectMode();
@@ -237,16 +238,16 @@ function renderConnections() {
     hit.setAttribute("class", "connection-hit");
     hit.setAttribute("role", "button");
     hit.setAttribute("tabindex", "0");
-    hit.setAttribute("aria-label", "Remove connection between notes");
+    hit.setAttribute("aria-label", t("Remove connection between notes"));
     const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
-    title.textContent = "Click to remove connection";
+    title.textContent = t("Click to remove connection");
     hit.append(title);
     const remove = () => {
-      if (!confirm("Remove this connection?")) return;
+      if (!confirm(t("Remove this connection?"))) return;
       state.connections = state.connections.filter(other => other !== link);
       persist();
       renderConnections();
-      showToast("Connection removed");
+      showToast(t("Connection removed"));
     };
     hit.addEventListener("click", remove);
     hit.addEventListener("mouseenter", () => line.classList.add("connection-hover"));
@@ -264,7 +265,7 @@ function renderSticky(note) {
   const el = document.createElement("article");
   el.className = "sticky";
   el.tabIndex = 0;
-  el.title = "Double-click to edit note";
+  el.title = t("Double-click to edit note");
   el.dataset.id = note.id;
   el.dataset.color = note.color;
   el.style.left = note.x + "px";
@@ -278,8 +279,8 @@ function renderSticky(note) {
   const format = document.createElement("div");
   format.className = "note-format";
   const face = document.createElement("select");
-  face.setAttribute("aria-label", "Note font face");
-  for (const [value, label] of [["sans", "Sans"], ["serif", "Serif"], ["mono", "Mono"]]) {
+  face.setAttribute("aria-label", t("Note font face"));
+  for (const [value, label] of [["sans", t("Sans")], ["serif", t("Serif")], ["mono", t("Mono")]]) {
     const option = document.createElement("option");
     option.value = value; option.textContent = label;
     face.append(option);
@@ -292,10 +293,10 @@ function renderSticky(note) {
     persist();
   });
   const size = document.createElement("select");
-  size.setAttribute("aria-label", "Note font size");
+  size.setAttribute("aria-label", t("Note font size"));
   for (const value of [11, 12, 14, 16, 18, 20, 24, 28]) {
     const option = document.createElement("option");
-    option.value = String(value); option.textContent = `${value}px`;
+    option.value = String(value); option.textContent = t("{size}px", { size: window.lifeOsI18n.number(value) });
     size.append(option);
   }
   size.value = String(note.fontSize);
@@ -311,8 +312,8 @@ function renderSticky(note) {
   body.className = "sticky-body";
   body.spellcheck = true;
   body.value = note.body || (note.title || "");
-  body.placeholder = "Write Markdown…";
-  body.setAttribute("aria-label", "Markdown source");
+  body.placeholder = t("Write Markdown…");
+  body.setAttribute("aria-label", t("Markdown source"));
   const voiceButton = window.addVoiceInputButton(body, "sticky-voice-input");
   const preview = document.createElement("div");
   preview.className = "markdown-preview";
@@ -321,25 +322,25 @@ function renderSticky(note) {
   const revealBtn = document.createElement("button");
   revealBtn.type = "button";
   revealBtn.className = "reveal-note";
-  revealBtn.textContent = "🔒 Reveal note";
+  revealBtn.textContent = t("🔒 Reveal note");
   const privacyBtn = document.createElement("button");
   privacyBtn.type = "button";
-  privacyBtn.title = "Toggle secret note";
+  privacyBtn.title = t("Toggle secret note");
   const hideBtn = document.createElement("button");
   hideBtn.type = "button";
-  hideBtn.textContent = "Hide";
-  hideBtn.setAttribute("aria-label", "Hide secret note");
+  hideBtn.textContent = t("Hide");
+  hideBtn.setAttribute("aria-label", t("Hide secret note"));
   let revealed = false;
   const updatePrivacy = () => {
     const locked = note.secret && !revealed;
     el.classList.toggle("secret-locked", locked);
-    el.setAttribute("aria-label", locked ? "Secret note, content hidden" : "Note, double-click or press Enter to edit");
+    el.setAttribute("aria-label", t(locked ? "Secret note, content hidden" : "Note, double-click or press Enter to edit"));
     preview.setAttribute("aria-hidden", String(locked));
     preview.inert = locked;
     revealBtn.hidden = !locked;
     hideBtn.hidden = !note.secret || locked;
     privacyBtn.textContent = note.secret ? "🔒" : "🔓";
-    privacyBtn.setAttribute("aria-label", note.secret ? "Turn off secret mode" : "Make note secret");
+    privacyBtn.setAttribute("aria-label", t(note.secret ? "Turn off secret mode" : "Make note secret"));
     privacyBtn.setAttribute("aria-pressed", String(note.secret));
   };
   revealBtn.onclick = () => { revealed = true; updatePrivacy(); };
@@ -362,8 +363,8 @@ function renderSticky(note) {
     const button = document.createElement("button");
     button.type = "button";
     button.dataset.color = color;
-    button.title = `Color ${color}`;
-    button.setAttribute("aria-label", `Color ${color}`);
+    button.title = t("Color {color}", { color: t(color) });
+    button.setAttribute("aria-label", button.title);
     button.setAttribute("aria-pressed", String(note.color === color));
     button.onclick = () => {
       note.color = color;
@@ -380,20 +381,20 @@ function renderSticky(note) {
   connectBtn.type = "button";
   connectBtn.className = "connect-note";
   connectBtn.textContent = "↗";
-  connectBtn.title = "Connect this note to another";
-  connectBtn.setAttribute("aria-label", "Connect this note to another");
+  connectBtn.title = t("Connect this note to another");
+  connectBtn.setAttribute("aria-label", connectBtn.title);
   connectBtn.setAttribute("aria-pressed", "false");
   connectBtn.onclick = () => {
     document.querySelectorAll(".sticky.editing").forEach(card => card._exitEdit?.());
     state.connectFrom = state.connectFrom === note.id ? null : note.id;
     syncConnectMode();
-    if (state.connectFrom) showToast("Select another note to connect · Esc to cancel");
+    if (state.connectFrom) showToast(t("Select another note to connect · Esc to cancel"));
   };
   const delBtn = document.createElement("button");
   delBtn.type = "button";
-  delBtn.title = "Delete note";
+  delBtn.title = t("Delete note");
   delBtn.textContent = "×";
-  delBtn.setAttribute("aria-label", "Delete note");
+  delBtn.setAttribute("aria-label", delBtn.title);
   delBtn.onclick = (e) => {
     e.stopPropagation();
     deleteNote(note.id);
@@ -402,8 +403,8 @@ function renderSticky(note) {
 
   const resize = document.createElement("div");
   resize.className = "resize-handle";
-  resize.setAttribute("aria-label", "Resize note");
-  resize.title = "Resize";
+  resize.setAttribute("aria-label", t("Resize note"));
+  resize.title = t("Resize");
 
   el.append(format, preview, body, voiceButton, revealBtn, swatch, actions, resize);
   bindDrag(el, note);
@@ -421,7 +422,7 @@ function renderSticky(note) {
 function deleteNote(id) {
   const idx = state.notes.findIndex((n) => n.id === id);
   if (idx === -1) return;
-  if (!confirm("Delete this note?")) return;
+  if (!confirm(t("Delete this note?"))) return;
   state.notes.splice(idx, 1);
   state.connections = state.connections.filter(link => link.a !== id && link.b !== id);
   if (state.connectFrom === id) state.connectFrom = null;
@@ -635,7 +636,7 @@ function bindEvents() {
     if (e.key === "Escape" && state.connectFrom) {
       state.connectFrom = null;
       syncConnectMode();
-      showToast("Connection canceled");
+      showToast(t("Connection canceled"));
       return;
     }
     if (e.target.matches("input, textarea, [contenteditable='true']")) return;

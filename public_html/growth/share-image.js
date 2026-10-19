@@ -38,6 +38,8 @@ function fitText(ctx, text, maxWidth) {
 
 export async function renderReviewImage(review, dimensions, dateLabel) {
   await document.fonts?.ready;
+  const { t, number } = window.lifeOsI18n;
+  const percent = value => t('{value}%', { value: number(value) });
   const canvas = document.createElement('canvas');
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext('2d');
@@ -61,15 +63,15 @@ export async function renderReviewImage(review, dimensions, dateLabel) {
   ctx.fillStyle = '#39e6ad';
   ctx.font = `700 26px ${FONT}`;
   ctx.letterSpacing = '4px';
-  ctx.fillText(`MY ${cadence.toUpperCase()} REVIEW`, pad, 150);
+  ctx.fillText(t(`MY ${cadence.toUpperCase()} REVIEW`), pad, 150);
   ctx.letterSpacing = '0px';
   ctx.fillStyle = '#fffaf0';
   ctx.font = `700 76px ${FONT}`;
-  ctx.fillText('Growing in every', pad, 250);
-  ctx.fillText('direction.', pad, 338);
+  ctx.fillText(t('Growing in every'), pad, 250);
+  ctx.fillText(t('direction.'), pad, 338);
   ctx.fillStyle = '#94a1b5';
   ctx.font = `400 30px ${FONT}`;
-  ctx.fillText(`${dateLabel} · ${reflected} of ${dimensions.length} dimensions reflected`, pad, 398);
+  ctx.fillText(t('{date} · {count} of {total} dimensions reflected', { date: dateLabel, count: number(reflected), total: number(dimensions.length) }), pad, 398);
 
   // Overall score ring.
   const ocx = W - pad - 110, ocy = 270;
@@ -77,10 +79,10 @@ export async function renderReviewImage(review, dimensions, dateLabel) {
   ctx.textAlign = 'center';
   ctx.fillStyle = '#fffaf0';
   ctx.font = `700 64px ${FONT}`;
-  ctx.fillText(overall === null ? '—' : String(overall), ocx, ocy + 18);
+  ctx.fillText(overall === null ? '—' : number(overall), ocx, ocy + 18);
   ctx.fillStyle = '#94a1b5';
   ctx.font = `500 20px ${FONT}`;
-  ctx.fillText('OVERALL', ocx, ocy + 50);
+  ctx.fillText(t('OVERALL'), ocx, ocy + 50);
   ctx.textAlign = 'left';
 
   // Dimension cards: 2 columns × 3 rows.
@@ -97,7 +99,7 @@ export async function renderReviewImage(review, dimensions, dateLabel) {
     ctx.textAlign = 'center';
     ctx.fillStyle = score === null ? '#94a1b5' : '#fffaf0';
     ctx.font = `700 ${score === null ? 34 : 36}px ${FONT}`;
-    ctx.fillText(score === null ? '—' : `${score}%`, cx, cy + 13);
+    ctx.fillText(score === null ? '—' : percent(score), cx, cy + 13);
     ctx.textAlign = 'left';
 
     const tx = cx + 58 + 32, maxText = x + cardW - tx - 28;
@@ -106,12 +108,12 @@ export async function renderReviewImage(review, dimensions, dateLabel) {
     ctx.fillText(d.icon, tx, cy - 34);
     ctx.fillStyle = '#fffaf0';
     ctx.font = `600 30px ${FONT}`;
-    ctx.fillText(fitText(ctx, SHORT[d.id] || d.name, maxText), tx, cy + 10);
+    ctx.fillText(fitText(ctx, SHORT[d.id] ? t(SHORT[d.id]) : d.name, maxText), tx, cy + 10);
     ctx.fillStyle = '#94a1b5';
     ctx.font = `400 21px ${FONT}`;
     const parts = [];
-    if (snap.habitPct !== null && snap.habitPct !== undefined) parts.push(`Habits ${snap.habitPct}%`);
-    ctx.fillText(fitText(ctx, parts.join(' · ') || 'Not measured yet', maxText), tx, cy + 48);
+    if (snap.habitPct !== null && snap.habitPct !== undefined) parts.push(t('Habits {percent}', { percent: percent(snap.habitPct) }));
+    ctx.fillText(fitText(ctx, parts.join(' · ') || t('Not measured yet'), maxText), tx, cy + 48);
   });
 
   // Footer.
@@ -125,23 +127,24 @@ export async function renderReviewImage(review, dimensions, dateLabel) {
   ctx.textAlign = 'center'; ctx.fillText('E', pad + 22, fy + 2); ctx.textAlign = 'left';
   ctx.fillStyle = '#fffaf0';
   ctx.font = `600 26px ${FONT}`;
-  ctx.fillText('Made with Edi Life OS', pad + 64, fy + 1);
+  ctx.fillText(t('Made with Edi Life OS'), pad + 64, fy + 1);
   ctx.textAlign = 'right';
   ctx.fillStyle = '#94a1b5';
   ctx.font = `400 24px ${FONT}`;
   ctx.fillText(PROJECT_URL, W - pad, fy + 1);
   ctx.textAlign = 'left';
 
-  return new Promise((resolve, reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(Error('Unable to create the image.')), 'image/png'));
+  return new Promise((resolve, reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(Error(t('Unable to create the image.'))), 'image/png'));
 }
 
 // Share through the system sheet where supported, otherwise download the PNG.
 export async function shareReviewImage(review, dimensions, dateLabel) {
   const blob = await renderReviewImage(review, dimensions, dateLabel);
   const file = new File([blob], `life-review-${review.date}.png`, {type: 'image/png'});
-  const text = `My ${review.cadence} life review, made with Edi Life OS — https://${PROJECT_URL}`;
+  const { t } = window.lifeOsI18n;
+  const text = t('My {cadence} life review, made with Edi Life OS — {url}', { cadence: t(review.cadence), url: `https://${PROJECT_URL}` });
   if (navigator.canShare?.({files: [file]})) {
-    try { await navigator.share({files: [file], title: 'My life review', text}); return 'shared'; }
+    try { await navigator.share({files: [file], title: t('My life review'), text}); return 'shared'; }
     catch (error) { if (error.name === 'AbortError') return 'cancelled'; }
   }
   const url = URL.createObjectURL(blob);

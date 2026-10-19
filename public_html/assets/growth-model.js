@@ -1,6 +1,8 @@
 import './goal-progress.js?v=goal-measures-2';
 // Connections live separately; source workspaces remain the owners of their records.
 export const KEY = 'edi_growth_v1';
+// name and hint translate when read: this module loads before the dictionary.
+const translated = text => window.lifeOsI18n ? window.lifeOsI18n.t(text) : text;
 export const dimensions = [
   {id:'spirituality', name:'Religion & Spirituality', icon:'✧', color:'#b69ce0', hint:'Faith, meaning and a grounded inner life.'},
   {id:'health', name:'Health', icon:'♡', color:'#39e6ad', hint:'Care for your body, energy and wellbeing.'},
@@ -8,7 +10,10 @@ export const dimensions = [
   {id:'finance', name:'Finance', icon:'↗', color:'#f3c969', hint:'Build security and make intentional money decisions.'},
   {id:'self-growth', name:'Self Growth', icon:'◈', color:'#7da5ee', hint:'Learn, create and become more capable.'},
   {id:'rest', name:'Fun & Rest', icon:'☼', color:'#6bc6ce', hint:'Make space for joy, recovery and curiosity.'}
-];
+].map(({name, hint, ...dimension}) => Object.defineProperties(dimension, {
+  name: {get: () => translated(name), enumerable: true},
+  hint: {get: () => translated(hint), enumerable: true},
+}));
 export const array = value => Array.isArray(value) ? value : [];
 export function read(key, fallback = {}) {
   const raw = appStorage.getItem(key);

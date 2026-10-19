@@ -3,6 +3,10 @@ const $ = (id) => document.getElementById(id);
 const $$ = (sel) => document.querySelectorAll(sel);
 
 const KEY = "edi_goals_v1";
+// `t` is a task variable in this file, so the translator is `tr`.
+const tr = window.lifeOsI18n.t;
+const num = value => window.lifeOsI18n.number(value);
+const pctText = value => tr("{value}%", { value: num(value) });
 const DRAFTS_KEY = "edi_goals_drafts_v1";
 const WIZARD_FIELDS = ["gTitle", "gSpecific", "gCategory",
   "gRelevant", "gPriority", "gDeadline", "gStart", "gProgressSource", "gHabit", "gHabitTarget"];
@@ -49,7 +53,7 @@ function load() {
     }
   } catch (e) {
     console.error("Failed to load goals:", e);
-    showToast("Couldn't read saved goals", "error");
+    showToast(tr("Couldn't read saved goals"), "error");
   }
 }
 
@@ -58,7 +62,7 @@ function save() {
     appStorage.setItem(KEY, JSON.stringify({...JSON.parse(appStorage.getItem(KEY) || "{}"), goals: state.goals }));
   } catch (e) {
     console.error("Failed to save goals:", e);
-    showToast("Unable to save goals", "error");
+    showToast(tr("Unable to save goals"), "error");
   }
 }
 
@@ -91,7 +95,8 @@ function renderWizardMeasures() {
     const row = document.createElement('div');
     row.className = 'measure-editor';
     row.dataset.id = measure.id || uid();
-    row.innerHTML = `<div class="measure-heading"><strong>Measure ${index + 1}</strong><button type="button" class="icon-btn" aria-label="Remove measure ${index + 1}">×</button></div><label class="field"><span>Success measure</span><input class="input" data-measure="metric" maxlength="120" placeholder="e.g. Books read"></label><div class="measure-values"><label class="field"><span>Current value</span><input class="input" data-measure="current" type="number" step="any" min="0" placeholder="Not recorded"></label><label class="field"><span>Target value</span><input class="input" data-measure="target" type="number" step="any" min="0" placeholder="e.g. 12"></label><label class="field"><span>Unit</span><input class="input" data-measure="unit" maxlength="20" placeholder="e.g. books"></label></div>`;
+    row.innerHTML = `<div class="measure-heading"><strong>${escapeHtml(tr("Measure {number}", { number: num(index + 1) }))}</strong><button type="button" class="icon-btn" aria-label="${escapeHtml(tr("Remove measure {number}", { number: num(index + 1) }))}">×</button></div><label class="field"><span>Success measure</span><input class="input" data-measure="metric" maxlength="120" placeholder="e.g. Books read"></label><div class="measure-values"><label class="field"><span>Current value</span><input class="input" data-measure="current" type="number" step="any" min="0" placeholder="Not recorded"></label><label class="field"><span>Target value</span><input class="input" data-measure="target" type="number" step="any" min="0" placeholder="e.g. 12"></label><label class="field"><span>Unit</span><input class="input" data-measure="unit" maxlength="20" placeholder="e.g. books"></label></div>`;
+    window.lifeOsI18n.apply(row);
     for (const key of ['metric', 'target', 'unit', 'current']) row.querySelector(`[data-measure="${key}"]`).value = measure[key] ?? '';
     row.querySelector('button').addEventListener('click', () => {
       state.wizard.measures = readWizardMeasures().filter(item => item.id !== row.dataset.id);
@@ -107,17 +112,17 @@ function renderDetailMeasures(goal) {
   const measures = goal.progressSource === "habit" ? [] : goalMeasures(goal);
   container.hidden = !measures.length;
   if (!measures.length) return;
-  const heading = document.createElement('h4'); heading.textContent = 'Success measures'; container.append(heading);
+  const heading = document.createElement('h4'); heading.textContent = tr('Success measures'); container.append(heading);
   measures.forEach((measure, index) => {
     const row = document.createElement('div'); row.className = 'measure-result';
     const description = document.createElement('div');
-    const name = document.createElement('strong'); name.textContent = measure.metric || `Measure ${index + 1}`;
-    const target = document.createElement('small'); target.textContent = measure.target != null ? `Target: ${measure.target}${measure.unit ? ' ' + measure.unit : ''}` : 'No numeric target';
+    const name = document.createElement('strong'); name.textContent = measure.metric || tr('Measure {number}', { number: num(index + 1) });
+    const target = document.createElement('small'); target.textContent = measure.target != null ? tr('Target: {value}', { value: num(measure.target) + (measure.unit ? ' ' + measure.unit : '') }) : tr('No numeric target');
     description.append(name, target);
     const label = document.createElement('label'); label.className = 'field';
-    const title = document.createElement('span'); title.textContent = 'Current value';
-    const input = document.createElement('input'); input.className = 'input'; input.type = 'number'; input.min = '0'; input.step = 'any'; input.placeholder = 'Not recorded'; input.value = measure.current ?? '';
-    input.setAttribute('aria-label', `Current value for ${measure.metric || 'measure ' + (index + 1)}`);
+    const title = document.createElement('span'); title.textContent = tr('Current value');
+    const input = document.createElement('input'); input.className = 'input'; input.type = 'number'; input.min = '0'; input.step = 'any'; input.placeholder = tr('Not recorded'); input.value = measure.current ?? '';
+    input.setAttribute('aria-label', measure.metric ? tr('Current value for {name}', { name: measure.metric }) : tr('Current value for measure {number}', { number: num(index + 1) }));
     input.addEventListener('change', () => {
       if (!input.checkValidity()) { input.reportValidity(); return; }
       measures[index].current = input.value === '' ? null : Number(input.value);
@@ -143,8 +148,8 @@ function daysUntil(iso) {
 }
 
 function formatDate(iso) {
-  if (!iso) return "No deadline";
-  return new Date(iso + "T00:00:00").toLocaleDateString(undefined, {
+  if (!iso) return tr("No deadline");
+  return new Date(iso + "T00:00:00").toLocaleDateString(window.lifeOsI18n.lang() === "en" ? undefined : window.lifeOsI18n.locale(), {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -165,7 +170,7 @@ function updateProgressFields() {
 }
 function progressCaption(g) {
   const p=progressResult(g);
-  return p.pct===null ? 'Habit progress unavailable' : p.source==='measure' ? 'Success measures' : `${p.done} / ${p.total} ${p.unit} complete`;
+  return p.pct===null ? tr('Habit progress unavailable') : p.source==='measure' ? tr('Success measures') : tr(p.unit==='days' ? '{done} / {total} days complete' : '{done} / {total} tasks complete', { done: num(p.done), total: num(p.total) });
 }
 function effectiveStatus(goal) {
   if (goal.status === "archived") return "archived";
@@ -183,13 +188,13 @@ function deadlineClass(goal) {
 }
 
 function deadlineText(goal) {
-  if (!goal.deadline) return "No deadline";
+  if (!goal.deadline) return tr("No deadline");
   const d = daysUntil(goal.deadline);
   if (d == null) return formatDate(goal.deadline);
-  if (d < 0) return `${Math.abs(d)}d overdue · ${formatDate(goal.deadline)}`;
-  if (d === 0) return `Due today`;
-  if (d === 1) return `Due tomorrow`;
-  return `${d}d left · ${formatDate(goal.deadline)}`;
+  if (d < 0) return tr("{days}d overdue · {date}", { days: num(Math.abs(d)), date: formatDate(goal.deadline) });
+  if (d === 0) return tr("Due today");
+  if (d === 1) return tr("Due tomorrow");
+  return tr("{days}d left · {date}", { days: num(d), date: formatDate(goal.deadline) });
 }
 
 // ── Theme ────────────────────────────────────────────────────────────────────
@@ -214,7 +219,7 @@ function renderCategoryFilter() {
   const sel = $("categoryFilter");
   const current = state.filters.category;
   const cats = uniqueCategories();
-  sel.innerHTML = `<option value="">All categories</option>` +
+  sel.innerHTML = `<option value="">${escapeHtml(tr("All categories"))}</option>` +
     cats.map((c) => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
   sel.value = current;
 }
@@ -231,10 +236,10 @@ function renderStats() {
   })();
 
   row.innerHTML = `
-    <div class="stat-card stat-total"><span class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="m15 9 5-5m0 0v4m0-4h-4"/></svg></span><div><div class="label">Total goals</div><div class="value">${total}</div></div></div>
-    <div class="stat-card stat-active"><span class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M13 2 4.5 13h7L11 22l8.5-12h-7L13 2Z"/></svg></span><div><div class="label">Active</div><div class="value accent">${active}</div></div></div>
-    <div class="stat-card stat-completed"><span class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></span><div><div class="label">Completed</div><div class="value">${completed}</div></div></div>
-    <div class="stat-card stat-progress"><span class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 19V9m6 10V5m6 14v-7m4 7H2"/></svg></span><div><div class="label">Avg progress</div><div class="value ${avgProgress >= 75 ? "accent" : avgProgress < 25 ? "warn" : ""}">${avgProgress}%</div></div></div>
+    <div class="stat-card stat-total"><span class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="m15 9 5-5m0 0v4m0-4h-4"/></svg></span><div><div class="label">${escapeHtml(tr("Total goals"))}</div><div class="value">${num(total)}</div></div></div>
+    <div class="stat-card stat-active"><span class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M13 2 4.5 13h7L11 22l8.5-12h-7L13 2Z"/></svg></span><div><div class="label">${escapeHtml(tr("Active"))}</div><div class="value accent">${num(active)}</div></div></div>
+    <div class="stat-card stat-completed"><span class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></span><div><div class="label">${escapeHtml(tr("Completed"))}</div><div class="value">${num(completed)}</div></div></div>
+    <div class="stat-card stat-progress"><span class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 19V9m6 10V5m6 14v-7m4 7H2"/></svg></span><div><div class="label">${escapeHtml(tr("Avg progress"))}</div><div class="value ${avgProgress >= 75 ? "accent" : avgProgress < 25 ? "warn" : ""}">${escapeHtml(pctText(avgProgress))}</div></div></div>
   `;
 }
 
@@ -247,7 +252,7 @@ function renderGoals() {
     if (status && effectiveStatus(g) !== status) return false;
     return true;
   });
-  $('goalListCount').textContent = `${list.length} goal${list.length === 1 ? '' : 's'}`;
+  $('goalListCount').textContent = tr(list.length === 1 ? '{count} goal' : '{count} goals', { count: num(list.length) });
 
   if (!state.goals.length) {
     main.innerHTML = "";
@@ -257,7 +262,7 @@ function renderGoals() {
   empty.hidden = true;
 
   if (!list.length) {
-    main.innerHTML = `<p class="empty-state">No goals match these filters.</p>`;
+    main.innerHTML = `<p class="empty-state">${escapeHtml(tr("No goals match these filters."))}</p>`;
     return;
   }
 
@@ -281,14 +286,14 @@ function goalCardHTML(g, index = 0) {
   const status = effectiveStatus(g);
   const progress = calcProgress(g);
   const priority = ['low', 'medium', 'high'].includes(g.priority) ? g.priority : 'medium';
-  const when = status === 'completed' ? '✓ Completed' : status === 'archived' ? 'Archived' : deadlineText(g);
+  const when = status === 'completed' ? tr('✓ Completed') : status === 'archived' ? tr('Archived') : deadlineText(g);
   return `
-    <article class="goal-card ${status}" data-id="${g.id}" tabindex="0" role="button" aria-label="Open goal: ${escapeHtml(g.title || 'Untitled goal').replace(/"/g, '&quot;')}">
-      <div class="goal-card-heading"><span class="priority-dot ${priority}" title="${priority} priority" aria-label="${priority} priority"></span><h3 dir="auto">${escapeHtml(g.title || "Untitled goal")}</h3></div>
-      <div class="progress-track" role="progressbar" aria-label="Goal progress" aria-valuemin="0" aria-valuemax="100" ${progress===null ? 'aria-valuetext="Unavailable"' : `aria-valuenow="${progress}"`}><div class="progress-fill" style="width:${progress ?? 0}%"></div></div>
+    <article class="goal-card ${status}" data-id="${g.id}" tabindex="0" role="button" aria-label="${escapeHtml(tr('Open goal: {title}', { title: g.title || tr('Untitled goal') }))}">
+      <div class="goal-card-heading"><span class="priority-dot ${priority}" title="${escapeHtml(tr(`${priority} priority`))}" aria-label="${escapeHtml(tr(`${priority} priority`))}"></span><h3 dir="auto">${escapeHtml(g.title || tr("Untitled goal"))}</h3></div>
+      <div class="progress-track" role="progressbar" aria-label="${escapeHtml(tr('Goal progress'))}" aria-valuemin="0" aria-valuemax="100" ${progress===null ? `aria-valuetext="${escapeHtml(tr('Unavailable'))}"` : `aria-valuenow="${progress}"`}><div class="progress-fill" style="width:${progress ?? 0}%"></div></div>
       <div class="footer-row">
         <span class="deadline ${deadlineClass(g)}">${escapeHtml(when)}</span>
-        <strong class="goal-card-pct">${progress ?? '—'}${progress === null ? '' : '%'}</strong>
+        <strong class="goal-card-pct">${progress === null ? '—' : escapeHtml(pctText(progress))}</strong>
       </div>
     </article>
   `;
@@ -316,13 +321,13 @@ function openWizard(editGoalId = null) {
   const form = $("wizardForm");
   form.reset();
   $('gHabit').replaceChildren();
-  const placeholder=new Option(habitContext ? 'Choose a habit' : 'Habits unavailable — refresh to retry', ''); $('gHabit').add(placeholder);
+  const placeholder=new Option(tr(habitContext ? 'Choose a habit' : 'Habits unavailable — refresh to retry'), ''); $('gHabit').add(placeholder);
   for(const h of habitContext?.habits || []) $('gHabit').add(new Option(h.name,String(h.id)));
   const linked=state.goals.find(g=>g.id===editGoalId)?.habitProgress;
-  if(linked && ![...$('gHabit').options].some(o=>o.value===String(linked.habitId))) $('gHabit').add(new Option((linked.habitName||'Habit')+' (archived)',String(linked.habitId)));
+  if(linked && ![...$('gHabit').options].some(o=>o.value===String(linked.habitId))) $('gHabit').add(new Option(tr('{name} (archived)', { name: linked.habitName || tr('Habit') }),String(linked.habitId)));
   $("goalId").value = editGoalId || "";
-  $("wizardEyebrow").textContent = editGoalId ? "Edit Goal" : "New Goal";
-  $("wizardTitle").textContent = editGoalId ? "Refine this SMART goal" : "Define a SMART goal";
+  $("wizardEyebrow").textContent = tr(editGoalId ? "Edit Goal" : "New Goal");
+  $("wizardTitle").textContent = tr(editGoalId ? "Refine this SMART goal" : "Define a SMART goal");
 
   if (savedDraft) {
     for (const field of WIZARD_FIELDS) {
@@ -439,19 +444,19 @@ function enableTaskDrag(list, tasks, onReorder) {
 function renderWizardTasks() {
   const ul = $("taskPreview");
   if ($('gProgressSource').value==='checklist' && !state.wizard.draftTasks.length) {
-    ul.innerHTML = `<li style="color:var(--text-tertiary);font-size:13px;justify-content:center;">No tasks yet. Add at least one to make this goal actionable.</li>`;
+    ul.innerHTML = `<li style="color:var(--text-tertiary);font-size:13px;justify-content:center;">${escapeHtml(tr("No tasks yet. Add at least one to make this goal actionable."))}</li>`;
     return;
   }
   ul.innerHTML = state.wizard.draftTasks
     .map(
       (t, i) => `
       <li data-task-index="${i}">
-        <button type="button" class="task-drag" draggable="true" data-drag-index="${i}" aria-label="Drag checklist item ${i + 1} to reorder" title="Drag to reorder">⠿</button>
-        <input class="input task-edit-input" data-i="${i}" aria-label="Checklist item ${i + 1}" maxlength="150" value="${escapeHtml(t.title)}">
+        <button type="button" class="task-drag" draggable="true" data-drag-index="${i}" aria-label="${escapeHtml(tr("Drag checklist item {number} to reorder", { number: num(i + 1) }))}" title="${escapeHtml(tr("Drag to reorder"))}">⠿</button>
+        <input class="input task-edit-input" data-i="${i}" aria-label="${escapeHtml(tr("Checklist item {number}", { number: num(i + 1) }))}" maxlength="150" value="${escapeHtml(t.title)}">
         <span class="task-order-actions">
-          <button type="button" data-action="up" data-i="${i}" aria-label="Move item up" ${i === 0 ? "disabled" : ""}>↑</button>
-          <button type="button" data-action="down" data-i="${i}" aria-label="Move item down" ${i === state.wizard.draftTasks.length - 1 ? "disabled" : ""}>↓</button>
-          <button type="button" data-action="remove" data-i="${i}" aria-label="Remove item">×</button>
+          <button type="button" data-action="up" data-i="${i}" aria-label="${escapeHtml(tr("Move item up"))}" ${i === 0 ? "disabled" : ""}>↑</button>
+          <button type="button" data-action="down" data-i="${i}" aria-label="${escapeHtml(tr("Move item down"))}" ${i === state.wizard.draftTasks.length - 1 ? "disabled" : ""}>↓</button>
+          <button type="button" data-action="remove" data-i="${i}" aria-label="${escapeHtml(tr("Remove item"))}">×</button>
         </span>
       </li>
     `
@@ -511,7 +516,7 @@ function showWizardStep(step) {
       li.removeAttribute("aria-current");
     }
   });
-  $("wizardProgress").textContent = `Step ${step + 1} of ${SMART_STEPS.length} · ${STEP_LABELS[SMART_STEPS[step]]}`;
+  $("wizardProgress").textContent = tr("Step {current} of {total} · {name}", { current: num(step + 1), total: num(SMART_STEPS.length), name: tr(STEP_LABELS[SMART_STEPS[step]]) });
   $("prevStepBtn").hidden = step === 0;
   const isLast = step === SMART_STEPS.length - 1;
   $("nextStepBtn").hidden = isLast;
@@ -544,9 +549,9 @@ function wizardStepValid(step) {
 
 function nextStep() {
   if (!wizardStepValid(state.wizard.step)) {
-    if (state.wizard.step === 0) setWizardError("Give your goal a title before continuing.");
-    else if (state.wizard.step === 1) setWizardError("Choose a habit and whole-day target, or name each measure and use valid numbers.");
-    else if (state.wizard.step === 2) setWizardError("Add at least one task before continuing.");
+    if (state.wizard.step === 0) setWizardError(tr("Give your goal a title before continuing."));
+    else if (state.wizard.step === 1) setWizardError(tr("Choose a habit and whole-day target, or name each measure and use valid numbers."));
+    else if (state.wizard.step === 2) setWizardError(tr("Add at least one task before continuing."));
     return;
   }
   showWizardStep(Math.min(state.wizard.step + 1, SMART_STEPS.length - 1));
@@ -561,23 +566,23 @@ function handleWizardSubmit(e) {
   // Final validation
   if (!$("gTitle").value.trim()) {
     showWizardStep(0);
-    setWizardError("Give your goal a title before saving.");
+    setWizardError(tr("Give your goal a title before saving."));
     $("gTitle").focus();
     return;
   }
   if ($('gProgressSource').value==='checklist' && !state.wizard.draftTasks.length) {
     showWizardStep(2);
-    setWizardError("Add at least one task before saving.");
+    setWizardError(tr("Add at least one task before saving."));
     return;
   }
 
   if($('gProgressSource').value==='habit' && (!$('gStart').value || !$('gDeadline').value || $('gStart').value>$('gDeadline').value || Number($('gHabitTarget').value)>(new Date($('gDeadline').value)-new Date($('gStart').value))/86400000+1)) {
-    showWizardStep(4); setWizardError('Choose a valid date window with enough days for your target.'); return;
+    showWizardStep(4); setWizardError(tr('Choose a valid date window with enough days for your target.')); return;
   }
   const id = $("goalId").value || uid();
   if (!wizardStepValid(1)) {
     showWizardStep(1);
-    setWizardError('Choose a habit and whole-day target, or name each measure and use valid numbers.');
+    setWizardError(tr('Choose a habit and whole-day target, or name each measure and use valid numbers.'));
     return;
   }
   const measures = readWizardMeasures().filter(measure => measure.metric);
@@ -606,10 +611,10 @@ function handleWizardSubmit(e) {
 
   if (existing) {
     Object.assign(existing, data);
-    showToast("Goal updated", "success");
+    showToast(tr("Goal updated"), "success");
   } else {
     state.goals.push(data);
-    showToast("Goal created", "success");
+    showToast(tr("Goal created"), "success");
   }
   save();
   LifeGoalProgress.load(state.goals,true).then(context=>{habitContext=context;render();}).catch(()=>{habitContext=null;render();});
@@ -629,7 +634,7 @@ function openDetail(id) {
   const goal = state.goals.find((g) => g.id === id);
   if (!goal) return;
   state.detailId = id;
-  $("detailCategory").textContent = goal.category || "Uncategorized";
+  $("detailCategory").textContent = goal.category || tr("Uncategorized");
   $("detailTitle").textContent = goal.title;
   renderDetailMeta(goal);
   renderSmartSummary(goal);
@@ -649,20 +654,20 @@ function renderDetailMeta(g) {
   const status = effectiveStatus(g);
   $("detailMeta").innerHTML = `
     <span><strong>${status}</strong></span>
-    <span>Priority: <strong>${g.priority || "medium"}</strong></span>
-    <span>${g.startDate ? "Started " + formatDate(g.startDate) : ""}</span>
-    <span>${g.deadline ? "Due " + formatDate(g.deadline) : "No deadline"}</span>
-    ${goalMeasures(g).length ? `<span><strong>${goalMeasures(g).length} success measure${goalMeasures(g).length === 1 ? '' : 's'}</strong></span>` : ''}
+    <span>${escapeHtml(tr("Priority:"))} <strong>${escapeHtml(tr(g.priority || "medium"))}</strong></span>
+    <span>${g.startDate ? escapeHtml(tr("Started {date}", { date: formatDate(g.startDate) })) : ""}</span>
+    <span>${escapeHtml(g.deadline ? tr("Due {date}", { date: formatDate(g.deadline) }) : tr("No deadline"))}</span>
+    ${goalMeasures(g).length ? `<span><strong>${escapeHtml(tr(goalMeasures(g).length === 1 ? '{count} success measure' : '{count} success measures', { count: num(goalMeasures(g).length) }))}</strong></span>` : ''}
   `;
 }
 
 function renderSmartSummary(g) {
   const fields = [
-    ["S · Specific", g.specific || g.title, true],
-    ["M · Measurable", goalMeasures(g).map(measure => `${measure.metric}${measure.target != null ? ' (target ' + measure.target + (measure.unit ? ' ' + measure.unit : '') + ')' : ''}`).join(' · ') || null, true],
-    ["A · Achievable", g.progressSource === "habit" ? (g.habitProgress?.habitName || "Daily habit") : `${g.tasks.length} task${g.tasks.length === 1 ? "" : "s"} planned`, true],
-    ["R · Relevant", g.relevant, true],
-    ["T · Time-bound", g.deadline ? `Due ${formatDate(g.deadline)}` : "No deadline", true],
+    [tr("S · Specific"), g.specific || g.title, true],
+    [tr("M · Measurable"), goalMeasures(g).map(measure => `${measure.metric}${measure.target != null ? ' ' + tr('(target {value})', { value: num(measure.target) + (measure.unit ? ' ' + measure.unit : '') }) : ''}`).join(' · ') || null, true],
+    [tr("A · Achievable"), g.progressSource === "habit" ? (g.habitProgress?.habitName || tr("Daily habit")) : tr(g.tasks.length === 1 ? "{count} task planned" : "{count} tasks planned", { count: num(g.tasks.length) }), true],
+    [tr("R · Relevant"), g.relevant, true],
+    [tr("T · Time-bound"), g.deadline ? tr("Due {date}", { date: formatDate(g.deadline) }) : tr("No deadline"), true],
   ];
   $("smartSummary").innerHTML = fields
     .filter(([, v]) => v)
@@ -673,33 +678,33 @@ function renderSmartSummary(g) {
 function renderDetailProgress(g) {
   const pct = calcProgress(g);
   const done = g.tasks.filter((t) => t.done).length;
-  $("progressLabel").textContent = pct === null ? "—" : pct + "%";
+  $("progressLabel").textContent = pct === null ? "—" : pctText(pct);
   $("progressCount").textContent = progressCaption(g);
   $('bumpProgressBtn').hidden=progressResult(g).source!=='checklist';
   $('detailTaskSection').hidden=g.progressSource==='habit';
   const p=progressResult(g); $('habitMilestones').hidden=p.source!=='habit';
-  $('habitMilestones').innerHTML=p.source==='habit' ? `<a href="/habittify/">Open Habittify ↗</a><div>${[...new Set([.25,.5,.75,1].map(n=>Math.ceil(p.total*n)))].map(n=>`<span class="${p.done!==null && p.done>=n?'reached':''}">${p.done!==null && p.done>=n?'✓ ':''}${n} days</span>`).join('')}</div>` : '';
+  $('habitMilestones').innerHTML=p.source==='habit' ? `<a href="/habittify/">${escapeHtml(tr("Open Habittify ↗"))}</a><div>${[...new Set([.25,.5,.75,1].map(n=>Math.ceil(p.total*n)))].map(n=>`<span class="${p.done!==null && p.done>=n?'reached':''}">${p.done!==null && p.done>=n?'✓ ':''}${escapeHtml(tr("{count} days", { count: num(n) }))}</span>`).join('')}</div>` : '';
   $("progressFill").style.width = (pct ?? 0) + "%";
 }
 
 function renderDetailTasks(g) {
   const ul = $("tasksList");
   if (!g.tasks.length) {
-    ul.innerHTML = `<li class="task-item" style="justify-content:center;color:var(--text-tertiary);">No tasks yet.</li>`;
+    ul.innerHTML = `<li class="task-item" style="justify-content:center;color:var(--text-tertiary);">${escapeHtml(tr("No tasks yet."))}</li>`;
     return;
   }
   ul.innerHTML = g.tasks
     .map(
       (t, i) => `
       <li class="task-item ${t.done ? "done" : ""}" data-id="${t.id}" data-task-index="${i}">
-        <button type="button" class="task-drag" draggable="true" data-drag-index="${i}" aria-label="Drag checklist item ${i + 1} to reorder" title="Drag to reorder">⠿</button>
-        <input type="checkbox" ${t.done ? "checked" : ""} aria-label="Mark complete">
-        <span class="task-title"><button type="button" class="task-title-edit" aria-label="Edit checklist item ${i + 1}">${escapeHtml(t.title)}</button></span>
+        <button type="button" class="task-drag" draggable="true" data-drag-index="${i}" aria-label="${escapeHtml(tr("Drag checklist item {number} to reorder", { number: num(i + 1) }))}" title="${escapeHtml(tr("Drag to reorder"))}">⠿</button>
+        <input type="checkbox" ${t.done ? "checked" : ""} aria-label="${escapeHtml(tr("Mark complete"))}">
+        <span class="task-title"><button type="button" class="task-title-edit" aria-label="${escapeHtml(tr("Edit checklist item {number}", { number: num(i + 1) }))}">${escapeHtml(t.title)}</button></span>
         <span class="task-order-actions">
-          <button type="button" data-move="-1" aria-label="Move checklist item ${i + 1} up" ${i === 0 ? "disabled" : ""}>↑</button>
-          <button type="button" data-move="1" aria-label="Move checklist item ${i + 1} down" ${i === g.tasks.length - 1 ? "disabled" : ""}>↓</button>
+          <button type="button" data-move="-1" aria-label="${escapeHtml(tr("Move checklist item {number} up", { number: num(i + 1) }))}" ${i === 0 ? "disabled" : ""}>↑</button>
+          <button type="button" data-move="1" aria-label="${escapeHtml(tr("Move checklist item {number} down", { number: num(i + 1) }))}" ${i === g.tasks.length - 1 ? "disabled" : ""}>↓</button>
         </span>
-        <button type="button" class="task-remove" aria-label="Remove">×</button>
+        <button type="button" class="task-remove" aria-label="${escapeHtml(tr("Remove"))}">×</button>
       </li>
     `
     )
@@ -750,15 +755,15 @@ function editDetailTask(g, taskId, row) {
   input.className = "input task-edit-input";
   input.value = task.title;
   input.maxLength = 150;
-  input.setAttribute("aria-label", "Task title");
+  input.setAttribute("aria-label", tr("Task title"));
   const actions = document.createElement("span");
   actions.className = "task-edit-actions";
   const saveButton = document.createElement("button");
   saveButton.type = "button";
-  saveButton.textContent = "Save";
+  saveButton.textContent = tr("Save");
   const cancelButton = document.createElement("button");
   cancelButton.type = "button";
-  cancelButton.textContent = "Cancel";
+  cancelButton.textContent = tr("Cancel");
   actions.append(saveButton, cancelButton);
   title.replaceChildren(input, actions);
   row.classList.add("editing");
@@ -766,7 +771,7 @@ function editDetailTask(g, taskId, row) {
     if (!row.isConnected) return;
     const value = input.value.trim();
     if (commit && !value) {
-      input.setCustomValidity("Enter a task title.");
+      input.setCustomValidity(tr("Enter a task title."));
       input.reportValidity();
       input.focus();
       return;
@@ -801,18 +806,18 @@ function bumpProgress() {
   if (!g) return;
   const open = g.tasks.filter((t) => !t.done);
   if (!open.length) {
-    showToast("All tasks complete — nice.", "success");
+    showToast(tr("All tasks complete — nice."), "success");
     return;
   }
   // Find longest open task, or first
   const next = open[0];
-  if (confirm(`Mark "${next.title}" complete?`)) {
+  if (confirm(tr('Mark "{title}" complete?', { title: next.title }))) {
     next.done = true;
     save();
     renderDetailTasks(g);
     renderDetailProgress(g);
     render();
-    showToast("Task complete", "success");
+    showToast(tr("Task complete"), "success");
   }
 }
 
@@ -828,7 +833,7 @@ function handleAddTask(e) {
   renderDetailTasks(g);
   renderDetailProgress(g);
   render();
-  showToast("Task added", "success");
+  showToast(tr("Task added"), "success");
 }
 
 function handleGoalNotesInput() {
@@ -849,12 +854,12 @@ function deleteCurrentGoal() {
   if (!state.detailId) return;
   const g = state.goals.find((x) => x.id === state.detailId);
   if (!g) return;
-  if (!confirm(`Delete "${g.title}" and all its tasks?`)) return;
+  if (!confirm(tr('Delete "{title}" and all its tasks?', { title: g.title }))) return;
   state.goals = state.goals.filter((x) => x.id !== state.detailId);
   save();
   closeDetail();
   render();
-  showToast("Goal deleted", "success");
+  showToast(tr("Goal deleted"), "success");
 }
 
 // ── Toast ────────────────────────────────────────────────────────────────────
@@ -953,11 +958,11 @@ function setupEventListeners() {
 document.addEventListener("DOMContentLoaded", async () => {
   await window.appStorageReady;
   load();
-  try {habitContext=await LifeGoalProgress.load(state.goals,true);} catch(e) {showToast(e.message,'error');}
+  try {habitContext=await LifeGoalProgress.load(state.goals,true);} catch(e) {showToast(tr(e.message),'error');}
   setupEventListeners();
   async function refreshHabitProgress() {
     if($("wizardModal").open || document.activeElement === $("goalNotes")) return;
-    try {await appStorage.sync(); load(); habitContext=await LifeGoalProgress.load(state.goals,true);} catch(e) {habitContext=null; showToast(e.message,'error');}
+    try {await appStorage.sync(); load(); habitContext=await LifeGoalProgress.load(state.goals,true);} catch(e) {habitContext=null; showToast(tr(e.message),'error');}
     render(); const g=state.goals.find(g=>g.id===state.detailId); if(g) {renderDetailProgress(g);renderDetailMeta(g);}
   }
   window.addEventListener('message',e=>{if(e.origin===location.origin && e.source===parent && e.data?.type==='goals-refresh')refreshHabitProgress();});

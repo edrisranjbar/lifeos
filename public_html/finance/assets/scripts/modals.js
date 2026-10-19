@@ -66,8 +66,8 @@ function enhanceCategorySelect(select) {
       const name = document.createElement('strong');
       name.textContent = parts.name;
       const detail = document.createElement('small');
-      detail.textContent = category.target > 0 ? `${fmt(category.target - spent)} ${currencyUnit()} · ${words.remaining}` : words.noBudget;
-      detail.classList.toggle('is-over', category.target > 0 && spent > category.target);
+      detail.textContent = budgetIsUnlimited(category) ? __t("Unlimited") : category.target > 0 ? `${fmt(category.target - spent)} ${currencyUnit()} · ${words.remaining}` : words.noBudget;
+      detail.classList.toggle('is-over', !budgetIsUnlimited(category) && category.target > 0 && spent > category.target);
       copy.append(name, detail);
       const check = document.createElement('span');
       check.className = 'category-check';
@@ -154,12 +154,18 @@ function openAddBudgetModal() {
     <div class="section-label" style="margin-bottom:18px;">${esc("Add Budget Category")}</div>
     <input type="text" id="newCatEmoji" placeholder="${esc("Emoji (optional, e.g. 🎮)")}" class="mb-3" maxlength="4">
     <input type="text" id="newCatName" placeholder="${esc("Category name (e.g. Entertainment)")}" class="mb-3">
-    <input type="number" id="newCatTarget" placeholder="${esc(`Monthly budget in ${currencyUnit()}`)}" class="mb-5">
+    <label class="budget-unlimited-choice"><input type="checkbox" id="newCatUnlimited" onchange="toggleBudgetLimit('newCat')"><span>${esc("Unlimited budget")}<small>${esc("Track spending without a limit or over-budget alerts.")}</small></span></label>
+    <input type="number" id="newCatTarget" min="1" step="any" aria-label="${esc('Monthly budget')}" placeholder="${esc(`Monthly budget in ${currencyUnit()}`)}" class="mb-5">
     <div style="display:flex;gap:10px;">
       <button class="btn-ghost" style="flex:1;padding:13px;" onclick="closeModal()">${esc("Cancel")}</button>
       <button class="btn-primary" style="flex:1;" onclick="saveNewBudget()">${esc("Add Category")}</button>
     </div>
   `);
+}
+
+function toggleBudgetLimit(prefix) {
+  const unlimited = document.getElementById(`${prefix}Unlimited`).checked;
+  document.getElementById(`${prefix}Target`).disabled = unlimited;
 }
 
 function openEditBudgetModal(id) {
@@ -175,7 +181,8 @@ function openEditBudgetModal(id) {
     <label class="field-label" for="editCatName">${esc("Category name")}</label>
     <input type="text" id="editCatName" value="${esc(parts.name)}" placeholder="${esc("Category name")}" class="mb-3">
     <label class="field-label" for="editCatTarget">${esc(`Monthly limit in ${currencyUnit()}`)}</label>
-    <input type="number" id="editCatTarget" value="${category.target}" min="1" step="1" class="mb-5" placeholder="${esc(`Monthly budget in ${currencyUnit()}`)}">
+    <label class="budget-unlimited-choice"><input type="checkbox" id="editCatUnlimited" ${budgetIsUnlimited(category) ? 'checked' : ''} onchange="toggleBudgetLimit('editCat')"><span>${esc("Unlimited budget")}<small>${esc("Track spending without a limit or over-budget alerts.")}</small></span></label>
+    <input type="number" id="editCatTarget" value="${Number(category.target) || 0}" ${budgetIsUnlimited(category) ? 'disabled' : ''} min="1" step="any" class="mb-5" placeholder="${esc(`Monthly budget in ${currencyUnit()}`)}">
     <div class="modal-actions triple">
       <button type="button" class="btn-ghost btn-danger-ghost" onclick="deleteCategory('${id}')">${esc("🗑️ Delete")}</button>
       <button type="button" class="btn-ghost" onclick="closeModal()">${esc("Cancel")}</button>

@@ -24,12 +24,14 @@ export function mountMobileNavigation() {
   dialog.setAttribute('aria-labelledby', 'mobile-menu-title');
   dialog.innerHTML = '<div class="mobile-menu-heading"><div><span class="mobile-menu-kicker">EDI LIFE OS</span><h2 id="mobile-menu-title">Your workspace</h2></div><button type="button" class="mobile-menu-close" aria-label="Close navigation"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>';
   document.body.append(dialog);
+  // Built after the page-wide pass, so translate the menu and toggle here.
+  window.lifeOsI18n.apply(dialog); window.lifeOsI18n.apply(toggle);
   const mobile = matchMedia('(max-width: 900px)');
   let previousOverflow = '';
   const close = () => { if (dialog.open) dialog.close(); };
   const updatePageName = () => {
     const names = { dashboard: 'Overview', growth: 'Growth', focus: 'Focus', finance: 'Finance', habittify: 'Habittify', kanban: 'Kanban', calendar: 'Calendar', goals: 'Goals', notepad: 'Notepad', notes: 'Notes', settings: 'Settings' };
-    pageName.textContent = names[location.hash.slice(1)] || 'Overview';
+    pageName.textContent = window.lifeOsI18n.t(names[location.hash.slice(1)] || 'Overview');
   };
   const syncLayout = () => {
     close();

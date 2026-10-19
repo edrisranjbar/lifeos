@@ -1,4 +1,5 @@
 const KEY = 'edi_notepad_v1';
+const { t, number } = window.lifeOsI18n;
 const $ = id => document.getElementById(id);
 
 const escapeHtml = globalThis.lifeOsHtml.escapeHtml;
@@ -25,7 +26,7 @@ function inline(value) {
 }
 
 function markdown(source) {
-  if (!source.trim()) return '<p class="empty">Your rendered Markdown will appear here.</p>';
+  if (!source.trim()) return `<p class="empty">${escapeHtml(t('Your rendered Markdown will appear here.'))}</p>`;
   const out = []; let list = ''; let code = false; let codeLines = [];
   const closeList = () => { if (list) { out.push(`</${list}>`); list = ''; } };
   const lines = source.replace(/\r\n?/g, '\n').split('\n');
@@ -75,7 +76,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const legacy = JSON.parse(appStorage.getItem('edi_notes_v1'));
       if (typeof legacy?.notepad === 'string') body = legacy.notepad;
       }
-      saved = {notes: [{id: crypto.randomUUID(), title: 'My note', body, updatedAt: Date.now()}], sort: 'manual'};
+      saved = {notes: [{id: crypto.randomUUID(), title: t('My note'), body, updatedAt: Date.now()}], sort: 'manual'};
     }
   } catch {}
   const input = $('notepadInput'), preview = $('notepadPreview'), status = $('saveStatus'), shell = $('editorShell');
@@ -87,10 +88,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   };
   const data = saved && Array.isArray(saved.notes) ? saved : {notes: [], sort: 'manual'};
   data.notes = data.notes.filter(note => note && typeof note.id === 'string');
-  if (!data.notes.length) data.notes.push({id: crypto.randomUUID(), title: 'My note', body: '', updatedAt: Date.now()});
+  if (!data.notes.length) data.notes.push({id: crypto.randomUUID(), title: t('My note'), body: '', updatedAt: Date.now()});
   data.notes = data.notes.map(note => ({
     id: note.id,
-    title: typeof note.title === 'string' ? note.title : 'Untitled note',
+    title: typeof note.title === 'string' ? note.title : t('Untitled note'),
     body: typeof note.body === 'string' ? note.body : '',
     updatedAt: Number(note.updatedAt) || Date.now(),
   }));
@@ -101,9 +102,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   function updateWritingStats() {
     const text = input.value;
     const words = text.trim() ? text.trim().split(/\s+/u).length : 0;
-    $('writingStats').textContent = `${words.toLocaleString()} words · ${Array.from(text).length.toLocaleString()} characters`;
+    $('writingStats').textContent = t('{words} words · {characters} characters', { words: number(words), characters: number(Array.from(text).length) });
     const before = text.slice(0, input.selectionStart).split('\n');
-    $('cursorPosition').textContent = `Ln ${before.length}, Col ${Array.from(before.at(-1)).length + 1}`;
+    $('cursorPosition').textContent = t('Ln {line}, Col {column}', { line: number(before.length), column: number(Array.from(before.at(-1)).length + 1) });
   }
   const activeNote = () => data.notes.find(note => note.id === data.activeId);
   const save = () => {
@@ -112,13 +113,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (note) note.body = input.value;
     try {
       appStorage.setItem(KEY, JSON.stringify(data));
-      status.textContent = 'Saved';
+      status.textContent = t('Saved');
     } catch {
-      status.textContent = 'Save failed';
+      status.textContent = t('Save failed');
     }
   };
   const queueSave = () => {
-    status.textContent = 'Saving…';
+    status.textContent = t('Saving…');
     clearTimeout(saveTimer);
     saveTimer = setTimeout(save, 220);
   };
@@ -128,17 +129,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (data.sort === 'recent') notes.sort((a, b) => b.updatedAt - a.updatedAt);
     return notes;
   };
-  const displayTitle = note => note.title.trim() || 'Untitled note';
+  const displayTitle = note => note.title.trim() || t('Untitled note');
   const renderTabs = () => {
     tabs.innerHTML = orderedNotes().map((note, index, notes) => `
       <li class="note-tab ${note.id === data.activeId ? 'active' : ''}" data-note-id="${escapeHtml(note.id)}" draggable="${data.sort === 'manual'}">
         <button type="button" class="note-tab-open" data-open-note="${escapeHtml(note.id)}" aria-current="${note.id === data.activeId ? 'page' : 'false'}" title="${escapeHtml(displayTitle(note))}">
-          <span class="note-tab-name" dir="${noteDirection(displayTitle(note))}">${escapeHtml(displayTitle(note))}</span><span class="note-tab-preview" dir="${noteDirection(note.body)}">${escapeHtml(note.body.split(/\r?\n/).find(line => line.trim()) || 'Empty note')}</span>
+          <span class="note-tab-name" dir="${noteDirection(displayTitle(note))}">${escapeHtml(displayTitle(note))}</span><span class="note-tab-preview" dir="${noteDirection(note.body)}">${escapeHtml(note.body.split(/\r?\n/).find(line => line.trim()) || t('Empty note'))}</span>
         </button>
         <span class="note-tab-actions">
-          <button type="button" data-move-note="up" data-note-id="${escapeHtml(note.id)}" aria-label="Move ${escapeHtml(displayTitle(note))} up" ${data.sort !== 'manual' || index === 0 ? 'disabled' : ''}>↑</button>
-          <button type="button" data-move-note="down" data-note-id="${escapeHtml(note.id)}" aria-label="Move ${escapeHtml(displayTitle(note))} down" ${data.sort !== 'manual' || index === notes.length - 1 ? 'disabled' : ''}>↓</button>
-          <button type="button" data-delete-note="${escapeHtml(note.id)}" aria-label="Delete ${escapeHtml(displayTitle(note))}" ${data.notes.length === 1 ? 'disabled' : ''}>×</button>
+          <button type="button" data-move-note="up" data-note-id="${escapeHtml(note.id)}" aria-label="${escapeHtml(t('Move {name} up', { name: displayTitle(note) }))}" ${data.sort !== 'manual' || index === 0 ? 'disabled' : ''}>↑</button>
+          <button type="button" data-move-note="down" data-note-id="${escapeHtml(note.id)}" aria-label="${escapeHtml(t('Move {name} down', { name: displayTitle(note) }))}" ${data.sort !== 'manual' || index === notes.length - 1 ? 'disabled' : ''}>↓</button>
+          <button type="button" data-delete-note="${escapeHtml(note.id)}" aria-label="${escapeHtml(t('Delete {name}', { name: displayTitle(note) }))}" ${data.notes.length === 1 ? 'disabled' : ''}>×</button>
         </span>
       </li>`).join('');
   };
@@ -154,7 +155,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderPreview();
     updateWritingStats();
     renderTabs();
-    status.textContent = 'Saved';
+    status.textContent = t('Saved');
     try { appStorage.setItem(KEY, JSON.stringify(data)); } catch {}
   };
   const reorderNote = (id, direction) => {
@@ -196,7 +197,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   titleInput.addEventListener('blur', save);
   $('newNoteBtn').addEventListener('click', () => {
     save();
-    const note = {id: crypto.randomUUID(), title: 'Untitled note', body: '', updatedAt: Date.now()};
+    const note = {id: crypto.randomUUID(), title: t('Untitled note'), body: '', updatedAt: Date.now()};
     data.notes.push(note);
     data.sort = 'manual';
     sortInput.value = data.sort;
@@ -208,7 +209,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const button = event.target.closest('[data-open-note]');
     const note = button && data.notes.find(item => item.id === button.dataset.openNote);
     if (!note) return;
-    const name = prompt('Rename note', note.title);
+    const name = prompt(t('Rename note'), note.title);
     if (name === null || !name.trim()) return;
     note.title = name.trim().slice(0, 100);
     note.updatedAt = Date.now();
@@ -243,7 +244,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const moveButton = event.target.closest('[data-move-note]');
     if (moveButton) { reorderNote(moveButton.dataset.noteId, moveButton.dataset.moveNote === 'up' ? -1 : 1); return; }
     const deleteButton = event.target.closest('[data-delete-note]');
-    if (deleteButton && data.notes.length > 1 && confirm('Delete this note? This cannot be undone.')) {
+    if (deleteButton && data.notes.length > 1 && confirm(t('Delete this note? This cannot be undone.'))) {
       const index = data.notes.findIndex(note => note.id === deleteButton.dataset.deleteNote);
       data.notes.splice(index, 1);
       if (data.activeId === deleteButton.dataset.deleteNote) {
@@ -290,18 +291,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   }));
 
   const MD_FORMATS = {
-    bold: { wrap: ['**', '**'], ph: 'bold text' },
-    italic: { wrap: ['*', '*'], ph: 'italic text' },
-    strike: { wrap: ['~~', '~~'], ph: 'strikethrough' },
-    code: { wrap: ['`', '`'], ph: 'code' },
-    link: { wrap: ['[', '](https://)'], ph: 'link text' },
-    codeblock: { wrap: ['```\n', '\n```'], ph: 'code' },
-    heading: { prefix: '## ', ph: 'Heading' },
-    quote: { prefix: '> ', ph: 'Quote' },
-    ul: { prefix: '- ', ph: 'List item' },
-    ol: { prefix: '1. ', ph: 'List item' },
-    task: { prefix: '- [ ] ', ph: 'Task' },
-    table: { wrap: ['\n', '\n'], ph: '| Column | Column |\n| --- | --- |\n| Text | Text |' },
+    bold: { wrap: ['**', '**'], ph: t('bold text') },
+    italic: { wrap: ['*', '*'], ph: t('italic text') },
+    strike: { wrap: ['~~', '~~'], ph: t('strikethrough') },
+    code: { wrap: ['`', '`'], ph: t('code') },
+    link: { wrap: ['[', '](https://)'], ph: t('link text') },
+    codeblock: { wrap: ['```\n', '\n```'], ph: t('code') },
+    heading: { prefix: '## ', ph: t('Heading') },
+    quote: { prefix: '> ', ph: t('Quote') },
+    ul: { prefix: '- ', ph: t('List item') },
+    ol: { prefix: '1. ', ph: t('List item') },
+    task: { prefix: '- [ ] ', ph: t('Task') },
+    table: { wrap: ['\n', '\n'], ph: t('| Column | Column |\n| --- | --- |\n| Text | Text |') },
     divider: { wrap: ['\n', '\n'], ph: '---' },
   };
 

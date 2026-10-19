@@ -27,6 +27,13 @@ const JALALI_MONTHS_FA = [
   "اسفند",
 ];
 const WEEKDAYS_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const { t, number } = window.lifeOsI18n;
+// Years and day numbers read as plain digits (no thousands separator).
+const plain = value => number(value, { useGrouping: false });
+const pctText = value => t("{value}%", { value: number(value) });
+const monthName = jm => t(JALALI_MONTHS[jm - 1]);
+const monthYear = j => t("{month} {year}", { month: monthName(j.jm), year: plain(j.jy) });
+const jalaliLabel = j => t("{day} {month} {year}", { day: plain(j.jd), month: monthName(j.jm), year: plain(j.jy) });
 
 const state = {
   habits: [],
@@ -156,7 +163,7 @@ async function api(path, options = {}) {
   }
   const response = await fetch(endpoint, { ...options, headers });
   const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.error || "Request failed");
+  if (!response.ok) throw new Error(t(data.error || "Request failed"));
   return data;
 }
 
@@ -201,9 +208,9 @@ function renderDailyProgress() {
   const doneIds = new Set((state.recentLogs[today] || []).map(Number));
   const done = state.habits.filter(habit => doneIds.has(habit.id)).length;
   const total = state.habits.length;
-  $('todayCount').textContent = `${done} / ${total} done`;
+  $('todayCount').textContent = t("{done} / {total} done", { done: number(done), total: number(total) });
   $('todayProgressFill').style.width = `${total ? done / total * 100 : 0}%`;
-  $('todayEncouragement').textContent = !total ? 'Start with one small habit.' : done === total ? 'Your daily practice is complete. Well done.' : done ? `${total - done} small step${total - done === 1 ? '' : 's'} left for today.` : 'A fresh start. Pick one habit to begin.';
+  $('todayEncouragement').textContent = !total ? t('Start with one small habit.') : done === total ? t('Your daily practice is complete. Well done.') : done ? t(total - done === 1 ? '{count} small step left for today.' : '{count} small steps left for today.', { count: number(total - done) }) : t('A fresh start. Pick one habit to begin.');
   let completed = 0, possible = 0, activeDays = 0;
   const bars = [];
   for (let offset = 6; offset >= 0; offset--) {
@@ -213,13 +220,13 @@ function renderDailyProgress() {
     const count = eligible.filter(habit => ids.has(habit.id)).length;
     completed += count; possible += eligible.length; if (count) activeDays++;
     const pct = eligible.length ? Math.round(count / eligible.length * 100) : 0;
-    const weekday = date.toLocaleDateString('en-US', {weekday:'short'});
-    bars.push(`<div class="week-day ${offset === 0 ? 'is-today' : ''}" title="${key}: ${count}/${eligible.length} completed"><div class="week-bar"><span style="height:${pct}%"></span></div><small>${weekday}</small></div>`);
+    const weekday = window.lifeOsI18n.date(date, {weekday:'short'});
+    bars.push(`<div class="week-day ${offset === 0 ? 'is-today' : ''}" title="${escapeHtml(t('{date}: {done}/{total} completed', { date: window.lifeOsI18n.digits(key), done: number(count), total: number(eligible.length) }))}"><div class="week-bar"><span style="height:${pct}%"></span></div><small>${weekday}</small></div>`);
   }
   $('weekBars').innerHTML = bars.join('');
-  $('weekCompletion').textContent = possible ? `${Math.round(completed / possible * 100)}%` : '—';
-  $('weekCheckins').textContent = completed;
-  $('weekActiveDays').textContent = `${activeDays} / 7`;
+  $('weekCompletion').textContent = possible ? pctText(Math.round(completed / possible * 100)) : '—';
+  $('weekCheckins').textContent = number(completed);
+  $('weekActiveDays').textContent = `${number(activeDays)} / ${number(7)}`;
 }
 
 async function loadActivity() {
@@ -247,17 +254,17 @@ function setDoneLocal(habitId, iso, done) {
 }
 
 function renderHabitList() {
-  $("habitCount").textContent = `${state.habits.length} active`;
+  $("habitCount").textContent = t("{count} active", { count: number(state.habits.length) });
   const list = $("habitList");
   if (!state.habits.length) {
-    list.innerHTML = `<div class="empty-state">No habits yet. Add your first habit above.</div>`;
+    list.innerHTML = `<div class="empty-state">${escapeHtml(t("No habits yet. Add your first habit above."))}</div>`;
     return;
   }
 
   list.innerHTML = state.habits.map((habit) => `
     <article class="habit-item">
       <div class="habit-name">${escapeHtml(habit.name)}</div>
-      <button class="icon-btn habit-edit" data-edit="${habit.id}" title="Edit habit" aria-label="Edit ${escapeHtml(habit.name)}">⋯</button>
+      <button class="icon-btn habit-edit" data-edit="${habit.id}" title="${escapeHtml(t("Edit habit"))}" aria-label="${escapeHtml(t("Edit {name}", { name: habit.name }))}">⋯</button>
     </article>
   `).join("");
 
@@ -269,7 +276,7 @@ function renderHabitList() {
 }
 
 function renderCategorySelect(selectEl, selectedValue) {
-  const options = [`<option value="">Uncategorized</option>`].concat(
+  const options = [`<option value="">${escapeHtml(t("Uncategorized"))}</option>`].concat(
     state.categories.map(
       (cat) =>
         `<option value="${escapeHtml(cat.name)}">${escapeHtml(cat.name)}</option>`,
@@ -282,10 +289,10 @@ function renderCategorySelect(selectEl, selectedValue) {
 }
 
 function renderCategoryList() {
-  $("categoryCount").textContent = `${state.categories.length} categories`;
+  $("categoryCount").textContent = t("{count} categories", { count: number(state.categories.length) });
   const list = $("categoryList");
   if (!state.categories.length) {
-    list.innerHTML = `<div class="empty-state">No categories yet. Add one above.</div>`;
+    list.innerHTML = `<div class="empty-state">${escapeHtml(t("No categories yet. Add one above."))}</div>`;
     return;
   }
 
@@ -301,11 +308,11 @@ function renderCategoryList() {
     <div class="category-item">
       <div>
         <span class="category-name">${escapeHtml(cat.name)}</span>
-        <span class="category-usage">${usage[cat.name] || 0} habit${usage[cat.name] === 1 ? "" : "s"}</span>
+        <span class="category-usage">${escapeHtml(t(usage[cat.name] === 1 ? "{count} habit" : "{count} habits", { count: number(usage[cat.name] || 0) }))}</span>
       </div>
       <div class="category-actions">
-        <button class="ghost-btn" data-rename-cat="${cat.id}">Rename</button>
-        <button class="ghost-btn danger-text" data-delete-cat="${cat.id}">Delete</button>
+        <button class="ghost-btn" data-rename-cat="${cat.id}">${escapeHtml(t("Rename"))}</button>
+        <button class="ghost-btn danger-text" data-delete-cat="${cat.id}">${escapeHtml(t("Delete"))}</button>
       </div>
     </div>
   `,
@@ -327,7 +334,7 @@ function renderCategoryList() {
 async function renameCategory(id) {
   const category = state.categories.find((cat) => cat.id === id);
   if (!category) return;
-  const input = window.prompt("Rename category", category.name);
+  const input = window.prompt(t("Rename category"), category.name);
   if (input === null) return;
   const name = input.trim();
   if (!name || name === category.name) return;
@@ -337,7 +344,7 @@ async function renameCategory(id) {
       body: JSON.stringify({ name }),
     });
     await refresh();
-    showToast("Category renamed");
+    showToast(t("Category renamed"));
   } catch (error) {
     showToast(error.message);
   }
@@ -348,13 +355,13 @@ async function deleteCategory(id) {
   if (!category) return;
   if (
     !confirm(
-      `Delete category “${category.name}”? Habits using it become uncategorized.`,
+      t("Delete category “{name}”? Habits using it become uncategorized.", { name: category.name }),
     )
   )
     return;
   await api(`/api/categories/${id}`, { method: "DELETE" });
   await refresh();
-  showToast("Category deleted");
+  showToast(t("Category deleted"));
 }
 
 function activityLevel(doneCount, totalHabits) {
@@ -388,32 +395,32 @@ function renderActivityGrid() {
     ).length;
     const level = activityLevel(doneCount, totalHabits);
     const j = jalaliFromDate(date);
-    const label = `${j.jd} ${JALALI_MONTHS[j.jm - 1]} ${j.jy} · ${doneCount}/${totalHabits} done`;
+    const label = `${jalaliLabel(j)} · ${t("{done}/{total} done", { done: number(doneCount), total: number(totalHabits) })}`;
     html += `<div class="activity-cell level-${level}" title="${escapeHtml(label)}"></div>`;
   }
 
   $("activityGrid").innerHTML = html;
   $("activitySubtitle").textContent =
-    `${JALALI_MONTHS[state.currentJ.jm - 1]} ${state.currentJ.jy} · ${toISODate(start)} → ${toISODate(end)}`;
+    `${monthYear(state.currentJ)} · ${window.lifeOsI18n.digits(toISODate(start))} ${window.lifeOsI18n.dir() === "rtl" ? "←" : "→"} ${window.lifeOsI18n.digits(toISODate(end))}`;
 }
 
 function renderHeader(days) {
   const { jy, jm } = state.currentJ;
-  $("monthName").textContent = `${JALALI_MONTHS[jm - 1]} ${jy}`;
+  $("monthName").textContent = monthYear({ jy, jm });
   const today = jalaliFromDate(new Date());
-  $("monthDateRange").textContent = `${today.jd} ${JALALI_MONTHS[today.jm - 1]} ${today.jy}`;
+  $("monthDateRange").textContent = jalaliLabel(today);
 }
 
 function renderTodayList() {
   const todayIso = toISODate(new Date());
   const todayJ = jalaliFromDate(new Date());
   $("todayDateLabel").textContent =
-    `${todayJ.jd} ${JALALI_MONTHS[todayJ.jm - 1]} ${todayJ.jy}`;
+    jalaliLabel(todayJ);
 
   const list = $("todayList");
   renderDailyProgress();
   if (!state.habits.length) {
-    list.innerHTML = `<div class="empty-state"><span class="empty-symbol" aria-hidden="true">◇</span><strong>Begin with something small</strong>Read one page. Take a short walk.<br>Create a habit you can repeat.</div>`;
+    list.innerHTML = `<div class="empty-state"><span class="empty-symbol" aria-hidden="true">◇</span><strong>${escapeHtml(t("Begin with something small"))}</strong>${escapeHtml(t("Read one page. Take a short walk."))}<br>${escapeHtml(t("Create a habit you can repeat."))}</div>`;
     return;
   }
 
@@ -422,9 +429,9 @@ function renderTodayList() {
       const done = (state.recentLogs[todayIso] || []).map(Number).includes(habit.id);
       return `
       <div class="today-item ${done ? "done" : ""}" data-today-habit="${habit.id}">
-        <button class="today-check ${done ? "done" : ""}" data-toggle-today="${habit.id}" aria-label="${done ? "Uncheck" : "Complete"} ${escapeHtml(habit.name)} for today" aria-pressed="${done}">✓</button>
-        <div><span class="today-name" dir="auto">${escapeHtml(habit.name)}</span><span class="today-meta">${escapeHtml(habit.category || "Daily practice")}</span></div>
-        <button class="icon-btn" data-edit-today="${habit.id}" aria-label="Edit ${escapeHtml(habit.name)}">⋯</button>
+        <button class="today-check ${done ? "done" : ""}" data-toggle-today="${habit.id}" aria-label="${escapeHtml(t(done ? "Uncheck {name} for today" : "Complete {name} for today", { name: habit.name }))}" aria-pressed="${done}">✓</button>
+        <div><span class="today-name" dir="auto">${escapeHtml(habit.name)}</span><span class="today-meta">${escapeHtml(habit.category || t("Daily practice"))}</span></div>
+        <button class="icon-btn" data-edit-today="${habit.id}" aria-label="${escapeHtml(t("Edit {name}", { name: habit.name }))}">⋯</button>
       </div>
     `;
     })
@@ -471,23 +478,23 @@ function renderTable() {
   renderTodayList();
 
   if (!state.habits.length) {
-    table.innerHTML = `<tbody><tr><td class="empty-state">No habits yet. Use “Add habit” above to start tracking.</td></tr></tbody>`;
+    table.innerHTML = `<tbody><tr><td class="empty-state">${escapeHtml(t("No habits yet. Use “Add habit” above to start tracking."))}</td></tr></tbody>`;
     renderStats(days);
     return;
   }
 
   const todayIso = toISODate(new Date());
   const head = `
-    <caption class="sr-only">Habits and daily completion for ${JALALI_MONTHS[state.currentJ.jm - 1]} ${state.currentJ.jy}</caption>
+    <caption class="sr-only">${escapeHtml(t("Habits and daily completion for {month}", { month: monthYear(state.currentJ) }))}</caption>
     <thead>
       <tr>
-        <th scope="col">Habit</th>
+        <th scope="col">${escapeHtml(t("Habit"))}</th>
         ${days
           .map(
             (day) => `
-          <th scope="col" class="${day.iso === todayIso ? "today-head" : ""}" aria-label="${day.jd} ${JALALI_MONTHS[day.jm - 1]} ${day.jy}, ${WEEKDAYS_SHORT[day.weekday]}">
-            <div class="day-num">${day.jd}</div>
-            <div class="day-name">${WEEKDAYS_SHORT[day.weekday]}</div>
+          <th scope="col" class="${day.iso === todayIso ? "today-head" : ""}" aria-label="${escapeHtml(jalaliLabel(day))}, ${escapeHtml(t(WEEKDAYS_SHORT[day.weekday]))}">
+            <div class="day-num">${plain(day.jd)}</div>
+            <div class="day-name">${escapeHtml(t(WEEKDAYS_SHORT[day.weekday]))}</div>
           </th>
         `,
           )
@@ -507,7 +514,7 @@ function renderTable() {
               <span class="mini-dot"></span>
               <span class="table-label-text">
                 <strong>${escapeHtml(habit.name)}</strong>
-                <small>${escapeHtml(habit.category || "Uncategorized")}</small>
+                <small>${escapeHtml(habit.category || t("Uncategorized"))}</small>
               </span>
             </div>
           </th>
@@ -516,7 +523,7 @@ function renderTable() {
               const done = isDone(habit.id, day.iso);
               return `
               <td class="check-cell">
-                <button class="check-btn ${done ? "done" : ""}" data-habit="${habit.id}" data-date="${day.iso}" aria-label="${escapeHtml(habit.name)}, ${day.jd} ${JALALI_MONTHS[day.jm - 1]} ${day.jy}" aria-pressed="${done}" title="${day.jd} ${JALALI_MONTHS[day.jm - 1]} ${day.jy}"></button>
+                <button class="check-btn ${done ? "done" : ""}" data-habit="${habit.id}" data-date="${day.iso}" aria-label="${escapeHtml(habit.name)}, ${escapeHtml(jalaliLabel(day))}" aria-pressed="${done}" title="${escapeHtml(jalaliLabel(day))}"></button>
               </td>
             `;
             })
@@ -571,7 +578,7 @@ function renderStats(days) {
   );
   const percent = total ? Math.round((done / total) * 100) : 0;
 
-  $("monthCompletionPill").textContent = eligibleDays.length ? `${percent}% · elapsed days` : 'Future month';
+  $("monthCompletionPill").textContent = eligibleDays.length ? t("{percent} · elapsed days", { percent: pctText(percent) }) : t('Future month');
   const activeDays = eligibleDays.filter((day) =>
     (state.logs[day.iso] || []).some((id) => activeIds.has(id)),
   ).length;
@@ -579,8 +586,8 @@ function renderStats(days) {
     ? Math.round((activeDays / eligibleDays.length) * 100)
     : 0;
   $("consistencyRate").textContent = eligibleDays.length
-    ? `Consistency ${consistency}% · ${activeDays}/${eligibleDays.length} days active`
-    : "Consistency — · Future month";
+    ? t("Consistency {percent} · {active}/{total} days active", { percent: pctText(consistency), active: number(activeDays), total: number(eligibleDays.length) })
+    : t("Consistency — · Future month");
 }
 
 function openEditDialog(id) {
@@ -596,7 +603,7 @@ async function saveEdit() {
   const id = Number($("editHabitId").value);
   const name = $("editHabitName").value.trim();
   if (!name) {
-    showToast("Habit name is required");
+    showToast(t("Habit name is required"));
     return;
   }
   await api(`/api/habits/${id}`, {
@@ -609,7 +616,7 @@ async function saveEdit() {
   });
   $("editDialog").close();
   await refresh();
-  showToast("Habit updated");
+  showToast(t("Habit updated"));
 }
 
 async function deleteCurrentHabit() {
@@ -617,13 +624,13 @@ async function deleteCurrentHabit() {
   const habit = state.habits.find((item) => item.id === id);
   if (!habit) return;
   if (
-    !confirm(`Remove “${habit.name}”? This also deletes its check-in history.`)
+    !confirm(t("Remove “{name}”? This also deletes its check-in history.", { name: habit.name }))
   )
     return;
   await api(`/api/habits/${id}`, { method: "DELETE" });
   $("editDialog").close();
   await refresh();
-  showToast("Habit removed");
+  showToast(t("Habit removed"));
 }
 
 const escapeHtml = globalThis.lifeOsHtml.escapeHtml;
@@ -671,7 +678,7 @@ function bindEvents() {
     await Promise.all([loadLogs(), loadActivity()]);
     renderTable();
     renderActivityGrid();
-    showToast("Returned to current month");
+    showToast(t("Returned to current month"));
   });
 
   $("addForm").addEventListener("submit", async (event) => {
@@ -694,7 +701,7 @@ function bindEvents() {
     $("habitCategory").value = "";
     await refresh();
     $('addDialog').close();
-    showToast("Habit added");
+    showToast(t("Habit added"));
     } catch (error) { showToast(error.message); }
     finally { submit.disabled = false; }
   });
@@ -711,7 +718,7 @@ function bindEvents() {
       });
       input.value = "";
       await refresh();
-      showToast("Category added");
+      showToast(t("Category added"));
     } catch (error) {
       showToast(error.message);
     }

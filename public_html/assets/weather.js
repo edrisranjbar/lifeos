@@ -1,6 +1,8 @@
 // Qeshm weather and marine data are served together by the local PHP endpoint.
 const $ = id => document.getElementById(id);
 const finite = value => typeof value === 'number' && Number.isFinite(value);
+const { t, number } = window.lifeOsI18n;
+const degrees = value => t('{value}°C', { value: number(Math.round(value)) });
 let lastAttempt = 0;
 let inFlight = null;
 
@@ -43,31 +45,32 @@ function symbol(code, isDay = true) {
 
 function windDirection(degrees) {
   if (!finite(degrees)) return '';
-  return ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'][Math.round(((degrees % 360) + 360) % 360 / 45) % 8];
+  return t(['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'][Math.round(((degrees % 360) + 360) % 360 / 45) % 8]);
 }
 
 function renderWeather(data) {
   const current = data?.current;
   const daily = data?.daily;
   if (!current || !finite(current.temperature_2m) || !Array.isArray(daily?.time) || daily.time.length < 8) throw new Error('Incomplete weather data');
-  $('kish-weather-temperature').innerHTML = `${Math.round(current.temperature_2m)}<small>°C</small>`;
-  $('kish-weather-condition').textContent = description(current.weather_code);
+  $('kish-weather-temperature').innerHTML = `${number(Math.round(current.temperature_2m))}<small>°C</small>`;
+  $('kish-weather-condition').textContent = t(description(current.weather_code));
   $('kish-weather-icon').innerHTML = symbol(current.weather_code, Boolean(current.is_day));
-  $('kish-weather-feels').textContent = finite(current.apparent_temperature) ? `${Math.round(current.apparent_temperature)}°C` : '—';
-  $('kish-weather-wind').textContent = finite(current.wind_speed_10m) ? `${Math.round(current.wind_speed_10m)} km/h ${windDirection(current.wind_direction_10m)}`.trim() : '—';
-  $('kish-weather-humidity').textContent = finite(current.relative_humidity_2m) ? `${Math.round(current.relative_humidity_2m)}%` : '—';
-  $('kish-weather-updated').textContent = `Updated ${current.time?.slice(11, 16) || '—'} · local time`;
-  const dayNames = new Intl.DateTimeFormat('en-US', { weekday: 'short', timeZone: 'UTC' });
+  $('kish-weather-feels').textContent = finite(current.apparent_temperature) ? degrees(current.apparent_temperature) : '—';
+  $('kish-weather-wind').textContent = finite(current.wind_speed_10m) ? `${t('{speed} km/h', { speed: number(Math.round(current.wind_speed_10m)) })} ${windDirection(current.wind_direction_10m)}`.trim() : '—';
+  $('kish-weather-humidity').textContent = finite(current.relative_humidity_2m) ? t('{value}%', { value: number(Math.round(current.relative_humidity_2m)) }) : '—';
+  $('kish-weather-updated').textContent = t('Updated {time} · local time', { time: window.lifeOsI18n.digits(current.time?.slice(11, 16) || '—') });
+  const dayNames = new Intl.DateTimeFormat(window.lifeOsI18n.locale(), { weekday: 'short', timeZone: 'UTC' });
   const days = daily.time.slice(1, 8).map((date, index) => {
     const i = index + 1;
     const name = dayNames.format(new Date(`${date}T12:00:00Z`));
-    const dateLabel = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' }).format(new Date(`${date}T12:00:00Z`));
-    const high = finite(daily.temperature_2m_max?.[i]) ? `${Math.round(daily.temperature_2m_max[i])}°` : '—';
-    const low = finite(daily.temperature_2m_min?.[i]) ? `${Math.round(daily.temperature_2m_min[i])}°` : '—';
-    return `<div class="kish-forecast-day" aria-label="${name}, ${dateLabel}: ${description(daily.weather_code?.[i])}, high ${high}, low ${low}"><span>${name}<small class="kish-forecast-date">${dateLabel}</small></span>${symbol(daily.weather_code?.[i])}<strong>${high} <small>${low}</small></strong></div>`;
+    const dateLabel = window.lifeOsI18n.date(new Date(`${date}T12:00:00Z`), { month: 'short', day: 'numeric', timeZone: 'UTC' });
+    const high = finite(daily.temperature_2m_max?.[i]) ? `${number(Math.round(daily.temperature_2m_max[i]))}°` : '—';
+    const low = finite(daily.temperature_2m_min?.[i]) ? `${number(Math.round(daily.temperature_2m_min[i]))}°` : '—';
+    return `<div class="kish-forecast-day" aria-label="${t('{day}, {date}: {condition}, high {high}, low {low}', { day: name, date: dateLabel, condition: t(description(daily.weather_code?.[i])), high, low })}"><span>${name}<small class="kish-forecast-date">${dateLabel}</small></span>${symbol(daily.weather_code?.[i])}<strong>${high} <small>${low}</small></strong></div>`;
   });
   $('kish-weather-forecast').querySelector('.kish-forecast-days').innerHTML = days.join('');
-  $('kish-weather-status').innerHTML = '<i></i> Live forecast';
+  $('kish-weather-status').innerHTML = '<i></i> ';
+  $('kish-weather-status').append(t('Live forecast'));
 }
 
 function renderMarine(data) {
@@ -86,9 +89,11 @@ function renderMarine(data) {
     if (heights[i] >= heights[i - 1] && heights[i] > heights[i + 1]) { nextTurn = { type: 'high', time: times[i] }; break; }
     if (heights[i] <= heights[i - 1] && heights[i] < heights[i + 1]) { nextTurn = { type: 'low', time: times[i] }; break; }
   }
-  $('kish-tide-state').textContent = phase;
-  const level = `${current.sea_level_height_msl >= 0 ? '+' : ''}${current.sea_level_height_msl.toFixed(2)} m vs mean sea level`;
-  const turn = nextTurn ? `Next ${nextTurn.type} ${nextTurn.time.slice(0, 10) === now.slice(0, 10) ? '' : 'tomorrow '}${nextTurn.time.slice(11, 16)} · ` : '';
+  $('kish-tide-state').textContent = t(phase);
+  const level = t('{height} m vs mean sea level', { height: window.lifeOsI18n.digits(`${current.sea_level_height_msl >= 0 ? '+' : ''}${current.sea_level_height_msl.toFixed(2)}`) });
+  const sameDay = nextTurn && nextTurn.time.slice(0, 10) === now.slice(0, 10);
+  const turnKey = !nextTurn ? '' : nextTurn.type === 'high' ? (sameDay ? 'Next high {time}' : 'Next high tomorrow {time}') : (sameDay ? 'Next low {time}' : 'Next low tomorrow {time}');
+  const turn = nextTurn ? `${t(turnKey, { time: window.lifeOsI18n.digits(nextTurn.time.slice(11, 16)) })} · ` : '';
   $('kish-tide-detail').textContent = `${turn}${level}`;
 }
 
@@ -118,18 +123,18 @@ export function refreshWeatherCard() {
 }
 
 function showWeatherUnavailable() {
-  $('kish-weather-status').textContent = 'Weather unavailable';
+  $('kish-weather-status').textContent = t('Weather unavailable');
   $('kish-weather-temperature').innerHTML = '—<small>°C</small>';
-  $('kish-weather-condition').textContent = 'Forecast temporarily unavailable';
+  $('kish-weather-condition').textContent = t('Forecast temporarily unavailable');
   $('kish-weather-icon').innerHTML = '';
   $('kish-weather-feels').textContent = '—';
   $('kish-weather-wind').textContent = '—';
   $('kish-weather-humidity').textContent = '—';
-  $('kish-weather-forecast').querySelector('.kish-forecast-days').textContent = '7-day forecast unavailable';
-  $('kish-weather-updated').textContent = 'Local forecast unavailable';
+  $('kish-weather-forecast').querySelector('.kish-forecast-days').textContent = t('7-day forecast unavailable');
+  $('kish-weather-updated').textContent = t('Local forecast unavailable');
 }
 
 function showMarineUnavailable() {
-  $('kish-tide-state').textContent = 'Tide estimate unavailable';
-  $('kish-tide-detail').textContent = 'Try again shortly';
+  $('kish-tide-state').textContent = t('Tide estimate unavailable');
+  $('kish-tide-detail').textContent = t('Try again shortly');
 }

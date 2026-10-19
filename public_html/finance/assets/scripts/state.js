@@ -35,6 +35,16 @@ let activePeriod = "Current";
 const currencyUnit = () => window.lifeOsCurrency?.unit() ?? "Toman";
 let renderedUnit = currencyUnit();
 
+const budgetIsUnlimited = category => category?.unlimited === true;
+function financeBudgetTotals(ledger = state) {
+  const categories = ledger.categories || [];
+  const unlimited = new Set(categories.filter(budgetIsUnlimited).map(category => category.id));
+  const total = categories.filter(category => !budgetIsUnlimited(category)).reduce((sum, category) => sum + (Number(category.target) || 0), 0);
+  const spent = (ledger.expenses || []).filter(expense => !unlimited.has(expense.categoryId)).reduce((sum, expense) => sum + (Number(expense.amount) || 0), 0);
+  const unlimitedSpent = (ledger.expenses || []).filter(expense => unlimited.has(expense.categoryId)).reduce((sum, expense) => sum + (Number(expense.amount) || 0), 0);
+  return {total, spent, remaining: total - spent, unlimitedSpent, unlimitedCount: unlimited.size, limitedCount: categories.length - unlimited.size};
+}
+
 const PERIODS_STORAGE_KEY = "daramd_periods_v1";
 const ACTIVE_PERIOD_KEY = "daramd_active_period_v1";
 
