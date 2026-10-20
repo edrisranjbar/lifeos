@@ -740,6 +740,12 @@ textarea:focus-visible {
   margin-bottom: 18px;
   overflow: hidden;
 }
+.budget-summary.has-unlimited { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.modal-box .budget-unlimited-choice { display: flex; align-items: flex-start; gap: 12px; margin: 0 0 16px; padding: 12px; border: 1px solid var(--ink-line); border-radius: 7px; color: var(--text); font-size: 13px; cursor: pointer; }
+.modal-box .budget-unlimited-choice input[type="checkbox"] { flex: 0 0 auto; width: 18px; height: 18px; margin: 1px 0 0; padding: 0; accent-color: var(--jade); }
+.budget-unlimited-choice small { display: block; margin-top: 5px; color: var(--muted); font-size: 11px; line-height: 1.6; }
+.modal-box input[type="number"]:disabled { opacity: .45; cursor: not-allowed; }
+@media (max-width: 640px) { .budget-summary.has-unlimited { grid-template-columns: 1fr; } }
 .budget-summary > div {
   padding: 16px 18px;
   display: flex;

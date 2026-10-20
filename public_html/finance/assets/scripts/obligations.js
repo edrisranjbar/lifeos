@@ -105,11 +105,12 @@ function render(){
     const more=paid?`<button data-ledger="${esc(o.decision.period)}" data-entry="${esc(o.decision.incomeId??o.decision.expenseId)}" data-kind="${o.direction==='credit'?'income':'expense'}">${window.lifeOsI18n.t("View in ledger")}</button><button data-action="undo" data-occurrence="${esc(o.id)}">${window.lifeOsI18n.t("Undo")}</button>`
       :o.status==='rejected'?`<button data-action="restore" data-occurrence="${esc(o.id)}">${window.lifeOsI18n.t("Mark as expected again")}</button>`
       :`<button data-action="reject" data-occurrence="${esc(o.id)}">${o.optional?tr('Skip this period'):w.defer}</button>`;
+    const deleteAction=`<button type="button" data-delete="${esc(o.planId)}" class="danger">${tr('Delete')}</button>`;
     return `<article class="ob-row tone-${tone}${o.id===requested?' ob-selected':''}" data-id="${esc(o.id)}">
       <div class="ob-when" aria-label="${esc(longDate(o.date))}"><strong>${fmt(o.date,{day:'numeric'})}</strong><span>${fmt(o.date,{month:'short'})}${o.date.slice(0,4)!==month.slice(0,4)?' '+o.date.slice(0,4):''}</span></div>
       <div class="ob-info"><h4 dir="auto">${esc(o.title)}</h4><p>${o.payee?`<span dir="auto">${esc(o.payee)}</span> · `:''}${esc(scheduleLabel(o))}${o.optional?' · '+tr('optional'):''}</p>${o.decision.note?`<p class="ob-row-note" dir="auto">${esc(o.decision.note)}</p>`:''}${paid?`<p class="ob-row-note">${esc(w.paid)} ${esc(longDate(o.decision.paymentDate))} · ${esc(o.decision.period)}</p>`:''}</div>
       <div class="ob-amount"><strong>${money(o.amount)}</strong><span class="ob-pill ${tone}">${label}</span></div>
-      <div class="ob-row-actions">${paid?'':`<button class="btn-primary ob-pay" data-pay="${esc(o.id)}">${w.pay}</button>`}<details class="ob-more"><summary aria-label="More actions for ${esc(o.title)}">⋯</summary><div class="ob-menu">${more}</div></details></div>
+      <div class="ob-row-actions">${paid?'':`<button class="btn-primary ob-pay" data-pay="${esc(o.id)}">${w.pay}</button>`}<details class="ob-more"><summary aria-label="More actions for ${esc(o.title)}">⋯</summary><div class="ob-menu">${more}${deleteAction}</div></details></div>
     </article>`;
   }).join(''):`<div class="ob-empty"><strong>${tr(filter==='open'?'All clear.':'Nothing here.')}</strong><span>${w.empty} ${tr('Use')} <b>${window.lifeOsI18n.t("＋ New")}</b> ${window.lifeOsI18n.t("to add one, or pick another month.")}</span></div>`;
   const plans=view.plans.filter(p=>p.direction===direction);
@@ -244,7 +245,7 @@ function openAction(name,id){
   $('obActionHeading').textContent={cancel:window.lifeOsI18n.t('Stop future dues'),delete:window.lifeOsI18n.t('Delete this entry?'),undo:credit?window.lifeOsI18n.t('Undo receipt'):window.lifeOsI18n.t('Undo payment'),reject:item?.optional?window.lifeOsI18n.t('Skip this period'):credit?window.lifeOsI18n.t('Mark as late'):window.lifeOsI18n.t('Defer payment'),restore:window.lifeOsI18n.t('Mark as expected again')}[name];
   $('obActionCopy').textContent={
     cancel:window.lifeOsI18n.t('No new dues are created from the chosen date. Earlier dues and anything already recorded stay as they are.'),
-    delete:window.lifeOsI18n.t("“{value0}” and all of its upcoming dues will be removed. This is meant for mistakes; it only works while nothing has been {value1}.",{value0:plan?.title||'',value1:tr(credit?'received':'paid')}),
+    delete:window.lifeOsI18n.t('Delete “{title}” and its entire schedule, including overdue dues? Recorded payments or receipts must be undone first. Ledger entries are not deleted here.',{title:plan?.title||''}),
     undo:window.lifeOsI18n.t("The {value0} created for this {value1} is removed from the ledger (if you haven’t edited it). A linked existing entry is kept and just unlinked.",{value0:tr(credit?'income':'expense'),value1:tr(credit?'receipt':'payment')}),
     reject:item?.optional?window.lifeOsI18n.t('Only this period is skipped. The next one stays scheduled.'):credit?window.lifeOsI18n.t('The amount is still owed to you. It stays expected and shows as overdue after the due date.'):window.lifeOsI18n.t('The amount is still owed. Deferring does not move the due date; it shows as overdue after it.'),
     restore:window.lifeOsI18n.t('This due becomes expected again.')

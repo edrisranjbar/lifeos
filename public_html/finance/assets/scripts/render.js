@@ -19,13 +19,18 @@ let incomeChart = null,
 function render() {
   renderPeriodSelector();
   const totalIncome = state.incomes.reduce((s, i) => s + i.amount, 0);
-  const totalBudget = state.categories.reduce((s, c) => s + c.target, 0);
+  const budgets = financeBudgetTotals();
+  const totalBudget = budgets.total;
+  const allUnlimited = budgets.unlimitedCount > 0 && budgets.limitedCount === 0;
   const totalSpent = state.expenses.reduce((s, e) => s + e.amount, 0);
   const balance = totalIncome - totalSpent;
 
   // Metrics — tweened counters
   animateNumber(document.getElementById("metricIncome"), totalIncome, fmt);
-  animateNumber(document.getElementById("metricBudget"), totalBudget, fmt);
+  if (allUnlimited) document.getElementById("metricBudget").textContent = window.lifeOsI18n.t("Unlimited");
+  else animateNumber(document.getElementById("metricBudget"), totalBudget, fmt);
+  const budgetNote = document.querySelector('[data-i18n="mAllocatedSub"]');
+  if (budgetNote) budgetNote.textContent = allUnlimited ? window.lifeOsI18n.t('No capped categories') : __t(budgets.unlimitedCount ? '{unit} across capped categories' : '{unit} across all categories', {unit:currencyUnit()});
   animateNumber(document.getElementById("metricSpent"), totalSpent, fmt);
   const balEl = document.getElementById("metricBalance");
   animateNumber(balEl, balance, (v) => (balance < 0 ? "−" : "") + fmt(v));
@@ -73,12 +78,14 @@ function render() {
   // Budget tracker
   const bt = document.getElementById("budgetTracker");
   const budgetSummary = document.getElementById("budgetSummary");
-  const budgetRemaining = totalBudget - totalSpent;
-  const usedPct = totalBudget > 0 ? Math.round((totalSpent / totalBudget) * 100) : 0;
+  budgetSummary.classList.toggle('has-unlimited', budgets.unlimitedCount > 0);
+  const budgetRemaining = budgets.remaining;
+  const usedPct = totalBudget > 0 ? Math.round((budgets.spent / totalBudget) * 100) : 0;
   budgetSummary.innerHTML = `
-    <div><span>${esc(window.lifeOsI18n.t("Monthly plan"))}</span><strong class="num">${fmt(totalBudget)}</strong></div>
-    <div><span>${esc(window.lifeOsI18n.t("Used"))}</span><strong class="num">${usedPct}%</strong></div>
-    <div><span>${esc(window.lifeOsI18n.t(budgetRemaining >= 0 ? "Available" : "Over plan"))}</span><strong class="num ${budgetRemaining < 0 ? "is-over" : ""}">${fmt(budgetRemaining)}</strong></div>
+    <div><span>${esc(window.lifeOsI18n.t(budgets.unlimitedCount ? "Capped budgets" : "Monthly plan"))}</span><strong class="num">${allUnlimited ? esc(window.lifeOsI18n.t("Unlimited")) : fmt(totalBudget)}</strong></div>
+    <div><span>${esc(window.lifeOsI18n.t("Used"))}</span><strong class="num">${allUnlimited ? '—' : usedPct + '%'}</strong></div>
+    <div><span>${esc(window.lifeOsI18n.t(budgetRemaining >= 0 ? "Available" : "Over plan"))}</span><strong class="num ${budgetRemaining < 0 ? "is-over" : ""}">${allUnlimited ? '—' : fmt(budgetRemaining)}</strong></div>
+    ${budgets.unlimitedCount ? `<div><span>${esc(window.lifeOsI18n.t("Unlimited category spending"))}</span><strong class="num">${fmt(budgets.unlimitedSpent)}</strong></div>` : ''}
   `;
   bt.innerHTML =
     state.categories.length === 0
@@ -95,7 +102,8 @@ function render() {
       const pct = cat.target > 0 ? (spent / cat.target) * 100 : 0;
       const pctDisplay = Math.round(pct);
       const fillPct = Math.min(pct, 100);
-      const over = spent > cat.target;
+      const unlimited = budgetIsUnlimited(cat);
+      const over = !unlimited && spent > cat.target;
       const ovBy = spent - cat.target;
       const remaining = cat.target - spent;
       return `
@@ -106,13 +114,13 @@ function render() {
       </div>
       <div class="budget-amount-row">
         <div><span>${esc(window.lifeOsI18n.t("Spent"))}</span><strong class="num">${fmt(spent)}</strong></div>
-        <div><span>${esc(window.lifeOsI18n.t(over ? "Over" : "Remaining"))}</span><strong class="num">${fmt(remaining)}</strong></div>
+        <div><span>${esc(window.lifeOsI18n.t(unlimited ? "Limit" : over ? "Over" : "Remaining"))}</span><strong class="num">${unlimited ? esc(window.lifeOsI18n.t("Unlimited")) : fmt(remaining)}</strong></div>
       </div>
-      <div class="progress-track" role="progressbar" aria-label="${esc(cat.label)} budget usage" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.min(pctDisplay, 100)}">
+      ${unlimited ? '' : `<div class="progress-track" role="progressbar" aria-label="${esc(cat.label)} budget usage" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.min(pctDisplay, 100)}">
         <div class="progress-fill" style="width:${fillPct}%;background:${over ? "var(--rust)" : "var(--jade)"};"></div>
-      </div>
+      </div>`}
       ${over ? `<div style="display:flex;justify-content:flex-end;margin-top:9px;"><span class="tag tag-rust">${esc(__t("↑ {amount} over", { amount: fmt(ovBy) }))}</span></div>` : ""}
-      <div class="budget-item-foot"><span>${pctDisplay}% ${esc(window.lifeOsI18n.t("used"))}</span><span class="num">${fmt(cat.target)} ${esc(window.lifeOsI18n.t("limit"))}</span></div>
+      <div class="budget-item-foot">${unlimited ? `<span>${esc(window.lifeOsI18n.t("No spending cap"))}</span>` : `<span>${pctDisplay}% ${esc(window.lifeOsI18n.t("used"))}</span><span class="num">${fmt(cat.target)} ${esc(window.lifeOsI18n.t("limit"))}</span>`}</div>
     </article>`;
     })
     .join("");
@@ -128,10 +136,10 @@ function render() {
         const used = category.target > 0 ? Math.round((spent / category.target) * 100) : 0;
         return `<tr>
           <td>${esc(category.label)}</td>
-          <td class="num">${fmt(category.target)}</td>
+          <td class="num">${budgetIsUnlimited(category) ? esc(window.lifeOsI18n.t("Unlimited")) : fmt(category.target)}</td>
           <td class="num">${fmt(spent)}</td>
-          <td class="num">${remaining < 0 ? "−" : ""}${fmt(remaining)}</td>
-          <td class="num">${used}%</td>
+          <td class="num">${budgetIsUnlimited(category) ? '—' : (remaining < 0 ? "−" : "") + fmt(remaining)}</td>
+          <td class="num">${budgetIsUnlimited(category) ? '—' : used + '%'}</td>
         </tr>`;
       })
       .join("");
@@ -248,7 +256,7 @@ function renderCharts(totalIncome) {
       spent: state.expenses
         .filter((e) => e.categoryId === cat.id)
         .reduce((s, e) => s + e.amount, 0),
-      target: cat.target,
+      target: budgetIsUnlimited(cat) ? null : cat.target,
     }))
     .filter((c) => c.spent > 0)
     .sort((a, b) => b.spent - a.spent);
@@ -273,7 +281,7 @@ function renderCharts(totalIncome) {
             label: "Spent",
             data: catTotals.map((c) => c.spent),
             backgroundColor: catTotals.map((c) =>
-              c.spent > c.target
+              c.target !== null && c.spent > c.target
                 ? "rgba(226,99,62,0.75)"
                 : "rgba(31,174,126,0.75)",
             ),
@@ -314,7 +322,7 @@ function renderCharts(totalIncome) {
             bodyFont: { family: "JetBrains Mono" },
             callbacks: {
               label: (ctx) =>
-                ` ${ctx.dataset.label}: ${ctx.raw.toLocaleString()} ${currencyUnit()}`,
+                ctx.raw === null ? ` ${ctx.dataset.label}: ${window.lifeOsI18n.t('Unlimited')}` : ` ${ctx.dataset.label}: ${ctx.raw.toLocaleString()} ${currencyUnit()}`,
             },
           },
         },

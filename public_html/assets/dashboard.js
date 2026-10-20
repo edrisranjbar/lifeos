@@ -624,11 +624,12 @@ function renderFinance() {
     <div class="fin-row"><strong class="fin-balance">${number(balance)}<span>${esc(window.lifeOsCurrency?.unit() ?? 'Toman')}</span></strong></div>
     <div class="fin-sub"><span class="fin-pill in">${esc(t('+{amount} in', { amount: number(income) }))}</span><span class="fin-pill out">${esc(t('−{amount} out', { amount: number(spent) }))}</span></div>
     <div class="fin-cats">${top.map(({ category, amount }) => {
-      const pct = category.target > 0 ? clamp(amount / category.target * 100) : 100;
-      const over = category.target > 0 && amount > category.target;
+      const unlimited = category.unlimited === true;
+      const pct = unlimited ? null : category.target > 0 ? clamp(amount / category.target * 100) : 100;
+      const over = !unlimited && category.target > 0 && amount > category.target;
       return `<div class="fin-cat">
-        <div class="fin-cat-head"><span>${esc(category.label)}${over ? ' · ' + esc(t('over')) : ''}</span><b>${pct===null?"—":esc(t('{percent} of budget', { percent: pctText(Math.round(pct)) }))}</b></div>
-        <span class="fin-cat-track"><span class="fin-cat-fill" data-w="${pct}" style="${over ? 'background:var(--danger)' : ''}"></span></span>
+        <div class="fin-cat-head"><span>${esc(category.label)}${over ? ' · ' + esc(t('over')) : ''}</span><b>${unlimited ? esc(t('Unlimited')) : esc(t('{percent} of budget', { percent: pctText(Math.round(pct)) }))}</b></div>
+        ${unlimited ? '' : `<span class="fin-cat-track"><span class="fin-cat-fill" data-w="${pct}" style="${over ? 'background:var(--danger)' : ''}"></span></span>`}
       </div>`;
     }).join('')}</div>`;
   requestAnimationFrame(() => wrap.querySelectorAll('.fin-cat-fill').forEach(el => { el.style.width = `${el.dataset.w}%`; }));

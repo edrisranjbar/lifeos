@@ -287,7 +287,8 @@ function importFromSheet(sheetName) {
     if (catNameIdx !== -1) {
       const catName = r[catNameIdx];
       const catTotal = parseFloat(r[catTotalIdx]);
-      if (catName && !isNaN(catTotal) && catTotal > 0) {
+      const unlimited = ['unlimited', '∞', 'نامحدود', 'غير محدود'].includes(String(r[catTotalIdx] ?? '').trim().toLowerCase());
+      if (catName && (unlimited || (Number.isFinite(catTotal) && catTotal > 0))) {
         const lowerCat = String(catName).toLowerCase().trim();
         const isSummary = ["want:", "need:", "saving:", "balance:"].includes(
           lowerCat,
@@ -296,7 +297,8 @@ function importFromSheet(sheetName) {
           const catId = matchImportCategory(catName);
           if (catId) {
             const cat = ensureCategory(catId, catName);
-            cat.target = catTotal;
+            if (!unlimited) cat.target = catTotal;
+            cat.unlimited = unlimited;
             updatedBudgets++;
           }
         }

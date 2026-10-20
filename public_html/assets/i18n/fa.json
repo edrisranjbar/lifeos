@@ -1441,5 +1441,13 @@
   "Reveal note": "نمایش یادداشت",
   "YOUR PREVIOUS NEXT STEP": "قدم بعدی مرور قبلی شما",
   "A fresh start. Choose one small step that matters to you.": "شروعی تازه؛ یک قدم کوچک و مهم برای خودتان انتخاب کنید.",
-  "%": "٪"
+  "%": "٪",
+  "Capped budgets": "بودجه‌های دارای سقف",
+  "Unlimited category spending": "هزینه دسته‌های نامحدود",
+  "No spending cap": "بدون سقف هزینه",
+  "Limit": "سقف",
+  "Delete “{title}” and its entire schedule, including overdue dues? Recorded payments or receipts must be undone first. Ledger entries are not deleted here.": "«{title}» و تمام برنامه سررسیدهای آن، از جمله موارد معوق، حذف شود؟ پرداخت‌ها یا دریافت‌های ثبت‌شده باید ابتدا لغو شوند. تراکنش‌های دفتر مالی از این بخش حذف نمی‌شوند.",
+  "No capped categories": "بدون دسته دارای سقف",
+  "{unit} across capped categories": "{unit} در دسته‌های دارای سقف",
+  "{unit} across all categories": "{unit} در همه دسته‌ها"
 }

@@ -27,7 +27,7 @@
     </script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <link href="assets/styles/style.css?v=persian-1" rel="stylesheet" />
+    <link href="assets/styles/style.css?v=finance-budgets-2" rel="stylesheet" />
     <link href="assets/styles/obligations.css?v=persian-1" rel="stylesheet" />
   <script src="/assets/html-escape.js?v=persian-1"></script>
 </head>
@@ -343,7 +343,7 @@
         for (const name of ["state.js", "ui.js", "import.js", "actions.js", "modals.js", "render.js", "script.js"]) {
           await new Promise((resolve, reject) => {
             const script = document.createElement('script');
-            script.src = `assets/scripts/${name}?v=persian-1`;
+            script.src = `assets/scripts/${name}?v=finance-budgets-2`;
             script.onload = resolve; script.onerror = reject; document.body.append(script);
           });
         }
@@ -354,6 +354,6 @@
         document.body.prepend(error);
       });
     </script>
-    <script type="module" src="assets/scripts/obligations.js?v=persian-1"></script>
+    <script type="module" src="assets/scripts/obligations.js?v=finance-budgets-2"></script>
   </body>
 </html>

@@ -23,6 +23,16 @@ Amounts and dates are fixed after creation, so changing a plan cannot rewrite pa
 - **Stop future dues** of a recurring same-amount plan from a date; earlier dues and decisions remain.
 - **Delete** a plan entered by mistake, but only while none of its dues are paid or received. Undo those first.
 
+Delete is available in the **⋯** menu on every due item in both **I owe** and **Owed to me**, as well as the plan list. It opens a confirmation for deleting the entire credit/debt plan and its schedule, including unpaid overdue dues; it does not delete just one installment. The backend rejects deletion while recorded payments/receipts remain, so ledger entries are never silently erased.
+
+## Unlimited category budgets
+
+In a budget category's Add/Edit dialog, enable **Unlimited budget** to track spending without a cap. Existing categories keep their limits until explicitly changed, and the previous numeric limit is retained when switching to unlimited. Turning it off restores that limit; a positive amount is required to save a capped budget.
+
+Unlimited categories show spending and an Unlimited label, without a usage percentage, limit bar or over-budget warning. Their expenses still count in total spending and cash balance, but are excluded from capped-budget usage and remaining-budget calculations. Overview spending indicators, charts, print views and Excel exports use the same distinction. Import budget cells can use `Unlimited`, `∞`, `نامحدود` or `غير محدود` instead of a numeric cap. No database migration is required.
+
+The Finance API's `budget_total` is the sum of capped limits; `budget_remaining` subtracts only spending outside unlimited categories. `budgeted_expense_total`, `unlimited_expense_total` and `unlimited_category_count` explain that scope. An unlimited category keeps its numeric `target` for restoring a cap and carries `unlimited: true`; missing/false preserves legacy capped behavior. Total income, expenses and balance retain their existing definitions.
+
 For new terms, stop the old plan and create a replacement.
 
 ## Generated dues and statuses

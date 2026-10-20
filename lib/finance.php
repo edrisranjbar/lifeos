@@ -46,8 +46,13 @@ function finance_summary(StateStore $store, mixed $period = null): array
     $state = $periods[$selected];
     $income = array_sum(array_column($state['incomes'] ?? [], 'amount'));
     $expense = array_sum(array_column($state['expenses'] ?? [], 'amount'));
-    $budget = array_sum(array_column($state['categories'] ?? [], 'target'));
-    return ['active_period' => $selected, 'income_total' => $income, 'expense_total' => $expense, 'balance' => $income - $expense, 'budget_total' => $budget, 'budget_remaining' => $budget - $expense, 'categories' => $state['categories'] ?? []];
+    $categories = $state['categories'] ?? [];
+    $unlimited = array_values(array_filter($categories, fn($category)=>($category['unlimited'] ?? false) === true));
+    $unlimitedIds = array_column($unlimited, 'id');
+    $budget = array_sum(array_column(array_filter($categories, fn($category)=>($category['unlimited'] ?? false) !== true), 'target'));
+    $unlimitedExpense = array_sum(array_column(array_filter($state['expenses'] ?? [], fn($item)=>in_array($item['categoryId'] ?? '', $unlimitedIds, true)), 'amount'));
+    $budgetedExpense = $expense - $unlimitedExpense;
+    return ['active_period' => $selected, 'income_total' => $income, 'expense_total' => $expense, 'balance' => $income - $expense, 'budget_total' => $budget, 'budget_remaining' => $budget - $budgetedExpense, 'budgeted_expense_total' => $budgetedExpense, 'unlimited_expense_total' => $unlimitedExpense, 'unlimited_category_count' => count($unlimited), 'categories' => $categories];
 }
 
 function finance_api(StateStore $store, string $method, string $resource, array $body, array $query): array
