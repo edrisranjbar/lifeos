@@ -1,5 +1,15 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
+/* Serve Persian glyphs locally, including in mixed-language notes and code. */
+@font-face {
+  font-family: "Vazirmatn";
+  src: url('../../assets/fonts/Vazirmatn-Variable.woff2') format('woff2');
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  unicode-range: U+0600-06FF, U+0750-077F, U+0870-089F, U+08A0-08FF, U+200C-200D, U+FB50-FDFF, U+FE70-FEFF;
+}
+
 :root {
   --bg: #05070a;
   --surface: #111825;
@@ -37,8 +47,8 @@
 }
 
 * { box-sizing: border-box; }
-html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--text); font-family: Inter, system-ui, sans-serif; }
-button { border: 0; cursor: pointer; font: 600 12px Inter, system-ui, sans-serif; color: inherit; }
+html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--text); font-family: Inter, "Vazirmatn", system-ui, sans-serif; }
+button { border: 0; cursor: pointer; font: 600 12px Inter, "Vazirmatn", system-ui, sans-serif; color: inherit; }
 button svg, .page-header svg { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
 button:focus-visible, select:focus-visible, input:focus-visible, .write-pane textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
@@ -47,7 +57,7 @@ button:focus-visible, select:focus-visible, input:focus-visible, .write-pane tex
 .app { width: min(1320px, calc(100% - 56px)); margin: auto; padding: 30px 0 28px; }
 .page-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; margin-bottom: 22px; }
 .eyebrow { display: block; color: var(--accent); font-size: 11px; font-weight: 600; letter-spacing: .18em; text-transform: uppercase; }
-.page-title h1 { margin: 8px 0 0; font: 400 clamp(30px, 4vw, 42px)/1 Georgia, serif; letter-spacing: -.02em; }
+.page-title h1 { margin: 8px 0 0; font: 400 clamp(30px, 4vw, 42px)/1 Georgia, "Vazirmatn", serif; letter-spacing: -.02em; }
 .header-actions { display: flex; align-items: center; gap: 12px; }
 
 .save-status { display: inline-flex; align-items: center; gap: 7px; padding: 6px 11px; border: 1px solid var(--border); border-radius: 999px; color: var(--muted); font-size: 12px; font-weight: 500; white-space: nowrap; }
@@ -73,7 +83,7 @@ button:focus-visible, select:focus-visible, input:focus-visible, .write-pane tex
 .new-note-btn svg { width: 15px; height: 15px; stroke-width: 2.4; }
 .new-note-btn:hover { filter: brightness(1.06); }
 .sort-label { display: block; margin: 0 4px 6px; color: var(--muted); font-size: 11px; font-weight: 500; }
-.note-sort { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface-2); color: var(--text); font: 13px Inter, system-ui, sans-serif; }
+.note-sort { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface-2); color: var(--text); font: 13px Inter, "Vazirmatn", system-ui, sans-serif; }
 
 .note-tabs { display: flex; flex-direction: column; gap: 4px; margin: 12px 0 0; padding: 0 2px 2px; list-style: none; overflow-y: auto; }
 .note-tab { position: relative; display: flex; align-items: flex-start; gap: 2px; min-width: 0; border-radius: 11px; border: 1px solid transparent; transition: background .15s, border-color .15s, opacity .15s; }
@@ -91,7 +101,7 @@ button:focus-visible, select:focus-visible, input:focus-visible, .write-pane tex
 .note-tab-meta:empty { display: none; }
 .note-tab-actions { display: flex; flex-direction: column; gap: 2px; padding: 6px 4px 0 0; opacity: 0; transition: opacity .15s; }
 .note-tab:hover .note-tab-actions, .note-tab:focus-within .note-tab-actions, .note-tab.active .note-tab-actions { opacity: 1; }
-.note-tab-actions button { display: grid; place-items: center; width: 24px; height: 22px; padding: 0; border-radius: 6px; background: transparent; color: var(--muted); font: 600 13px Inter, sans-serif; }
+.note-tab-actions button { display: grid; place-items: center; width: 24px; height: 22px; padding: 0; border-radius: 6px; background: transparent; color: var(--muted); font: 600 13px Inter, "Vazirmatn", sans-serif; }
 .note-tab-actions button:hover:not(:disabled) { background: var(--surface-3); color: var(--accent); }
 .note-tab-actions button[data-delete-note]:hover:not(:disabled) { color: var(--danger); }
 .note-tab-actions button:disabled { opacity: .25; cursor: default; }
@@ -100,7 +110,7 @@ button:focus-visible, select:focus-visible, input:focus-visible, .write-pane tex
 /* ── Title and editor ────────────────────────────────────────── */
 .note-work-area { display: flex; min-width: 0; flex-direction: column; gap: 12px; }
 .note-title-row { display: flex; align-items: center; min-width: 0; }
-.note-title-input { width: 100%; padding: 2px 0 8px; border: 0; border-bottom: 1px solid transparent; outline: 0; background: transparent; color: var(--text); font: 400 clamp(22px, 2.4vw, 28px)/1.2 Georgia, serif; text-align: start; transition: border-color .15s; }
+.note-title-input { width: 100%; padding: 2px 0 8px; border: 0; border-bottom: 1px solid transparent; outline: 0; background: transparent; color: var(--text); font: 400 clamp(22px, 2.4vw, 28px)/1.2 Georgia, "Vazirmatn", serif; text-align: start; transition: border-color .15s; }
 .note-title-input::placeholder { color: var(--muted); opacity: .7; }
 .note-title-input:hover { border-bottom-color: var(--border); }
 .note-title-input:focus { border-bottom-color: var(--accent); }
@@ -124,7 +134,7 @@ button:focus-visible, select:focus-visible, input:focus-visible, .write-pane tex
 .pane-label { padding: 0 20px; color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; }
 
 textarea, .markdown-preview { width: 100%; min-height: 0; border: 0; outline: 0; overflow: auto; color: var(--text); }
-.write-pane textarea { padding: 24px 28px 64px; resize: none; background: var(--surface-2); font: 14px/1.9 "JetBrains Mono", ui-monospace, monospace; tab-size: 2; caret-color: var(--accent); overflow-wrap: break-word; text-align: start; unicode-bidi: normal; }
+.write-pane textarea { padding: 24px 28px 64px; resize: none; background: var(--surface-2); font: 14px/1.9 "JetBrains Mono", "Vazirmatn", ui-monospace, monospace; tab-size: 2; caret-color: var(--accent); overflow-wrap: break-word; text-align: start; unicode-bidi: normal; }
 .write-pane textarea::placeholder { color: var(--muted); opacity: .65; }
 textarea::selection { background: var(--accent-soft); }
 .write-pane > .notepad-voice-input { position: absolute; inset-inline-end: 14px; bottom: 14px; z-index: 2; }
@@ -138,7 +148,7 @@ textarea::selection { background: var(--accent-soft); }
 .markdown-preview > * { max-width: 72ch; }
 .markdown-preview > :first-child { margin-top: 0; }
 .markdown-preview h1, .markdown-preview h2, .markdown-preview h3 { line-height: 1.25; font-weight: 650; }
-.markdown-preview h1 { font: 400 32px/1.15 Georgia, serif; letter-spacing: -.02em; margin: 0 0 20px; }
+.markdown-preview h1 { font: 400 32px/1.15 Georgia, "Vazirmatn", serif; letter-spacing: -.02em; margin: 0 0 20px; }
 .markdown-preview h2 { font-size: 22px; margin: 32px 0 12px; padding-bottom: 9px; border-bottom: 1px solid var(--border); }
 .markdown-preview h3 { font-size: 18px; margin: 26px 0 10px; }
 .markdown-preview p { margin: 0 0 14px; }
@@ -147,7 +157,7 @@ textarea::selection { background: var(--accent-soft); }
 .markdown-preview li::marker { color: var(--accent); }
 .markdown-preview blockquote { margin: 0 0 14px; padding: 10px 16px; border-inline-start: 3px solid var(--accent); border-radius: 0 9px 9px 0; background: var(--accent-soft); color: var(--text-secondary); }
 .markdown-preview blockquote[dir="rtl"] { border-radius: 9px 0 0 9px; }
-.markdown-preview code, .markdown-preview pre { font-family: "JetBrains Mono", ui-monospace, monospace; }
+.markdown-preview code, .markdown-preview pre { font-family: "JetBrains Mono", "Vazirmatn", ui-monospace, monospace; }
 .markdown-preview code { display: inline-block; padding: 1px 6px; border-radius: 5px; background: var(--accent-soft); font-size: .88em; direction: ltr; unicode-bidi: isolate; text-align: left; }
 .markdown-preview pre { padding: 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); line-height: 1.65; overflow: auto; direction: ltr; text-align: left; overflow-wrap: normal; }
 .markdown-preview pre code { display: block; padding: 0; background: none; }
@@ -163,7 +173,7 @@ textarea::selection { background: var(--accent-soft); }
 .md-task input { flex: none; width: 15px; height: 15px; accent-color: var(--accent); cursor: pointer; }
 .md-task input:checked + span { color: var(--muted); text-decoration: line-through; }
 .markdown-preview .empty { display: grid; place-items: center; min-height: 40vh; max-width: none; margin: 0; color: var(--muted); font-size: 14px; text-align: center; }
-.write-pane textarea[dir="rtl"], .markdown-preview[dir="rtl"] { font-family: Tahoma, "Segoe UI", sans-serif; }
+.write-pane textarea[dir="rtl"], .markdown-preview[dir="rtl"] { font-family: "Vazirmatn", Tahoma, "Segoe UI", sans-serif; }
 
 /* ── Status bar ──────────────────────────────────────────────── */
 .editor-status { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; padding: 0 6px; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
