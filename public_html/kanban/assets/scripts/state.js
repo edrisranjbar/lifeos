@@ -151,6 +151,18 @@ function setupEventListeners() {
     if (event.target === $('moveCardModal') && !state.moveCard?.busy) $('moveCardModal').close();
   });
   $('moveCardModal').addEventListener('cancel', event => { if (state.moveCard?.busy) event.preventDefault(); });
+  $('goalCardBtn').addEventListener('click', () => {
+    document.querySelector('.editor-more').open = false;
+    openGoalCard({...state.cardModal, fromEditor: true});
+  });
+  $('goalCardForm').addEventListener('submit', moveCardToGoal);
+  ['closeGoalCard', 'cancelGoalCard'].forEach(id => $(id).addEventListener('click', () => {
+    if (!state.goalCard?.busy) $('goalCardModal').close();
+  }));
+  $('goalCardModal').addEventListener('click', event => {
+    if (event.target === $('goalCardModal') && !state.goalCard?.busy) $('goalCardModal').close();
+  });
+  $('goalCardModal').addEventListener('cancel', event => { if (state.goalCard?.busy) event.preventDefault(); });
   $('cardTitle')?.addEventListener('input', clearCardFormError);
   $('cardDescription')?.addEventListener('input', clearCardFormError);
   $('addLabelBtn')?.addEventListener('click', addBoardLabel);

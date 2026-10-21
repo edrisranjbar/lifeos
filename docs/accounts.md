@@ -8,7 +8,7 @@ Every account is an administrator. Each signs in with its own username and passw
 
 Settings has four sections:
 
-- **Preferences:** appearance and display currency. Currency changes labels without converting amounts.
+- **Preferences:** appearance, display currency and calendar. Currency changes labels without converting amounts; the calendar (Gregorian or Jalali) only changes how Habittify shows dates.
 - **My account:** change your own username or password after confirming your current password; sign out of this browser.
 - **Accounts:** create administrators, change another account's username, reset its password, deactivate or reactivate access. All changes require the acting administrator's current password. New passwords must be 12–72 bytes. Duplicate usernames are rejected.
 - **About:** project and issue links.

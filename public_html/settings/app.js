@@ -101,12 +101,19 @@
   window.appStorageReady.then(()=>{
     document.documentElement.dataset.theme=appStorage.getItem('edi_os_theme') || 'dark'; updateThemeButtons();
     $('currency').value=lifeOsCurrency.current().code; $('currency').disabled=false; themeButtons.forEach(button=>button.disabled=false);
+    $('calendar').value=appStorage.getItem('edi_calendar_v1')==='jalali'?'jalali':'gregorian'; $('calendar').disabled=false;
   }).catch(()=>status('preferenceMessage','Unable to load preferences. Reload to try again.','error'));
   $('currency').addEventListener('change',async()=>{
     $('currency').disabled=true;
     try { appStorage.setItem(lifeOsCurrency.KEY,$('currency').value); await appStorage.flush(); status('preferenceMessage','Display currency saved.','success'); }
     catch (error) { status('preferenceMessage',error.message,'error'); }
     finally { $('currency').disabled=false; }
+  });
+  $('calendar').addEventListener('change',async()=>{
+    $('calendar').disabled=true;
+    try { appStorage.setItem('edi_calendar_v1',$('calendar').value); await appStorage.flush(); status('preferenceMessage','Calendar saved.','success'); }
+    catch (error) { status('preferenceMessage',error.message,'error'); }
+    finally { $('calendar').disabled=false; }
   });
   themeButtons.forEach(button=>button.addEventListener('click',async()=>{
     themeButtons.forEach(item=>item.disabled=true);

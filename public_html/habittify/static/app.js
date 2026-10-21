@@ -26,7 +26,23 @@ const JALALI_MONTHS_FA = [
   "بهمن",
   "اسفند",
 ];
+const GREGORIAN_MONTHS = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
 const WEEKDAYS_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+// Shared with Settings. Gregorian unless the user picks the Jalali calendar.
+const CALENDAR_KEY = "edi_calendar_v1";
 
 const state = {
   habits: [],
@@ -35,7 +51,8 @@ const state = {
   recentLogs: {},
   activityLogs: {},
   activityRange: null,
-  currentJ: null,
+  month: null,
+  calendar: "gregorian",
   today: new Date(),
 };
 
@@ -147,6 +164,54 @@ function getMonthDays(jy, jm) {
   });
 }
 
+// Calendar-neutral helpers: months are { y, m } in the active calendar, while
+// every stored log date stays a Gregorian YYYY-MM-DD.
+function readCalendar() {
+  try {
+    return appStorage.getItem(CALENDAR_KEY) === "jalali" ? "jalali" : "gregorian";
+  } catch {
+    return "gregorian";
+  }
+}
+
+function monthOf(date) {
+  if (state.calendar === "jalali") {
+    const j = jalaliFromDate(date);
+    return { y: j.jy, m: j.jm };
+  }
+  return { y: date.getFullYear(), m: date.getMonth() + 1 };
+}
+
+function shiftMonth({ y, m }, delta) {
+  const next = normalizeMonth(y, m + delta);
+  return { y: next.jy, m: next.jm };
+}
+
+function sameMonth(a, b) {
+  return a.y === b.y && a.m === b.m;
+}
+
+function monthDays({ y, m }) {
+  if (state.calendar === "jalali") return getMonthDays(y, m).map((day) => ({ ...day, d: day.jd }));
+  const length = new Date(y, m, 0).getDate();
+  return Array.from({ length }, (_, i) => {
+    const date = new Date(y, m - 1, i + 1);
+    return { d: i + 1, date, iso: toISODate(date), weekday: date.getDay() };
+  });
+}
+
+function monthLabel({ y, m }) {
+  return `${(state.calendar === "jalali" ? JALALI_MONTHS : GREGORIAN_MONTHS)[m - 1]} ${y}`;
+}
+
+function dayLabel(date) {
+  if (state.calendar === "jalali") {
+    const j = jalaliFromDate(date);
+    return `${j.jd} ${JALALI_MONTHS[j.jm - 1]} ${j.jy}`;
+  }
+  return `${date.getDate()} ${GREGORIAN_MONTHS[date.getMonth()]} ${date.getFullYear()}`;
+}
+
 async function api(path, options = {}) {
   const [routePath, query = ""] = path.replace(/^\/api\/?/, "").split("?");
   const endpoint = `api.php?route=${encodeURIComponent(routePath)}${query ? `&${query}` : ""}`;
@@ -177,7 +242,7 @@ async function loadHabits() {
 }
 
 async function loadLogs() {
-  const days = getMonthDays(state.currentJ.jy, state.currentJ.jm);
+  const days = monthDays(state.month);
   const start = days[0].iso;
   const end = days[days.length - 1].iso;
   const data = await api(`/api/logs?start=${start}&end=${end}`);
@@ -223,7 +288,7 @@ function renderDailyProgress() {
 }
 
 async function loadActivity() {
-  const days = getMonthDays(state.currentJ.jy, state.currentJ.jm);
+  const days = monthDays(state.month);
   const start = days[0].date;
   const end = days[days.length - 1].date;
   const data = await api(
@@ -387,28 +452,23 @@ function renderActivityGrid() {
       activeIds.has(id),
     ).length;
     const level = activityLevel(doneCount, totalHabits);
-    const j = jalaliFromDate(date);
-    const label = `${j.jd} ${JALALI_MONTHS[j.jm - 1]} ${j.jy} · ${doneCount}/${totalHabits} done`;
+    const label = `${dayLabel(date)} · ${doneCount}/${totalHabits} done`;
     html += `<div class="activity-cell level-${level}" title="${escapeHtml(label)}"></div>`;
   }
 
   $("activityGrid").innerHTML = html;
   $("activitySubtitle").textContent =
-    `${JALALI_MONTHS[state.currentJ.jm - 1]} ${state.currentJ.jy} · ${toISODate(start)} → ${toISODate(end)}`;
+    `${monthLabel(state.month)} · ${toISODate(start)} → ${toISODate(end)}`;
 }
 
 function renderHeader(days) {
-  const { jy, jm } = state.currentJ;
-  $("monthName").textContent = `${JALALI_MONTHS[jm - 1]} ${jy}`;
-  const today = jalaliFromDate(new Date());
-  $("monthDateRange").textContent = `${today.jd} ${JALALI_MONTHS[today.jm - 1]} ${today.jy}`;
+  $("monthName").textContent = monthLabel(state.month);
+  $("monthDateRange").textContent = dayLabel(new Date());
 }
 
 function renderTodayList() {
   const todayIso = toISODate(new Date());
-  const todayJ = jalaliFromDate(new Date());
-  $("todayDateLabel").textContent =
-    `${todayJ.jd} ${JALALI_MONTHS[todayJ.jm - 1]} ${todayJ.jy}`;
+  $("todayDateLabel").textContent = dayLabel(new Date());
 
   const list = $("todayList");
   renderDailyProgress();
@@ -452,13 +512,10 @@ async function toggleToday(habitId) {
   }); } catch (error) { showToast(error.message); if (button) button.disabled = false; return; }
   setDoneLocal(habitId, todayIso, data.done);
   renderTodayList();
-  if (
-    state.currentJ.jy === jalaliFromDate(new Date()).jy &&
-    state.currentJ.jm === jalaliFromDate(new Date()).jm
-  ) {
+  if (sameMonth(state.month, monthOf(new Date()))) {
     renderTable();
   } else {
-    renderStats(getMonthDays(state.currentJ.jy, state.currentJ.jm));
+    renderStats(monthDays(state.month));
   }
   await loadActivity();
   renderActivityGrid();
@@ -466,7 +523,7 @@ async function toggleToday(habitId) {
 
 function renderTable() {
   const table = $("habitTable");
-  const days = getMonthDays(state.currentJ.jy, state.currentJ.jm);
+  const days = monthDays(state.month);
   renderHeader(days);
   renderTodayList();
 
@@ -478,15 +535,15 @@ function renderTable() {
 
   const todayIso = toISODate(new Date());
   const head = `
-    <caption class="sr-only">Habits and daily completion for ${JALALI_MONTHS[state.currentJ.jm - 1]} ${state.currentJ.jy}</caption>
+    <caption class="sr-only">Habits and daily completion for ${monthLabel(state.month)}</caption>
     <thead>
       <tr>
         <th scope="col">Habit</th>
         ${days
           .map(
             (day) => `
-          <th scope="col" class="${day.iso === todayIso ? "today-head" : ""}" aria-label="${day.jd} ${JALALI_MONTHS[day.jm - 1]} ${day.jy}, ${WEEKDAYS_SHORT[day.weekday]}">
-            <div class="day-num">${day.jd}</div>
+          <th scope="col" class="${day.iso === todayIso ? "today-head" : ""}" aria-label="${dayLabel(day.date)}, ${WEEKDAYS_SHORT[day.weekday]}">
+            <div class="day-num">${day.d}</div>
             <div class="day-name">${WEEKDAYS_SHORT[day.weekday]}</div>
           </th>
         `,
@@ -516,7 +573,7 @@ function renderTable() {
               const done = isDone(habit.id, day.iso);
               return `
               <td class="check-cell">
-                <button class="check-btn ${done ? "done" : ""}" data-habit="${habit.id}" data-date="${day.iso}" aria-label="${escapeHtml(habit.name)}, ${day.jd} ${JALALI_MONTHS[day.jm - 1]} ${day.jy}" aria-pressed="${done}" title="${day.jd} ${JALALI_MONTHS[day.jm - 1]} ${day.jy}"></button>
+                <button class="check-btn ${done ? "done" : ""}" data-habit="${habit.id}" data-date="${day.iso}" aria-label="${escapeHtml(habit.name)}, ${dayLabel(day.date)}" aria-pressed="${done}" title="${dayLabel(day.date)}"></button>
               </td>
             `;
             })
@@ -550,7 +607,7 @@ async function toggleCell(button) {
   setDoneLocal(habitId, date, data.done);
   button.classList.toggle("done", data.done);
   button.setAttribute("aria-pressed", String(data.done));
-  renderStats(getMonthDays(state.currentJ.jy, state.currentJ.jm));
+  renderStats(monthDays(state.month));
   if (date === toISODate(new Date())) renderTodayList();
   else renderDailyProgress();
   await loadActivity();
@@ -653,21 +710,21 @@ function bindEvents() {
   $('cancelAdd').addEventListener('click', () => $('addDialog').close());
 
   $("prevMonth").addEventListener("click", async () => {
-    state.currentJ = normalizeMonth(state.currentJ.jy, state.currentJ.jm - 1);
+    state.month = shiftMonth(state.month, -1);
     await Promise.all([loadLogs(), loadActivity()]);
     renderTable();
     renderActivityGrid();
   });
 
   $("nextMonth").addEventListener("click", async () => {
-    state.currentJ = normalizeMonth(state.currentJ.jy, state.currentJ.jm + 1);
+    state.month = shiftMonth(state.month, 1);
     await Promise.all([loadLogs(), loadActivity()]);
     renderTable();
     renderActivityGrid();
   });
 
   $("todayBtn").addEventListener("click", async () => {
-    state.currentJ = jalaliFromDate(new Date());
+    state.month = monthOf(new Date());
     await Promise.all([loadLogs(), loadActivity()]);
     renderTable();
     renderActivityGrid();
@@ -727,9 +784,21 @@ function bindEvents() {
 }
 
 async function boot() {
-  state.currentJ = jalaliFromDate(new Date());
+  state.calendar = readCalendar();
+  state.month = monthOf(new Date());
   bindEvents();
   await refresh();
+  // Follow a calendar change made in Settings without a reload.
+  addEventListener("app-storage-change", async () => {
+    const calendar = readCalendar();
+    if (calendar === state.calendar) return;
+    state.calendar = calendar;
+    state.month = monthOf(new Date());
+    await Promise.all([loadLogs(), loadActivity()]);
+    renderTable();
+    renderActivityGrid();
+    renderTodayList();
+  });
 }
 
 window.appStorageReady

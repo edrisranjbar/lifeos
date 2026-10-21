@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <script src="/assets/storage.js?v=multi-user-1"></script>
+    <script src="/assets/storage.js?v=calendar-1"></script>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
@@ -23,7 +23,7 @@
         }
       })();
     </script>
-    <link rel="stylesheet" href="assets/styles/style.css?v=issue19-1" />
+    <link rel="stylesheet" href="assets/styles/style.css?v=goal-move-1" />
   <script src="/assets/html-escape.js?v=issue19-1"></script>
 </head>
   <body>
@@ -114,7 +114,7 @@
           <select id="cardList" aria-label="Card list"></select>
           <div class="trello-top-actions">
             <button type="button" data-editor-target="cardAttachmentsSection" aria-label="Card attachments"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><circle cx="9" cy="9" r="1"/><path d="m5 18 5-6 3 3 3-4 3 7"/></svg></button>
-            <details class="editor-more"><summary aria-label="More card actions">⋯</summary><div><button type="button" id="moveCardBtn">Move to another project</button><button type="button" id="deleteCardBtn" class="menu-danger">Delete card</button></div></details>
+            <details class="editor-more"><summary aria-label="More card actions">⋯</summary><div><button type="button" id="moveCardBtn">Move to another project</button><button type="button" id="goalCardBtn">Move to goal</button><button type="button" id="deleteCardBtn" class="menu-danger">Delete card</button></div></details>
             <button type="button" id="closeCardModal" aria-label="Close card"><svg viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
           </div>
         </header>
@@ -203,16 +203,26 @@
         <footer><button type="button" id="cancelMoveCard" class="btn-ghost">Cancel</button><button type="submit" id="confirmMoveCard" class="btn-primary">Move card</button></footer>
       </form>
     </dialog>
+    <dialog class="move-card-modal" id="goalCardModal" aria-labelledby="goalCardTitle">
+      <form id="goalCardForm">
+        <header><div><p class="move-card-kicker">CARD ACTION</p><h2 id="goalCardTitle">Move to goal</h2></div><button type="button" id="closeGoalCard" aria-label="Close move to goal">×</button></header>
+        <p id="goalCardSummary" class="move-card-summary" dir="auto"></p>
+        <ul id="goalCardDetails" class="goal-card-details"></ul>
+        <p class="move-card-hint">The card leaves this board and becomes a goal in Goals. Its priority, start date and labels carry over; comments and activity do not.</p>
+        <p id="goalCardError" class="move-card-error" role="alert" hidden></p>
+        <footer><button type="button" id="cancelGoalCard" class="btn-ghost">Cancel</button><button type="submit" id="confirmGoalCard" class="btn-primary">Move to goal</button></footer>
+      </form>
+    </dialog>
     <div class="toast" id="toast"></div>
-    <script src="assets/scripts/state.js?v=issue19-1" defer></script>
+    <script src="assets/scripts/state.js?v=goal-move-1" defer></script>
 <script src="assets/scripts/inline-editor.js?v=issue19-1" defer></script>
 <script src="assets/scripts/board-tabs.js?v=issue19-1" defer></script>
 <script src="assets/scripts/column-drag.js?v=issue19-1" defer></script>
-<script src="assets/scripts/board-view.js?v=issue19-1" defer></script>
+<script src="assets/scripts/board-view.js?v=goal-move-1" defer></script>
 <script src="assets/scripts/board-modal.js?v=issue19-1" defer></script>
 <script src="assets/scripts/card-drag.js?v=issue19-1" defer></script>
 <script src="assets/scripts/utilities.js?v=issue19-1" defer></script>
-<script src="assets/scripts/card-modal.js?v=issue19-1" defer></script>
+<script src="assets/scripts/card-modal.js?v=goal-move-1" defer></script>
 <script src="assets/scripts/attachments.js?v=issue19-1" defer></script>
 <script src="assets/scripts/dates.js?v=issue19-1" defer></script>
 <script src="assets/scripts/card-fields.js?v=issue19-1" defer></script>

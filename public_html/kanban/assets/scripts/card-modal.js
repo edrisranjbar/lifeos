@@ -309,6 +309,75 @@ async function moveCardToProject(event) {
   }
 }
 
+function setGoalCardBusy(busy) {
+  ['confirmGoalCard', 'cancelGoalCard', 'closeGoalCard'].forEach(id => { $(id).disabled = busy; });
+  $('confirmGoalCard').textContent = busy ? 'Moving…' : 'Move to goal';
+}
+
+function openGoalCard(context) {
+  const card = getColumn(context.boardId, context.columnId)?.cards.find(item => item.id === context.cardId);
+  if (!card) return;
+  state.goalCard = {...context, busy: false};
+  $('goalCardSummary').textContent = card.title || 'Untitled card';
+  const lists = Array.isArray(card.checklists) ? card.checklists : [{items: card.checklist || []}];
+  const tasks = lists.reduce((count, list) => count + (list.items || []).filter(item => item.text?.trim()).length, 0);
+  const details = [
+    card.description?.trim() ? 'The description becomes the goal’s specific outcome.' : '',
+    card.dueDate ? `The due date (${formatCardDueDate(card.dueDate)}) becomes the deadline.` : 'No due date, so the goal starts without a deadline.',
+    tasks ? `${tasks} checklist item${tasks === 1 ? '' : 's'} become${tasks === 1 ? 's' : ''} goal tasks.` : 'No checklist items yet; add tasks in Goals.',
+  ].filter(Boolean);
+  $('goalCardDetails').replaceChildren(...details.map(text => Object.assign(document.createElement('li'), {textContent: text})));
+  $('goalCardError').hidden = true;
+  setGoalCardBusy(false);
+  $('goalCardModal').showModal();
+}
+
+async function moveCardToGoal(event) {
+  event.preventDefault();
+  const context = state.goalCard;
+  if (!context || context.busy) return;
+  if (context.fromEditor && $('cardModal').open) {
+    handleCardFormSubmit({preventDefault() {}});
+    if ($('cardModal').open) { $('goalCardModal').close(); $('cardTitle').focus(); return; }
+    context.fromEditor = false;
+  }
+  // Saving the editor may have changed the card's list.
+  const source = getBoard(context.boardId)?.columns.find(column => column.cards.some(card => card.id === context.cardId));
+  if (!source) { $('goalCardError').textContent = 'Card not found. Reload the board and try again.'; $('goalCardError').hidden = false; return; }
+  context.busy = true;
+  setGoalCardBusy(true);
+  $('goalCardError').hidden = true;
+  try {
+    const data = await appStorage.mutateItems([KEY, 'edi_goals_v1'], async ({csrf, revisions}) => {
+      const response = await fetch('/kanban.php', {
+        method: 'POST', redirect: 'error', signal: AbortSignal.timeout(15000),
+        headers: {'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRF-Token': csrf},
+        body: JSON.stringify({action: 'to_goal', board_id: context.boardId, column_id: source.id, card_id: context.cardId, revisions})
+      });
+      let payload;
+      try { payload = await response.json(); } catch { throw new Error('The server could not process the move. Please try again.'); }
+      if (!response.ok) {
+        const error = new Error(payload.error?.message || (typeof payload.error === 'string' ? payload.error : 'Unable to move the card. Please try again.'));
+        error.stateConflict = payload.error?.code === 'state_conflict';
+        throw error;
+      }
+      return payload.data;
+    });
+    state.boards = JSON.parse(appStorage.getItem(KEY)).boards;
+    $('goalCardModal').close();
+    render();
+    showToast(`“${data.result.title}” is now a goal`, 'success');
+  } catch (error) {
+    $('goalCardError').textContent = ['TimeoutError', 'AbortError', 'TypeError'].includes(error.name)
+      ? 'The move could not be confirmed. Reload to check the card before trying again.'
+      : error.message || 'Unable to move the card.';
+    $('goalCardError').hidden = false;
+  } finally {
+    context.busy = false;
+    setGoalCardBusy(false);
+  }
+}
+
 function openCardModal({ boardId, columnId, cardId }) {
   const board = getBoard(boardId);
   if (!board) return;

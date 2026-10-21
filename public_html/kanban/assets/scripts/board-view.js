@@ -176,7 +176,7 @@ function renderBoardContent() {
         <div class="card-header">
           <span class="priority-dot ${priorityClass}" role="img" aria-label="${priority} priority" title="${priority} priority"></span>
           <h3 class="card-title" contenteditable="false">${escapeHtml(card.title)}</h3>
-          <details class="card-menu"><summary aria-label="Card actions" title="Card actions">⋯</summary><div class="card-actions-menu"><button type="button" data-action="edit">Edit card</button><button type="button" data-action="move">Move to another project</button><button type="button" data-action="delete" class="menu-danger">Delete card</button></div></details>
+          <details class="card-menu"><summary aria-label="Card actions" title="Card actions">⋯</summary><div class="card-actions-menu"><button type="button" data-action="edit">Edit card</button><button type="button" data-action="move">Move to another project</button><button type="button" data-action="goal">Move to goal</button><button type="button" data-action="delete" class="menu-danger">Delete card</button></div></details>
         </div>
         ${card.description ? `<p class="card-desc">${escapeHtml(card.description)}</p>` : ''}
         ${labelsHtml ? `<div class="card-meta"><div class="card-labels">${labelsHtml}</div></div>` : ''}
@@ -193,6 +193,10 @@ function renderBoardContent() {
       cardEl.querySelector('[data-action="move"]').addEventListener('click', () => {
         cardEl.querySelector('.card-menu').open = false;
         openMoveCard({boardId: board.id, columnId: column.id, cardId: card.id, fromEditor: false});
+      });
+      cardEl.querySelector('[data-action="goal"]').addEventListener('click', () => {
+        cardEl.querySelector('.card-menu').open = false;
+        openGoalCard({boardId: board.id, columnId: column.id, cardId: card.id, fromEditor: false});
       });
       cardEl.querySelector('[data-action="delete"]').addEventListener('click', (e) => {
         e.stopPropagation();
