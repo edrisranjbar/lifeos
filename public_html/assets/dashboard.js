@@ -142,6 +142,7 @@ export function mountDashboard() {
       <a href="#focus"><i style="background:#c49bff"></i>Focus</a>
       <a href="#finance"><i style="background:#3bb273"></i>Finance</a>
       <a href="#habittify"><i style="background:#39e6ad"></i>Habittify</a>
+      <a href="#todo"><i style="background:#ff8060"></i>Todo</a>
       <a href="#kanban"><i style="background:#7dbafa"></i>Kanban</a>
       <a href="#goals"><i style="background:#f3c969"></i>Goals</a>
       <a href="#notes"><i style="background:#ff9ec4"></i>Notes</a>

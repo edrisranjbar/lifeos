@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <script src="/assets/storage.js?v=todo-1"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Plan everyday tasks with subtasks, due dates, priorities and lists.">
+  <title>Todo · Edi Life OS</title>
+  <script>
+    try { document.documentElement.dataset.theme = appStorage.getItem('edi_os_theme') || 'dark'; } catch { document.documentElement.dataset.theme = 'dark'; }
+  </script>
+  <link rel="stylesheet" href="static/style.css?v=todo-1">
+  <script src="/assets/html-escape.js?v=issue19-1"></script>
+</head>
+<body>
+  <main class="app">
+    <header class="page-header">
+      <div class="page-title">
+        <span class="eyebrow">Everyday tasks</span>
+        <div class="title-line">
+          <h1>Todo</h1>
+          <span class="count-pill" id="openCount">0 open</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <span class="save-status" id="saveStatus" role="status" data-state="saved">Saved</span>
+        <label class="search-field">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input id="searchInput" type="search" placeholder="Search tasks" aria-label="Search tasks" autocomplete="off">
+          <kbd>/</kbd>
+        </label>
+      </div>
+    </header>
+
+    <section class="todo-workspace">
+      <aside class="todo-sidebar" aria-label="Task views and lists">
+        <nav class="view-list" id="viewList" aria-label="Views"></nav>
+        <div class="sidebar-heading">
+          <h2>Lists</h2>
+          <button type="button" class="icon-btn" id="newListBtn" title="New list" aria-label="New list"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+        </div>
+        <nav class="view-list" id="customLists" aria-label="Lists"></nav>
+        <form class="new-list-form" id="newListForm" hidden>
+          <label class="sr-only" for="newListName">List name</label>
+          <input id="newListName" maxlength="60" placeholder="List name" autocomplete="off" dir="auto">
+        </form>
+      </aside>
+
+      <section class="task-column" aria-labelledby="viewTitle">
+        <div class="task-column-head">
+          <div>
+            <h2 id="viewTitle">Inbox</h2>
+            <p id="viewHint"></p>
+          </div>
+          <div class="column-actions">
+            <label class="sr-only" for="sortSelect">Sort tasks</label>
+            <select id="sortSelect" class="select">
+              <option value="smart">Smart order</option>
+              <option value="due">Due date</option>
+              <option value="priority">Priority</option>
+              <option value="created">Newest first</option>
+              <option value="title">Name</option>
+            </select>
+            <button type="button" class="ghost-btn" id="listMenuBtn" hidden>Rename list</button>
+            <button type="button" class="ghost-btn danger" id="deleteListBtn" hidden>Delete list</button>
+          </div>
+        </div>
+
+        <form class="quick-add" id="quickAdd">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+          <label class="sr-only" for="quickTitle">New task</label>
+          <input id="quickTitle" maxlength="300" placeholder="Add a task… press Enter to save" autocomplete="off" dir="auto">
+          <label class="sr-only" for="quickDue">Due date</label>
+          <input id="quickDue" type="date" title="Due date">
+          <label class="sr-only" for="quickPriority">Priority</label>
+          <select id="quickPriority" class="select" title="Priority">
+            <option value="none">No priority</option>
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+          </select>
+          <button type="submit" class="btn-primary">Add</button>
+        </form>
+
+        <ol class="task-list" id="taskList" aria-label="Tasks"></ol>
+        <div class="empty-state" id="emptyState" hidden>
+          <div class="empty-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4 10-10"/></svg></div>
+          <strong id="emptyTitle">Nothing here yet</strong>
+          <span id="emptyText">Add a task above to get started.</span>
+        </div>
+
+        <details class="done-section" id="doneSection" hidden>
+          <summary><span id="doneLabel">Completed</span><button type="button" class="ghost-btn" id="clearDoneBtn">Clear completed</button></summary>
+          <ol class="task-list" id="doneList" aria-label="Completed tasks"></ol>
+        </details>
+      </section>
+
+      <aside class="task-detail" id="taskDetail" aria-label="Task details" hidden>
+        <div class="detail-head">
+          <label class="check" title="Mark complete">
+            <input type="checkbox" id="detailDone">
+            <span aria-hidden="true"></span>
+            <span class="sr-only">Completed</span>
+          </label>
+          <label class="sr-only" for="detailTitle">Task name</label>
+          <textarea id="detailTitle" class="detail-title" rows="1" maxlength="300" dir="auto" placeholder="Task name"></textarea>
+          <button type="button" class="icon-btn" id="closeDetail" title="Close" aria-label="Close details"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+        </div>
+
+        <div class="detail-fields">
+          <label class="field">
+            <span>Due date</span>
+            <input type="date" id="detailDue">
+          </label>
+          <label class="field">
+            <span>Priority</span>
+            <select id="detailPriority" class="select">
+              <option value="none">None</option>
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>List</span>
+            <select id="detailList" class="select"></select>
+          </label>
+        </div>
+
+        <section class="detail-block">
+          <div class="detail-block-head">
+            <h3>Subtasks</h3>
+            <span class="subtask-count" id="subtaskCount"></span>
+          </div>
+          <div class="progress" id="subtaskProgress" hidden><span></span></div>
+          <ul class="subtask-list" id="subtaskList"></ul>
+          <form class="subtask-add" id="subtaskAdd">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+            <label class="sr-only" for="subtaskTitle">New subtask</label>
+            <input id="subtaskTitle" maxlength="300" placeholder="Add a subtask" autocomplete="off" dir="auto">
+          </form>
+        </section>
+
+        <section class="detail-block">
+          <div class="detail-block-head"><h3><label for="detailNotes">Description</label></h3></div>
+          <textarea id="detailNotes" class="detail-notes" maxlength="20000" dir="auto" placeholder="Add details, links or context…"></textarea>
+        </section>
+
+        <footer class="detail-foot">
+          <span id="detailMeta"></span>
+          <button type="button" class="ghost-btn danger" id="deleteTask"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>Delete</button>
+        </footer>
+      </aside>
+    </section>
+  </main>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="static/app.js?v=todo-1" defer></script>
+</body>
+</html>
