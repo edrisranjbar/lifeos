@@ -4,6 +4,7 @@ const $$ = (sel) => document.querySelectorAll(sel);
 const state = {
   boards: [],
   activeBoardId: null,
+  allProjects: false,
   editing: {
     type: null, // 'card' or 'column'
     id: null,
@@ -43,6 +44,7 @@ function loadState() {
       const parsed = JSON.parse(saved);
       state.boards = parsed.boards || [];
       state.activeBoardId = parsed.activeBoardId || null;
+      state.allProjects = parsed.allProjects === true;
       if (!state.activeBoardId && state.boards.length > 0) {
         state.activeBoardId = state.boards[0].id;
       }
@@ -293,7 +295,8 @@ function saveState() {
   try {
     appStorage.setItem(KEY, JSON.stringify({
       boards: state.boards,
-      activeBoardId: state.activeBoardId
+      activeBoardId: state.activeBoardId,
+      allProjects: state.allProjects
     }));
   } catch (e) {
     console.error("Failed to save kanban state:", e);
