@@ -11,8 +11,23 @@ function renderBoardTabs() {
 
   container.innerHTML = '';
 
+  const allGroup = document.createElement('div');
+  allGroup.className = `board-tab-group all-projects-tab ${state.allProjects ? 'active' : ''}`;
+  const allTab = document.createElement('button');
+  allTab.type = 'button';
+  allTab.className = 'board-tab';
+  allTab.setAttribute('aria-current', state.allProjects ? 'page' : 'false');
+  allTab.innerHTML = window.lifeOsI18n.markup('<span class="tab-name">All projects</span>');
+  allTab.addEventListener('click', () => {
+    state.allProjects = true;
+    saveState();
+    render();
+  });
+  allGroup.appendChild(allTab);
+  container.appendChild(allGroup);
+
   state.boards.forEach(board => {
-    const isActive = board.id === state.activeBoardId;
+    const isActive = !state.allProjects && board.id === state.activeBoardId;
     const group = document.createElement('div');
     group.className = `board-tab-group ${isActive ? 'active' : ''}`;
     const tab = document.createElement('button');
@@ -32,6 +47,7 @@ function renderBoardTabs() {
     tab.addEventListener('click', (e) => {
       e.stopPropagation();
       state.activeBoardId = board.id;
+      state.allProjects = false;
       saveState();
       render();
     });

@@ -46,6 +46,7 @@ function handleBoardSubmit(e) {
   } else {
     state.boards.push({...createBoard(name), description, background});
     state.activeBoardId = state.boards[state.boards.length - 1].id;
+    state.allProjects = false;
     showToast(window.lifeOsI18n.t('Board created'), 'success');
   }
   saveState();

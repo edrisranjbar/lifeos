@@ -8,6 +8,11 @@ function renderBoardContent() {
   const container = $('columnsContainer');
   if (!container) return;
 
+  if (state.allProjects) {
+    renderAllProjectsContent();
+    return;
+  }
+
   const board = getActiveBoard();
   if (!board) {
     container.innerHTML = window.lifeOsI18n.markup('<div class="empty-board"><h3>No boards</h3><p>Create a board to get started</p></div>');
@@ -151,79 +156,7 @@ function renderBoardContent() {
 
     // Render cards
     const cardsContainer = colEl.querySelector('.column-cards');
-    column.cards.forEach((card, cardIndex) => {
-      const cardEl = document.createElement('div');
-      cardEl.className = 'card';
-      cardEl.dataset.cardId = card.id;
-      cardEl.dataset.cardIndex = cardIndex;
-      cardEl.draggable = true;
-
-      const priority = ['low', 'medium', 'high'].includes(card.priority) ? card.priority : 'medium';
-      const priorityClass = `priority-${priority}`;
-
-      // Labels HTML
-      const labelsHtml = (card.labelIds || []).map(id => board.labelDefs.find(label => label.id === id)).filter(Boolean)
-        .map(label => `<span class="label-tag" style="background:${safeLabelColor(label.color)};color:${labelTextColor(label.color)}">${escapeHtml(label.name)}</span>`).join('');
-      const checklist = card.checklist || [];
-      const completed = checklist.filter(item => item.done).length;
-      const dueDate = /^\d{4}-\d{2}-\d{2}$/.test(card.dueDate || '') ? card.dueDate : '';
-      const now = new Date();
-      const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-      const dueClass = dueDate && column.name.toLowerCase() !== 'done' ? (dueDate < today ? 'overdue' : dueDate === today ? 'due-today' : '') : '';
-
-      // Card content with inline edit support
-      cardEl.innerHTML = `
-        <div class="card-header">
-          <span class="priority-dot ${priorityClass}" role="img" aria-label="${escapeHtml(window.lifeOsI18n.t(priority + ' priority'))}" title="${escapeHtml(window.lifeOsI18n.t(priority + ' priority'))}"></span>
-          <h3 class="card-title" contenteditable="false">${escapeHtml(card.title)}</h3>
-          <details class="card-menu"><summary aria-label="${window.lifeOsI18n.t("Card actions")}" title="${window.lifeOsI18n.t("Card actions")}">⋯</summary><div class="card-actions-menu"><button type="button" data-action="edit">${window.lifeOsI18n.t("Edit card")}</button><button type="button" data-action="move">${window.lifeOsI18n.t("Move to another project")}</button><button type="button" data-action="goal">${window.lifeOsI18n.t("Move to goal")}</button><button type="button" data-action="delete" class="menu-danger">${window.lifeOsI18n.t("Delete card")}</button></div></details>
-        </div>
-        ${card.description ? `<p class="card-desc">${escapeHtml(card.description)}</p>` : ''}
-        ${labelsHtml ? `<div class="card-meta"><div class="card-labels">${labelsHtml}</div></div>` : ''}
-        ${(dueDate || checklist.length) ? `<div class="card-details-meta">${dueDate ? `<span class="due-badge ${dueClass}" title="Due ${escapeHtml(dueDate)}">◷ ${escapeHtml(formatCardDueDate(dueDate))}</span>` : ''}${checklist.length ? `<span class="checklist-badge" title="${window.lifeOsI18n.t("Checklist progress")}">☑ ${completed}/${checklist.length}</span>` : ''}</div>` : ''}
-      `;
-
-      // Remove card
-      cardEl.querySelector('.card-menu').addEventListener('click', (e) => e.stopPropagation());
-      cardEl.querySelector('.card-menu').addEventListener('dragstart', (e) => { e.preventDefault(); e.stopPropagation(); });
-      cardEl.querySelector('[data-action="edit"]').addEventListener('click', () => {
-        cardEl.querySelector('.card-menu').open = false;
-        openCardModal({ boardId: board.id, columnId: column.id, cardId: card.id });
-      });
-      cardEl.querySelector('[data-action="move"]').addEventListener('click', () => {
-        cardEl.querySelector('.card-menu').open = false;
-        openMoveCard({boardId: board.id, columnId: column.id, cardId: card.id, fromEditor: false});
-      });
-      cardEl.querySelector('[data-action="goal"]').addEventListener('click', () => {
-        cardEl.querySelector('.card-menu').open = false;
-        openGoalCard({boardId: board.id, columnId: column.id, cardId: card.id, fromEditor: false});
-      });
-      cardEl.querySelector('[data-action="delete"]').addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (!confirm(window.lifeOsI18n.t('Delete this card?'))) return;
-        column.cards.splice(cardIndex, 1);
-        saveState();
-        render();
-        showToast(window.lifeOsI18n.t('Card deleted'), 'success');
-      });
-
-      // Open details from any part of the card, as on a Trello board.
-      cardEl.addEventListener('click', (e) => {
-        if (e.target.closest('.card-menu')) return;
-        if (e.target.closest('.inline-edit-input')) return;
-        openCardModal({
-          boardId: state.activeBoardId,
-          columnId: column.id,
-          cardId: card.id
-        });
-      });
-
-      // Drag & drop
-      cardEl.addEventListener('dragstart', handleDragStart);
-      cardEl.addEventListener('dragend', handleDragEnd);
-
-      cardsContainer.appendChild(cardEl);
-    });
+    column.cards.forEach((card, cardIndex) => cardsContainer.appendChild(createCardElement(board, column, card, cardIndex)));
 
     container.appendChild(colEl);
   });
@@ -252,4 +185,81 @@ function renderBoardContent() {
     }
   });
   container.appendChild(addColEl);
+}
+
+// One card, shared by the single-project and all-projects views.
+function createCardElement(board, column, card, cardIndex, showProject = false) {
+  const cardEl = document.createElement('div');
+  cardEl.className = 'card';
+  cardEl.dataset.cardId = card.id;
+  cardEl.dataset.boardId = board.id;
+  cardEl.dataset.cardIndex = cardIndex;
+  cardEl.draggable = true;
+
+  const priority = ['low', 'medium', 'high'].includes(card.priority) ? card.priority : 'medium';
+  const priorityClass = `priority-${priority}`;
+
+  // Labels HTML
+  const labelsHtml = (card.labelIds || []).map(id => board.labelDefs.find(label => label.id === id)).filter(Boolean)
+    .map(label => `<span class="label-tag" style="background:${safeLabelColor(label.color)};color:${labelTextColor(label.color)}">${escapeHtml(label.name)}</span>`).join('');
+  const checklist = card.checklist || [];
+  const completed = checklist.filter(item => item.done).length;
+  const dueDate = /^\d{4}-\d{2}-\d{2}$/.test(card.dueDate || '') ? card.dueDate : '';
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const dueClass = dueDate && column.name.toLowerCase() !== 'done' ? (dueDate < today ? 'overdue' : dueDate === today ? 'due-today' : '') : '';
+
+  // Card content with inline edit support
+  cardEl.innerHTML = `
+        <div class="card-header">
+          <span class="priority-dot ${priorityClass}" role="img" aria-label="${escapeHtml(window.lifeOsI18n.t(priority + ' priority'))}" title="${escapeHtml(window.lifeOsI18n.t(priority + ' priority'))}"></span>
+          <h3 class="card-title" contenteditable="false">${escapeHtml(card.title)}</h3>
+          <details class="card-menu"><summary aria-label="${window.lifeOsI18n.t("Card actions")}" title="${window.lifeOsI18n.t("Card actions")}">⋯</summary><div class="card-actions-menu"><button type="button" data-action="edit">${window.lifeOsI18n.t("Edit card")}</button><button type="button" data-action="move">${window.lifeOsI18n.t("Move to another project")}</button><button type="button" data-action="goal">${window.lifeOsI18n.t("Move to goal")}</button><button type="button" data-action="delete" class="menu-danger">${window.lifeOsI18n.t("Delete card")}</button></div></details>
+        </div>
+        ${showProject ? `<span class="card-project" title="${window.lifeOsI18n.t("Project")}">${escapeHtml(board.name)}</span>` : ''}
+        ${card.description ? `<p class="card-desc">${escapeHtml(card.description)}</p>` : ''}
+        ${labelsHtml ? `<div class="card-meta"><div class="card-labels">${labelsHtml}</div></div>` : ''}
+        ${(dueDate || checklist.length) ? `<div class="card-details-meta">${dueDate ? `<span class="due-badge ${dueClass}" title="Due ${escapeHtml(dueDate)}">◷ ${escapeHtml(formatCardDueDate(dueDate))}</span>` : ''}${checklist.length ? `<span class="checklist-badge" title="${window.lifeOsI18n.t("Checklist progress")}">☑ ${completed}/${checklist.length}</span>` : ''}</div>` : ''}
+  `;
+
+  // Remove card
+  cardEl.querySelector('.card-menu').addEventListener('click', (e) => e.stopPropagation());
+  cardEl.querySelector('.card-menu').addEventListener('dragstart', (e) => { e.preventDefault(); e.stopPropagation(); });
+  cardEl.querySelector('[data-action="edit"]').addEventListener('click', () => {
+    cardEl.querySelector('.card-menu').open = false;
+    openCardModal({ boardId: board.id, columnId: column.id, cardId: card.id });
+  });
+  cardEl.querySelector('[data-action="move"]').addEventListener('click', () => {
+    cardEl.querySelector('.card-menu').open = false;
+    openMoveCard({boardId: board.id, columnId: column.id, cardId: card.id, fromEditor: false});
+  });
+  cardEl.querySelector('[data-action="goal"]').addEventListener('click', () => {
+    cardEl.querySelector('.card-menu').open = false;
+    openGoalCard({boardId: board.id, columnId: column.id, cardId: card.id, fromEditor: false});
+  });
+  cardEl.querySelector('[data-action="delete"]').addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!confirm(window.lifeOsI18n.t('Delete this card?'))) return;
+    column.cards.splice(cardIndex, 1);
+    saveState();
+    render();
+    showToast(window.lifeOsI18n.t('Card deleted'), 'success');
+  });
+
+  // Open details from any part of the card, as on a Trello board.
+  cardEl.addEventListener('click', (e) => {
+    if (e.target.closest('.card-menu')) return;
+    if (e.target.closest('.inline-edit-input')) return;
+    openCardModal({
+      boardId: board.id,
+      columnId: column.id,
+      cardId: card.id
+    });
+  });
+
+  // Drag & drop
+  cardEl.addEventListener('dragstart', handleDragStart);
+  cardEl.addEventListener('dragend', handleDragEnd);
+
+  return cardEl;
 }

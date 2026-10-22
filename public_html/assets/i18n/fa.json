@@ -1490,5 +1490,11 @@
   "No checklist items yet; add tasks in Goals.": "هنوز موردی در چک‌لیست نیست؛ در بخش اهداف کار اضافه کنید.",
   "The server could not process the move. Please try again.": "سرور نتوانست انتقال را انجام دهد. دوباره تلاش کنید.",
   "Unable to move the card. Please try again.": "انتقال کارت ممکن نشد. دوباره تلاش کنید.",
-  "“{title}” is now a goal": "«{title}» به هدف تبدیل شد"
+  "“{title}” is now a goal": "«{title}» به هدف تبدیل شد",
+  "All projects": "همه پروژه‌ها",
+  "Tasks from every project, grouped by list. Drag a card to move it to that list in its own project.": "تسک‌های همه پروژه‌ها، گروه‌بندی‌شده بر اساس فهرست. کارت را بکشید تا به همان فهرست در پروژه خودش منتقل شود.",
+  "{projects} projects · {cards} cards": "{projects} پروژه · {cards} کارت",
+  "No lists": "فهرستی وجود ندارد",
+  "Add lists to a project to see its tasks here": "به یک پروژه فهرست اضافه کنید تا تسک‌های آن اینجا نمایش داده شوند.",
+  "{board} has no \"{list}\" list": "پروژه {board} فهرست «{list}» ندارد"
 }
