@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const linkedColumn = linkedBoard.columns.find(column => column.cards.some(card => card.id === link.get('card')));
     if (linkedColumn) {
       state.activeBoardId = linkedBoard.id;
+      state.allProjects = false;
       saveState(); render();
       openCardModal({boardId: linkedBoard.id, columnId: linkedColumn.id, cardId: link.get('card')});
     }

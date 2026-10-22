@@ -5,7 +5,7 @@ function handleDragStart(e) {
 
   state.dragging.card = cardEl;
   state.dragging.fromColumn = cardEl.closest('.column') ? cardEl.closest('.column').dataset.columnId : null;
-  state.dragging.fromBoard = state.activeBoardId;
+  state.dragging.fromBoard = cardEl.dataset.boardId || state.activeBoardId;
 
   cardEl.classList.add('dragging');
 
@@ -52,6 +52,11 @@ function handleCardContainerDrop(e) {
   if (!cardId) return;
 
   e.preventDefault();
+
+  if (state.allProjects) {
+    handleAllProjectsDrop(e, cardId);
+    return;
+  }
 
   // Find the column the drop landed in
   const targetColEl = e.target.closest('.column-cards');
