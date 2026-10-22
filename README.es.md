@@ -88,6 +88,7 @@ La mayoría de nosotros gestionamos nuestras vidas repartidas entre una aplicaci
 | **Enfoque** | Sesiones temporizadas con descansos cortos y largos, historial de sesiones y música de fondo. |
 | **Finanzas** | Gastos, ingresos y presupuestos en la divisa que elijas en Configuración. Deudas y cobros pendientes registrados directamente en el balance. [Guía](docs/financial-commitments.md) |
 | **Habittify** | Hábitos diarios con seguimiento de cumplimiento, rachas y progreso mensual. |
+| **Todo** | Tareas diarias con subtareas, fechas límite, prioridades, descripciones y listas propias. Vistas Hoy, Próximas y Completadas, búsqueda y opción de deshacer. |
 | **Kanban** | Tarjetas y listas con prioridades, etiquetas, fechas, subtareas, comentarios y archivos adjuntos. |
 | **Calendario** | Tarjetas y compromisos financieros con fecha límite en vista mensual o de agenda. |
 | **Objetivos** | Metas SMART con métricas, fechas límite, prioridades o avance impulsado por hábitos. |
