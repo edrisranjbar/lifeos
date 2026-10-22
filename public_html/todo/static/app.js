@@ -311,11 +311,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     event.preventDefault();
     const done = doneInList(data.view);
     if (!done.length || !confirm(`Delete ${done.length} completed task${done.length === 1 ? '' : 's'}?`)) return;
-    const before = data.tasks;
     data.tasks = data.tasks.filter(task => !done.includes(task));
     if (done.some(task => task.id === selectedId)) selectedId = null;
     commit();
-    toast(`Deleted ${done.length} task${done.length === 1 ? '' : 's'}`, () => { data.tasks = before; commit(); });
+    toast(`Deleted ${done.length} task${done.length === 1 ? '' : 's'}`, () => {
+      // Restore removed records without replacing work saved since the deletion.
+      const existingIds = new Set(data.tasks.map(task => task.id));
+      for (const task of done) {
+        if (existingIds.has(task.id)) continue;
+        data.tasks.push(task);
+        existingIds.add(task.id);
+      }
+      commit();
+    });
   };
 
   // Detail panel
