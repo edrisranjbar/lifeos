@@ -87,8 +87,8 @@ Most of us run our lives across a to-do app, a habit tracker, a budgeting spread
 | **Growth** | Connect six life dimensions to long-term goals, SMART goals, habits and tasks. Run weekly, monthly or quarterly reviews. [Guide](docs/growth.md) |
 | **Focus** | Timed sessions with short and long breaks, session history and a focus soundtrack. |
 | **Finance** | Expenses, income and budgets in the currency you choose in Settings (Toman by default). Debts you owe and credits owed to you, one-time or recurring, recorded straight into the ledger. [Guide](docs/financial-commitments.md) |
-| **Habittify** | Daily habits with completion, streaks and monthly progress. |
-| **Kanban** | Draggable cards and lists with priorities, labels, dates, checklists, comments and file attachments. |
+| **Habittify** | Daily habits with completion, streaks and monthly progress, on a Gregorian or Jalali calendar (Gregorian by default, set in Settings). |
+| **Kanban** | Draggable cards and lists with priorities, labels, dates, checklists, comments and file attachments. Any card can be moved to Goals, where its checklist becomes the goal's tasks. |
 | **Calendar** | Due cards and financial dues across all boards in Month or Schedule view. |
 | **Goals** | SMART goals with measures, deadlines, priorities, editable and sortable checklists — or progress driven by a habit. Click a checklist title to edit it; save with Enter or cancel with Escape. |
 | **Notepad** | Markdown notes with preview and export. Persian/Arabic and Hebrew notes automatically use RTL writing; mixed-language preview blocks detect their own direction, while code stays LTR. Persian text uses the bundled Vazirmatn font in the editor, preview, note titles and list, independently of the interface language. |

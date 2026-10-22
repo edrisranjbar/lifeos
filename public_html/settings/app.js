@@ -106,6 +106,7 @@
     for (const currency of lifeOsCurrency.list) $('currency').append(new Option(`${t(currency.name)} (${t(currency.unit)})`,currency.code));
     document.documentElement.dataset.theme=appStorage.getItem('edi_os_theme') || 'dark'; updateThemeButtons();
     $('currency').value=lifeOsCurrency.current().code; $('currency').disabled=false; themeButtons.forEach(button=>button.disabled=false);
+    $('calendar').value=appStorage.getItem('edi_calendar_v1')==='jalali'?'jalali':'gregorian'; $('calendar').disabled=false;
     $('language').value=window.lifeOsI18n.lang(); $('language').disabled=false;
   }).catch(()=>status('preferenceMessage',t('Unable to load preferences. Reload to try again.'),'error'));
   // Save first, then reload the whole workspace so every app switches language and direction.
@@ -127,6 +128,12 @@
     try { appStorage.setItem(lifeOsCurrency.KEY,$('currency').value); await appStorage.flush(); status('preferenceMessage',t('Display currency saved.'),'success'); }
     catch (error) { status('preferenceMessage',error.message,'error'); }
     finally { $('currency').disabled=false; }
+  });
+  $('calendar').addEventListener('change',async()=>{
+    $('calendar').disabled=true;
+    try { appStorage.setItem('edi_calendar_v1',$('calendar').value); await appStorage.flush(); status('preferenceMessage',t('Calendar saved.'),'success'); }
+    catch (error) { status('preferenceMessage',error.message,'error'); }
+    finally { $('calendar').disabled=false; }
   });
   themeButtons.forEach(button=>button.addEventListener('click',async()=>{
     themeButtons.forEach(item=>item.disabled=true);
@@ -151,5 +158,21 @@
     if (current) markCurrent(current.id);
   }); };
   addEventListener('scroll',spy,{passive:true}); addEventListener('resize',spy);
+  // Browser notifications for due items; the bell panel in the top bar shares this setting.
+  import('/assets/due-alerts.js?v=due-alerts-1').then(due=>{
+    const button=$('dueNotifyToggle');
+    const sync=()=>{
+      if (!due.notificationsSupported()) { button.hidden=true; $('dueNotifyHint').textContent=t('This browser does not support notifications.'); return; }
+      const blocked=Notification.permission==='denied';
+      button.disabled=blocked; button.textContent=due.notificationsEnabled()?t('Turn off'):t('Turn on');
+      if (blocked) $('dueNotifyHint').textContent=t('Notifications are blocked for this site. Allow them in your browser settings to turn this on.');
+    };
+    button.addEventListener('click',async()=>{
+      try { if (due.notificationsEnabled()) due.disableNotifications(); else await due.enableNotifications(); status('preferenceMessage',due.notificationsEnabled()?t('Due-date notifications are on for this device.'):t('Due-date notifications are off.'),'success'); }
+      catch (error) { status('preferenceMessage',error.message,'error'); }
+      sync();
+    });
+    sync();
+  }).catch(()=>{ $('dueNotifyToggle').hidden=true; });
   loadAccount();
 })();

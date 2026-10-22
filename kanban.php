@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/lib/state_store.php';
+require_once __DIR__ . '/lib/kanban_goal.php';
 life_os_require_auth();
 
 try {
     api_method(['POST'], $_SERVER['REQUEST_METHOD'] ?? 'GET');
     life_os_require_csrf(fn () => throw new ApiException(403, 'invalid_request_token', 'Invalid request token. Reload and try again.'));
     $body = api_body();
+    if (($body['action'] ?? null) === 'to_goal') api_json(kanban_card_to_goal(new StateStore(life_os_db()), life_os_db(), $body));
     api_fields($body, ['source_board_id', 'source_column_id', 'card_id', 'destination_board_id', 'destination_column_id', 'revision']);
     foreach (['source_board_id', 'source_column_id', 'card_id', 'destination_board_id', 'destination_column_id'] as $field) {
         $body[$field] = api_text($body[$field] ?? '', $field, 100, true);

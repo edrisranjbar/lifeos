@@ -36,6 +36,7 @@ export const EXTRA_KEYS = [
   'Toman', 'Rial',
   // Habittify's Jalali months and short weekdays; Notes colors.
   'Farvardin', 'Ordibehesht', 'Khordad', 'Tir', 'Mordad', 'Shahrivar', 'Mehr', 'Aban', 'Azar', 'Dey', 'Bahman', 'Esfand',
+  'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December',
   'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat',
   'yellow', 'pink', 'blue', 'green', 'lavender', 'peach',
 ];

@@ -270,7 +270,7 @@ async function moveCardToProject(event) {
   }
   // Saving the editor may have changed the card's list within its current project.
   const source = getBoard(context.boardId)?.columns.find(column => column.cards.some(card => card.id === context.cardId));
-  if (!source) { $('moveCardError').textContent = window.lifeOsI18n.t('Card not found. Reload the board and try again.'); $('moveCardError').hidden = false; return; }
+  if (!source) { $('moveCardError').textContent = window.lifeOsI18n.t(window.lifeOsI18n.t('Card not found. Reload the board and try again.')); $('moveCardError').hidden = false; return; }
   context.busy = true;
   ['moveCardProject', 'moveCardList', 'confirmMoveCard', 'cancelMoveCard', 'closeMoveCard'].forEach(id => { $(id).disabled = true; });
   $('confirmMoveCard').textContent = window.lifeOsI18n.t('Moving…');
@@ -283,9 +283,9 @@ async function moveCardToProject(event) {
         body: JSON.stringify({source_board_id: context.boardId, source_column_id: source.id, card_id: context.cardId, destination_board_id: destinationBoardId, destination_column_id: destinationColumnId, revision})
       });
       let payload;
-      try { payload = await response.json(); } catch { throw new Error('The server could not process the move. Please try again.'); }
+      try { payload = await response.json(); } catch { throw new Error(window.lifeOsI18n.t('The server could not process the move. Please try again.')); }
       if (!response.ok) {
-        const error = new Error(payload.error?.message || (typeof payload.error === 'string' ? payload.error : 'Unable to move the card. Please try again.'));
+        const error = new Error(payload.error?.message || (typeof payload.error === 'string' ? payload.error : window.lifeOsI18n.t('Unable to move the card. Please try again.')));
         error.stateConflict = payload.error?.code === 'state_conflict';
         throw error;
       }
@@ -299,13 +299,82 @@ async function moveCardToProject(event) {
     showToast(window.lifeOsI18n.t("Card moved to {value0}",{value0:getBoard(destinationBoardId)?.name || 'project'}), 'success');
   } catch (error) {
     $('moveCardError').textContent = ['TimeoutError', 'AbortError', 'TypeError'].includes(error.name)
-      ? window.lifeOsI18n.t('The move could not be confirmed. Reload to check the card before trying again.')
-      : error.message || window.lifeOsI18n.t('Unable to move the card.');
+      ? window.lifeOsI18n.t(window.lifeOsI18n.t('The move could not be confirmed. Reload to check the card before trying again.'))
+      : error.message || window.lifeOsI18n.t(window.lifeOsI18n.t('Unable to move the card.'));
     $('moveCardError').hidden = false;
   } finally {
     context.busy = false;
     ['moveCardProject', 'moveCardList', 'confirmMoveCard', 'cancelMoveCard', 'closeMoveCard'].forEach(id => { $(id).disabled = false; });
     $('confirmMoveCard').textContent = window.lifeOsI18n.t('Move card');
+  }
+}
+
+function setGoalCardBusy(busy) {
+  ['confirmGoalCard', 'cancelGoalCard', 'closeGoalCard'].forEach(id => { $(id).disabled = busy; });
+  $('confirmGoalCard').textContent = window.lifeOsI18n.t(busy ? 'Moving…' : 'Move to goal');
+}
+
+function openGoalCard(context) {
+  const card = getColumn(context.boardId, context.columnId)?.cards.find(item => item.id === context.cardId);
+  if (!card) return;
+  state.goalCard = {...context, busy: false};
+  $('goalCardSummary').textContent = card.title || 'Untitled card';
+  const lists = Array.isArray(card.checklists) ? card.checklists : [{items: card.checklist || []}];
+  const tasks = lists.reduce((count, list) => count + (list.items || []).filter(item => item.text?.trim()).length, 0);
+  const details = [
+    card.description?.trim() ? window.lifeOsI18n.t('The description becomes the goal’s specific outcome.') : '',
+    card.dueDate ? window.lifeOsI18n.t('The due date ({date}) becomes the deadline.', {date:formatCardDueDate(card.dueDate)}) : window.lifeOsI18n.t('No due date, so the goal starts without a deadline.'),
+    tasks ? window.lifeOsI18n.t('{count} checklist items become goal tasks.', {count:window.lifeOsI18n.number(tasks)}) : window.lifeOsI18n.t('No checklist items yet; add tasks in Goals.'),
+  ].filter(Boolean);
+  $('goalCardDetails').replaceChildren(...details.map(text => Object.assign(document.createElement('li'), {textContent: text})));
+  $('goalCardError').hidden = true;
+  setGoalCardBusy(false);
+  $('goalCardModal').showModal();
+}
+
+async function moveCardToGoal(event) {
+  event.preventDefault();
+  const context = state.goalCard;
+  if (!context || context.busy) return;
+  if (context.fromEditor && $('cardModal').open) {
+    handleCardFormSubmit({preventDefault() {}});
+    if ($('cardModal').open) { $('goalCardModal').close(); $('cardTitle').focus(); return; }
+    context.fromEditor = false;
+  }
+  // Saving the editor may have changed the card's list.
+  const source = getBoard(context.boardId)?.columns.find(column => column.cards.some(card => card.id === context.cardId));
+  if (!source) { $('goalCardError').textContent = window.lifeOsI18n.t('Card not found. Reload the board and try again.'); $('goalCardError').hidden = false; return; }
+  context.busy = true;
+  setGoalCardBusy(true);
+  $('goalCardError').hidden = true;
+  try {
+    const data = await appStorage.mutateItems([KEY, 'edi_goals_v1'], async ({csrf, revisions}) => {
+      const response = await fetch('/kanban.php', {
+        method: 'POST', redirect: 'error', signal: AbortSignal.timeout(15000),
+        headers: {'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRF-Token': csrf},
+        body: JSON.stringify({action: 'to_goal', board_id: context.boardId, column_id: source.id, card_id: context.cardId, revisions})
+      });
+      let payload;
+      try { payload = await response.json(); } catch { throw new Error(window.lifeOsI18n.t('The server could not process the move. Please try again.')); }
+      if (!response.ok) {
+        const error = new Error(payload.error?.message || (typeof payload.error === 'string' ? payload.error : window.lifeOsI18n.t('Unable to move the card. Please try again.')));
+        error.stateConflict = payload.error?.code === 'state_conflict';
+        throw error;
+      }
+      return payload.data;
+    });
+    state.boards = JSON.parse(appStorage.getItem(KEY)).boards;
+    $('goalCardModal').close();
+    render();
+    showToast(window.lifeOsI18n.t('“{title}” is now a goal', {title:data.result.title}), 'success');
+  } catch (error) {
+    $('goalCardError').textContent = ['TimeoutError', 'AbortError', 'TypeError'].includes(error.name)
+      ? window.lifeOsI18n.t('The move could not be confirmed. Reload to check the card before trying again.')
+      : error.message || window.lifeOsI18n.t('Unable to move the card.');
+    $('goalCardError').hidden = false;
+  } finally {
+    context.busy = false;
+    setGoalCardBusy(false);
   }
 }
 

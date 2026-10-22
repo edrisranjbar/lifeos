@@ -176,7 +176,7 @@ function renderBoardContent() {
         <div class="card-header">
           <span class="priority-dot ${priorityClass}" role="img" aria-label="${escapeHtml(window.lifeOsI18n.t(priority + ' priority'))}" title="${escapeHtml(window.lifeOsI18n.t(priority + ' priority'))}"></span>
           <h3 class="card-title" contenteditable="false">${escapeHtml(card.title)}</h3>
-          <details class="card-menu"><summary aria-label="${window.lifeOsI18n.t("Card actions")}" title="${window.lifeOsI18n.t("Card actions")}">⋯</summary><div class="card-actions-menu"><button type="button" data-action="edit">${window.lifeOsI18n.t("Edit card")}</button><button type="button" data-action="move">${window.lifeOsI18n.t("Move to another project")}</button><button type="button" data-action="delete" class="menu-danger">${window.lifeOsI18n.t("Delete card")}</button></div></details>
+          <details class="card-menu"><summary aria-label="${window.lifeOsI18n.t("Card actions")}" title="${window.lifeOsI18n.t("Card actions")}">⋯</summary><div class="card-actions-menu"><button type="button" data-action="edit">${window.lifeOsI18n.t("Edit card")}</button><button type="button" data-action="move">${window.lifeOsI18n.t("Move to another project")}</button><button type="button" data-action="goal">${window.lifeOsI18n.t("Move to goal")}</button><button type="button" data-action="delete" class="menu-danger">${window.lifeOsI18n.t("Delete card")}</button></div></details>
         </div>
         ${card.description ? `<p class="card-desc">${escapeHtml(card.description)}</p>` : ''}
         ${labelsHtml ? `<div class="card-meta"><div class="card-labels">${labelsHtml}</div></div>` : ''}
@@ -193,6 +193,10 @@ function renderBoardContent() {
       cardEl.querySelector('[data-action="move"]').addEventListener('click', () => {
         cardEl.querySelector('.card-menu').open = false;
         openMoveCard({boardId: board.id, columnId: column.id, cardId: card.id, fromEditor: false});
+      });
+      cardEl.querySelector('[data-action="goal"]').addEventListener('click', () => {
+        cardEl.querySelector('.card-menu').open = false;
+        openGoalCard({boardId: board.id, columnId: column.id, cardId: card.id, fromEditor: false});
       });
       cardEl.querySelector('[data-action="delete"]').addEventListener('click', (e) => {
         e.stopPropagation();

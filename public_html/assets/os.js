@@ -2,6 +2,7 @@ import { mountFocusAudio } from './focus-audio.js?v=issue19-1';
 import { remainingSeconds, nextMode } from './timer.mjs';
 import { mountDashboard, refreshDashboard } from './dashboard.js?v=finance-budgets-2';
 import { mountMobileNavigation } from './mobile-nav.js?v=issue19-1';
+import { mountDueAlerts } from './due-alerts.js?v=due-alerts-1';
 await window.appStorageReady;
 const {t,number,digits}=window.lifeOsI18n;
 mountDashboard();
@@ -37,6 +38,16 @@ addEventListener('message',event=>{
 // Keep planning together in the menu: Growth, then Goals, then Habittify.
 {const growthLink=document.querySelector('nav a[href="#growth"]'),goalsLink=document.querySelector('nav a[href="#goals"]'),habitsLink=document.querySelector('nav a[href="#habittify"]');if(growthLink&&goalsLink&&habitsLink){growthLink.after(goalsLink);goalsLink.after(habitsLink);}}
 mountMobileNavigation();
+// Open a due item in its app, reusing the deep links the Calendar and Growth send.
+function openDueItem(open){
+  const frame=$(open?.page);if(!frame||!['kanban','goals','finance'].includes(open.page))return;
+  const url=new URL(frame.dataset.src,location.href);
+  if(open.page==='kanban'){url.searchParams.set('board',open.boardId);url.searchParams.set('card',open.cardId);}
+  if(open.page==='goals')url.searchParams.set('goal',open.goalId);
+  if(open.page==='finance'){url.searchParams.set('payment',open.occurrenceId);url.searchParams.set('due',open.dueDate);}
+  frame.src=url.href;location.hash='#'+open.page;
+}
+mountDueAlerts({esc:globalThis.lifeOsHtml.escapeHtml,openItem:openDueItem});
 // Several people can share one device, so always show whose workspace is open.
 fetch('/credentials.php',{headers:{Accept:'application/json'},cache:'no-store',redirect:'error'}).then(response=>response.ok?response.json():null).then(account=>{
   if(typeof account?.username!=='string')return;
@@ -54,7 +65,7 @@ let focusAudio=null;
 // Adopt focus state saved by another tab or device so the timer and Overview agree.
 addEventListener('app-storage-change',()=>{const raw=appStorage.getItem('edi_focus_v1');if(!raw||raw===JSON.stringify(data))return;let next;try{next=JSON.parse(raw)}catch{return}if(!next||typeof next!=='object')return;data={history:[],lengths:{focus:25,short:5,long:15},mode:'focus',remaining:1500,deadline:null,round:0,...next};for(const mode of ['focus','short','long'])$(mode+'Length').value=data.lengths[mode];focusAudio?.sync(data.soundtrack);render()});
 function save(){try{appStorage.setItem('edi_focus_v1',JSON.stringify(data))}catch{if(!storageFailed){storageFailed=true;$('status').textContent=t('Unable to save focus data to the server.')}}}
-const day=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Tehran',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+const day=(time=Date.now())=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Tehran',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(time));
 function applyTheme(theme){document.documentElement.dataset.theme=theme;try{for(const key of ['edi_os_theme','edifinance_theme','habittify_theme','edi_kanban_theme','edi_goals_theme','edi_notes_theme'])appStorage.setItem(key,theme)}catch{}for(const id of ['growth','finance','habittify','kanban','calendar','goals','notes','notepad','settings']){const doc=$(id).contentDocument;if(doc)doc.documentElement.dataset.theme=theme}const sunIcon=document.querySelector('.sun-icon'),moonIcon=document.querySelector('.moon-icon');if(sunIcon&&moonIcon){sunIcon.style.display=theme==='dark'?'none':'block';moonIcon.style.display=theme==='dark'?'block':'none'}}
 let theme='dark';try{theme=appStorage.getItem('edi_os_theme')||appStorage.getItem('edifinance_theme')||theme}catch{}applyTheme(theme);
 $('theme').onclick=()=>applyTheme(document.documentElement.dataset.theme==='dark'?'light':'dark');
@@ -66,7 +77,8 @@ function setMode(mode){data.mode=mode;data.deadline=null;data.remaining=data.len
 document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{if(data.deadline||data.remaining!==data.lengths[data.mode]*60){if(!confirm(t('Switch intervals and discard progress on this interval?')))return}setMode(b.dataset.mode)});
 $('start').onclick=()=>{if(data.deadline){data.remaining=remainingSeconds(data,Date.now());data.deadline=null}else{data.deadline=Date.now()+data.remaining*1000}save();render()};
 $('reset').onclick=()=>{if(confirm(t('Reset this interval?')))setMode(data.mode)};
-function tick(){if(data.deadline&&remainingSeconds(data,Date.now())===0){if(data.mode==='focus'){data.round++;data.history.push({day:day(),minutes:data.lengths.focus})}const next=nextMode(data.mode,data.round);setMode(next);$('status').textContent=t(next==='focus'?'Break complete. Ready for another session?':'Session complete. Time for a break.');}render()}
+// Only Pomodoro intervals count as focus time, logged on the day they ended (even if the tab was closed then).
+function tick(){if(data.deadline&&remainingSeconds(data,Date.now())===0){const finished=data.mode,minutes=data.lengths.focus;if(finished==='focus'){data.round++;data.history.push({day:day(data.deadline),minutes})}const next=nextMode(finished,data.round);setMode(next);$('status').textContent=finished==='focus'?t('Session complete: {minutes} min added to today. Time for a break.', {minutes:window.lifeOsI18n.number(minutes)}):data.history.some(h=>h.day===day())?t('Break complete. Ready for another session?'):t('Break complete. Breaks don’t count as focus time; start a Pomodoro to log minutes.');}render()}
 setInterval(tick,500);document.addEventListener('visibilitychange',tick);tick();
 for(const mode of ['focus','short','long'])$(mode+'Length').value=data.lengths[mode];
 $('saveSettings').onclick=()=>{const next={};for(const mode of ['focus','short','long']){const input=$(mode+'Length');if(!input.reportValidity())return;next[mode]=Number(input.value)}if((data.deadline||data.remaining!==data.lengths[data.mode]*60)&&!confirm(t('Save durations and reset this interval?')))return;data.lengths=next;setMode(data.mode);$('status').textContent=t('Timer settings saved.')};

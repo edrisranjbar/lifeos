@@ -62,6 +62,8 @@ jobs:
 
       - name: Run obligations tests
         run: php tests/obligations_test.php
+      - name: Run Kanban card to goal tests
+        run: php tests/kanban_goal_test.php
 
       - name: Run logout HTTP tests
         run: php tests/logout_test.php
