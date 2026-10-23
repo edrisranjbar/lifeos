@@ -31,6 +31,86 @@ function editedAgo(timestamp) {
 const NOTE_W = 220;
 const NOTE_H = 200;
 const GRID = 32;
+const viewport = {x: 0, y: 0, scale: 1};
+let spaceToPan = false;
+
+function applyViewport() {
+  $('canvasScene').style.transform = `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.scale})`;
+  $('canvas').style.backgroundSize = `${24 * viewport.scale}px ${24 * viewport.scale}px`;
+  $('canvas').style.backgroundPosition = `${viewport.x}px ${viewport.y}px`;
+  $('resetZoom').textContent = `${Math.round(viewport.scale * 100)}%`;
+}
+function zoomCanvas(scale, x, y) {
+  const next = Math.min(4, Math.max(.1, scale));
+  const ratio = next / viewport.scale;
+  viewport.x = x - (x - viewport.x) * ratio;
+  viewport.y = y - (y - viewport.y) * ratio;
+  viewport.scale = next;
+  applyViewport();
+}
+function bindCanvasNavigation() {
+  const canvas = $('canvas');
+  const centeredZoom = factor => zoomCanvas(viewport.scale * factor, canvas.clientWidth / 2, canvas.clientHeight / 2);
+  $('zoomIn').onclick = () => centeredZoom(1.2);
+  $('zoomOut').onclick = () => centeredZoom(1 / 1.2);
+  $('resetZoom').onclick = () => zoomCanvas(1, canvas.clientWidth / 2, canvas.clientHeight / 2);
+  $('fitNotes').onclick = () => {
+    const notes = getFiltered();
+    if (!notes.length) { Object.assign(viewport, {x: 0, y: 0, scale: 1}); applyViewport(); return; }
+    const left = Math.min(...notes.map(n => n.x)), top = Math.min(...notes.map(n => n.y));
+    const right = Math.max(...notes.map(n => n.x + n.w)), bottom = Math.max(...notes.map(n => n.y + n.h));
+    viewport.scale = Math.max(.1, Math.min(1, (canvas.clientWidth - 80) / (right - left), (canvas.clientHeight - 100) / (bottom - top)));
+    viewport.x = (canvas.clientWidth - (right - left) * viewport.scale) / 2 - left * viewport.scale;
+    viewport.y = (canvas.clientHeight - (bottom - top) * viewport.scale) / 2 - top * viewport.scale;
+    applyViewport();
+  };
+  canvas.addEventListener('wheel', e => {
+    if (!e.ctrlKey && !e.metaKey && e.target.closest('textarea, .markdown-preview, select')) return;
+    e.preventDefault();
+    const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? canvas.clientHeight : 1;
+    if (e.ctrlKey || e.metaKey) {
+      const rect = canvas.getBoundingClientRect();
+      zoomCanvas(viewport.scale * Math.exp(-e.deltaY * unit * .002), e.clientX - rect.left, e.clientY - rect.top);
+    } else {
+      viewport.x -= (e.shiftKey && !e.deltaX ? e.deltaY : e.deltaX) * unit;
+      viewport.y -= (e.shiftKey && !e.deltaX ? 0 : e.deltaY) * unit;
+      applyViewport();
+    }
+  }, {passive: false});
+  let pan = null;
+  canvas.addEventListener('pointerdown', e => {
+    if (pan) return;
+    const blank = e.target === canvas || e.target === $('canvasScene') || e.target === $('connectionsLayer');
+    if (!(e.button === 1 || (e.button === 0 && (spaceToPan || blank)))) return;
+    e.preventDefault(); e.stopPropagation();
+    pan = {id: e.pointerId, x: e.clientX, y: e.clientY, originX: viewport.x, originY: viewport.y};
+    canvas.setPointerCapture(e.pointerId);
+    canvas.classList.add('panning');
+  }, true);
+  canvas.addEventListener('pointermove', e => {
+    if (!pan || pan.id !== e.pointerId) return;
+    viewport.x = pan.originX + e.clientX - pan.x;
+    viewport.y = pan.originY + e.clientY - pan.y;
+    applyViewport();
+  });
+  const endPan = e => {
+    if (!pan || (e.pointerId !== undefined && e.pointerId !== pan.id)) return;
+    if (canvas.hasPointerCapture(pan.id)) canvas.releasePointerCapture(pan.id);
+    pan = null; canvas.classList.remove('panning');
+  };
+  canvas.addEventListener('pointerup', endPan);
+  canvas.addEventListener('pointercancel', endPan);
+  canvas.addEventListener('lostpointercapture', endPan);
+  document.addEventListener('keydown', e => {
+    if (e.code !== 'Space' || e.target.closest('input, textarea, select, button, [contenteditable="true"]')) return;
+    e.preventDefault(); spaceToPan = true; canvas.classList.add('pan-ready');
+  });
+  document.addEventListener('keyup', e => {
+    if (e.code === 'Space') { spaceToPan = false; canvas.classList.remove('pan-ready'); }
+  });
+  window.addEventListener('blur', () => { spaceToPan = false; canvas.classList.remove('pan-ready'); endPan({}); });
+  applyViewport();
+}
 
 const state = {
   notes: [],
@@ -198,7 +278,7 @@ function renderAll() {
   for (const note of state.notes) {
     const el = renderSticky(note);
     el.classList.toggle("dimmed", !filteredIds.has(note.id) && state.search.trim() !== "");
-    canvas.append(el);
+    $('canvasScene').append(el);
   }
   renderConnections();
   syncConnectMode();
@@ -231,8 +311,8 @@ function renderConnections() {
   const svg = $("connectionsLayer");
   const canvas = $("canvas");
   if (!svg || !canvas) return;
-  const width = Math.max(canvas.clientWidth, ...state.notes.map(note => note.x + note.w + 40), 1);
-  const height = Math.max(canvas.clientHeight, ...state.notes.map(note => note.y + note.h + 40), 1);
+  const width = Math.max(canvas.clientWidth, 1);
+  const height = Math.max(canvas.clientHeight, 1);
   svg.style.width = `${width}px`;
   svg.style.height = `${height}px`;
   svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
@@ -502,11 +582,9 @@ function deleteNote(id) {
 
 function createNote() {
   const canvas = $("canvas");
-  const rect = canvas.getBoundingClientRect();
-  const offset = state.notes.length * 18;
   const note = makeNote("", "", {
-    x: snap(80 + offset + Math.random() * 60),
-    y: snap(80 + offset + Math.random() * 60)
+    x: snap((canvas.clientWidth / 2 - viewport.x) / viewport.scale - NOTE_W / 2 + Math.random() * 32),
+    y: snap((canvas.clientHeight / 2 - viewport.y) / viewport.scale - NOTE_H / 2 + Math.random() * 32)
   });
   state.notes.push(note);
   persist();
@@ -521,6 +599,7 @@ function bindDrag(el, note) {
 
   const onDown = (e) => {
     // Only drag when not editing, and ignore clicks on the action/swatch/resize areas
+    if (e.button !== 0 || spaceToPan) return;
     if (e.target.closest("button, a, textarea, select, .note-format, .swatch, .resize-handle")) return;
     if (state.connectFrom) return;
     if (el.classList.contains("editing")) return;
@@ -538,10 +617,10 @@ function bindDrag(el, note) {
 
   const onMove = (e) => {
     if (pointerId === null) return;
-    const dx = e.clientX - startX;
-    const dy = e.clientY - startY;
-    note.x = Math.max(0, originX + dx);
-    note.y = Math.max(60, originY + dy);
+    const dx = (e.clientX - startX) / viewport.scale;
+    const dy = (e.clientY - startY) / viewport.scale;
+    note.x = originX + dx;
+    note.y = originY + dy;
     el.style.left = note.x + "px";
     el.style.top = note.y + "px";
     renderConnections();
@@ -552,7 +631,7 @@ function bindDrag(el, note) {
     pointerId = null;
     el.classList.remove("dragging");
     note.x = snap(note.x);
-    note.y = Math.max(60, snap(note.y));
+    note.y = snap(note.y);
     el.style.left = note.x + "px";
     el.style.top = note.y + "px";
     renderConnections();
@@ -571,6 +650,7 @@ function bindResize(el, note, handle) {
   let pointerId = null;
 
   const onDown = (e) => {
+    if (e.button !== 0 || spaceToPan) return;
     e.preventDefault();
     e.stopPropagation();
     pointerId = e.pointerId;
@@ -586,8 +666,8 @@ function bindResize(el, note, handle) {
 
   const onMove = (e) => {
     if (pointerId === null) return;
-    const dx = e.clientX - startX;
-    const dy = e.clientY - startY;
+    const dx = (e.clientX - startX) / viewport.scale;
+    const dy = (e.clientY - startY) / viewport.scale;
     note.w = Math.max(120, originW + dx);
     note.h = Math.max(80, originH + dy);
     el.style.width = note.w + "px";
@@ -741,5 +821,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   applyTheme();
   loadState();
   bindEvents();
+  bindCanvasNavigation();
   renderAll();
 });

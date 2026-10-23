@@ -73,11 +73,11 @@ button svg, .search-field svg, .empty-icon svg { width: 16px; height: 16px; flex
   display: flex;
   flex: none;
   justify-content: space-between;
-  align-items: flex-end;
+  align-items: center;
   gap: 20px;
   width: min(1320px, calc(100% - 56px));
   margin: 0 auto;
-  padding: 30px 0 20px;
+  padding: 16px 0;
 }
 .eyebrow { display: block; color: var(--accent); font-size: 11px; font-weight: 600; letter-spacing: .18em; text-transform: uppercase; }
 .title-line { display: flex; align-items: center; gap: 12px; margin-top: 8px; }
@@ -109,8 +109,17 @@ button svg, .search-field svg, .empty-icon svg { width: 16px; height: 16px; flex
   background-image: radial-gradient(circle, var(--grid-dot) 1.1px, transparent 1.4px);
   background-size: 24px 24px;
   border-top: 1px solid var(--border);
-  overflow: auto;
+  overflow: hidden;
+  touch-action: none;
+  overscroll-behavior: none;
 }
+.canvas-scene { position: absolute; inset: 0; transform-origin: 0 0; }
+.canvas.panning, .canvas.panning * { cursor: grabbing !important; user-select: none; }
+.canvas.pan-ready { cursor: grab; }
+.canvas-controls { position: fixed; bottom: 18px; inset-inline-end: 18px; z-index: 55; display: flex; gap: 4px; padding: 5px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); box-shadow: var(--shadow-card); }
+.canvas-controls button { min-width: 34px; padding: 6px 9px; border: 0; border-radius: 7px; background: transparent; font-size: 13px; }
+.canvas-controls button:hover { background: var(--surface-2); }
+.canvas-controls button:focus-visible { outline: 2px solid var(--accent); }
 .connections-layer { position: absolute; top: 0; left: 0; z-index: 0; pointer-events: none; overflow: visible; }
 .connection-line { fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-linecap: round; stroke-dasharray: 1 6; opacity: .9; pointer-events: none; }
 .connection-line.connection-hover { stroke-width: 4; stroke-dasharray: none; opacity: 1; }

@@ -25,18 +25,13 @@
         }
       })();
     </script>
-    <link rel="stylesheet" href="static/style.css?v=notes-ui-1" />
+    <link rel="stylesheet" href="static/style.css?v=notes-canvas-2" />
   <script src="/assets/html-escape.js?v=issue19-1"></script>
 </head>
   <body>
     <header class="notes-toolbar">
       <div class="toolbar-left">
-        <span class="eyebrow">Markdown workspace</span>
-        <div class="title-line">
-          <h1>Notes</h1>
           <span class="count-pill" id="notesCount">0 notes</span>
-        </div>
-        <p class="toolbar-hint">Double-click a note to edit · drag to move · link two notes to connect ideas</p>
       </div>
       <div class="toolbar-right">
         <label class="search-field">
@@ -62,7 +57,9 @@
     </header>
 
     <main class="canvas" id="canvas" aria-label="Sticky notes canvas">
-      <svg class="connections-layer" id="connectionsLayer" aria-label="Note connections"></svg>
+      <div class="canvas-scene" id="canvasScene">
+        <svg class="connections-layer" id="connectionsLayer" aria-label="Note connections"></svg>
+      </div>
       <div class="empty-state" id="emptyState" hidden>
         <div class="empty-card">
           <span class="empty-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M15.5 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8.5Z"/><path d="M15 3v6h6"/></svg></span>
@@ -73,8 +70,15 @@
       </div>
     </main>
 
+    <div class="canvas-controls" role="group" aria-label="Canvas zoom">
+      <button type="button" id="zoomOut" aria-label="Zoom out">−</button>
+      <button type="button" id="resetZoom" title="Reset zoom">100%</button>
+      <button type="button" id="zoomIn" aria-label="Zoom in">+</button>
+      <button type="button" id="fitNotes">Fit notes</button>
+    </div>
+
     <div class="toast" id="toast"></div>
     <script src="../assets/voice-input.js" defer></script>
-    <script src="static/app.js?v=persian-1" defer></script>
+    <script src="static/app.js?v=notes-canvas-2" defer></script>
   </body>
 </html>
