@@ -1496,5 +1496,8 @@
   "{projects} projects · {cards} cards": "{projects} پروژه · {cards} کارت",
   "No lists": "فهرستی وجود ندارد",
   "Add lists to a project to see its tasks here": "به یک پروژه فهرست اضافه کنید تا تسک‌های آن اینجا نمایش داده شوند.",
-  "{board} has no \"{list}\" list": "پروژه {board} فهرست «{list}» ندارد"
+  "{board} has no \"{list}\" list": "پروژه {board} فهرست «{list}» ندارد",
+  "Create period…": "ساخت دوره…",
+  "Enter a Persian month as YYYY/MM (for example 1405/08).": "سال و ماه شمسی را به شکل YYYY/MM وارد کنید (مثلاً ۱۴۰۵/۰۸).",
+  "Enter a valid Persian year and month.": "سال و ماه شمسی معتبر وارد کنید."
 }

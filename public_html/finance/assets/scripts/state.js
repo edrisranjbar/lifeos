@@ -86,6 +86,15 @@ function load() {
   activePeriod = appStorage.getItem(ACTIVE_PERIOD_KEY) || "Current";
   if (!periods[activePeriod]) activePeriod = Object.keys(periods)[0];
   state = cloneState(normalizeState(periods[activePeriod]));
+  // Open the new Persian month once; later visits preserve history selection.
+  const month = currentFinanceMonth();
+  const existing = findFinanceMonth(month);
+  if (!existing) {
+    const name = financeMonthName(month);
+    periods[name] = newFinancePeriod(month);
+    activePeriod = name;
+    state = cloneState(periods[name]);
+  }
   save();
 }
 function save() {
@@ -115,7 +124,49 @@ function renderPeriodSelector() {
       (period) =>
         `<option value="${esc(period)}" ${period === activePeriod ? "selected" : ""}>${esc(period)}</option>`,
     )
-    .join("");
+    .join("") + '<option value="" disabled>────────</option><option value="__create_period__">' + esc(__t('Create period…')) + '</option>';
+}
+
+const FINANCE_MONTHS = ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'];
+function currentFinanceMonth() {
+  const parts = new Intl.DateTimeFormat('en-US-u-ca-persian', {timeZone: 'Asia/Tehran', year: 'numeric', month: 'numeric'}).formatToParts(new Date());
+  return {year: Number(parts.find(p => p.type === 'year').value), month: Number(parts.find(p => p.type === 'month').value)};
+}
+function financeMonthName(month) { return `${FINANCE_MONTHS[month.month - 1]} ${month.year}`; }
+function findFinanceMonth(month) {
+  return Object.keys(periods).find(name => {
+    const saved = periods[name]?.calendarPeriod;
+    return name === financeMonthName(month) || (saved?.calendar === 'persian' && saved.year === month.year && saved.month === month.month);
+  });
+}
+function newFinancePeriod(month) {
+  const next = freshState();
+  next.categories = cloneState(state.categories);
+  next.calendarPeriod = {calendar: 'persian', ...month};
+  return next;
+}
+function selectFinancePeriod(name) {
+  if (name !== '__create_period__') { switchPeriod(name); return; }
+  renderPeriodSelector();
+  const today = currentFinanceMonth();
+  const answer = prompt(__t('Enter a Persian month as YYYY/MM (for example 1405/08).'), `${today.year}/${String(today.month).padStart(2, '0')}`);
+  if (answer === null) return;
+  const normalized = answer.replace(/[۰-۹]/g, c => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(c))).replace(/[٠-٩]/g, c => String('٠١٢٣٤٥٦٧٨٩'.indexOf(c)));
+  const match = normalized.trim().match(/^(\d{4})\/(\d{1,2})$/);
+  if (!match || Number(match[2]) < 1 || Number(match[2]) > 12) {
+    showToast(__t('Enter a valid Persian year and month.'), 'error'); return;
+  }
+  openFinanceMonth({year: Number(match[1]), month: Number(match[2])});
+}
+function openFinanceMonth(month) {
+  save();
+  const existing = findFinanceMonth(month);
+  const target = existing || financeMonthName(month);
+  if (!existing) periods[target] = newFinancePeriod(month);
+  activePeriod = target;
+  state = cloneState(normalizeState(periods[target]));
+  save(); render(); pulseMain();
+  if (!existing) showToast(__t('New period "{period}" created.', {period: target}), 'success');
 }
 
 function clearAllData() {
@@ -126,36 +177,9 @@ function clearAllData() {
   render();
 }
 
-// ── PERIOD NAVIGATION (prev / next month) ─────────────────────────────────────
-const PERIOD_NAME_FMT = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  year: "numeric",
-});
-
-// Shifts a period name by ±1 month. Calendar-like names ("Sep 2026")
-// shift from themselves; free-form names ("Current", "Khordad") fall
-// back to the real current month as the anchor.
-function shiftPeriodName(name, delta) {
-  const parsed = new Date(`1 ${name}`);
-  const base = isNaN(parsed) ? new Date() : parsed;
-  base.setDate(1);
-  base.setMonth(base.getMonth() + delta);
-  return PERIOD_NAME_FMT.format(base);
-}
-
+// ── PERSIAN MONTH NAVIGATION ────────────────────────────────────────────────
 function gotoPeriod(delta) {
-  const target = shiftPeriodName(activePeriod, delta);
-  let created = false;
-  if (!periods[target]) {
-    periods[target] = freshState();
-    created = true;
-  }
-  activePeriod = target;
-  state = cloneState(normalizeState(periods[target]));
-  appStorage.setItem(ACTIVE_PERIOD_KEY, activePeriod);
-  appStorage.setItem("daramd_v1", JSON.stringify(state));
-  save();
-  render();
-  pulseMain();
-  if (created) showToast(__t("New period \"{period}\" created.", { period: target }), "success");
+  const base = state.calendarPeriod?.calendar === 'persian' ? state.calendarPeriod : currentFinanceMonth();
+  const offset = base.year * 12 + base.month - 1 + delta;
+  openFinanceMonth({year: Math.floor(offset / 12), month: ((offset % 12) + 12) % 12 + 1});
 }
