@@ -254,7 +254,27 @@ export function mountDueAlerts({ esc, openItem }) {
     if (item) { open(false); openItem(item.open); }
   });
   document.addEventListener('keydown', event => { if (event.key === 'Escape' && !panel.hidden) { open(false); bell.focus(); } });
-  document.addEventListener('click', event => { if (!panel.hidden && !panel.contains(event.target) && !bell.contains(event.target) && !banner.contains(event.target)) open(false); });
+  const dismissOutside = event => {
+    if (!panel.hidden && !panel.contains(event.target) && !bell.contains(event.target) && !banner.contains(event.target)) open(false);
+  };
+  document.addEventListener('pointerdown', dismissOutside, true);
+  document.addEventListener('click', dismissOutside);
+  // Events inside an app iframe do not bubble into the shell document.
+  const observedDocuments = new WeakSet();
+  const observeFrame = frame => {
+    try {
+      const doc = frame.contentDocument;
+      if (!doc || observedDocuments.has(doc)) return;
+      observedDocuments.add(doc);
+      const dismissFromApp = () => { if (!panel.hidden) open(false); };
+      doc.addEventListener('pointerdown', dismissFromApp, true);
+      doc.addEventListener('click', dismissFromApp, true);
+    } catch { /* Only the app's same-origin frames are observed. */ }
+  };
+  document.querySelectorAll('iframe').forEach(frame => {
+    frame.addEventListener('load', () => observeFrame(frame));
+    observeFrame(frame);
+  });
 
   let storageTimer;
   addEventListener('app-storage-change', () => { clearTimeout(storageTimer); storageTimer = setTimeout(refresh, 300); });

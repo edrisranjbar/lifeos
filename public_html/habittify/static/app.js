@@ -275,7 +275,9 @@ function renderDailyProgress() {
   const total = state.habits.length;
   $('todayCount').textContent = t("{done} / {total} done", { done: number(done), total: number(total) });
   $('todayProgressFill').style.width = `${total ? done / total * 100 : 0}%`;
-  $('todayEncouragement').textContent = !total ? t('Start with one small habit.') : done === total ? t('Your daily practice is complete. Well done.') : done ? t(total - done === 1 ? '{count} small step left for today.' : '{count} small steps left for today.', { count: number(total - done) }) : t('A fresh start. Pick one habit to begin.');
+  const encouragement = $('todayEncouragement');
+  encouragement.textContent = !total ? t('Start with one small habit.') : done === total ? t('Your daily practice is complete. Well done.') : done ? t(total - done === 1 ? '{count} small step left for today.' : '{count} small steps left for today.', { count: number(total - done) }) : '';
+  encouragement.hidden = total > 0 && done === 0;
   let completed = 0, possible = 0, activeDays = 0;
   const bars = [];
   for (let offset = 6; offset >= 0; offset--) {
