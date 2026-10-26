@@ -3,6 +3,7 @@ import './goal-progress.js';
 import { refreshWeatherCard } from './weather.js?v=issue19-1';
 import { remainingSeconds } from './timer.mjs';
 import { mountGrowthOverview, refreshGrowthOverview } from './growth-overview.js?v=issue19-1';
+import { mountMailCard } from './mail-card.js?v=mail-1';
 
 const readJson = (key) => {
   try { return JSON.parse(appStorage.getItem(key) || 'null'); } catch { return null; }
@@ -61,7 +62,7 @@ function smoothPath(points) {
 export function mountDashboard() {
   const stylesheet = document.createElement('link');
   stylesheet.rel = 'stylesheet';
-  stylesheet.href = 'assets/dashboard.css?v=issue19-1';
+  stylesheet.href = 'assets/dashboard.css?v=mail-1';
   document.head.append(stylesheet);
   const nav = document.querySelector('.os-nav nav');
   const overview = document.createElement('a');
@@ -151,6 +152,7 @@ export function mountDashboard() {
 
   document.getElementById('focus').before(main);
   mountGrowthOverview(main);
+  mountMailCard(main);
   addEventListener('storage', () => { if (!main.hidden) refreshDashboard(); });
   addEventListener('app-storage-change', () => { if (!main.hidden) refreshDashboard(); });
   addEventListener('focus', () => { if (!main.hidden) { appStorage.sync(); refreshDashboard(); } });

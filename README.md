@@ -84,6 +84,7 @@ Most of us run our lives across a to-do app, a habit tracker, a budgeting spread
 | Workspace | What you can do |
 | --- | --- |
 | **Overview** | A live productivity score, focus and habit trends, goals, finances and a seven-day weather forecast. |
+| **Email** | Your recent inbox on the Overview and an AI summary of the last 24 hours each morning, from any IMAP mailbox with your own Claude, OpenAI, Gemini or OpenAI-compatible key. Read-only. [Guide](docs/email.md) |
 | **Growth** | Connect six life dimensions to long-term goals, SMART goals, habits and tasks. Run weekly, monthly or quarterly reviews. [Guide](docs/growth.md) |
 | **Focus** | Timed sessions with short and long breaks, session history and a focus soundtrack. |
 | **Finance** | Expenses, income and budgets in the currency you choose in Settings (Toman by default). Debts you owe and credits owed to you, one-time or recurring, recorded straight into the ledger. [Guide](docs/financial-commitments.md) |
@@ -240,7 +241,7 @@ Built with PHP, MySQL and vanilla JavaScript — no frontend build step, no fram
 - [Deployment guide](docs/deployment.md) — Apache, shared hosting, backups and migration
 - [Troubleshooting](docs/troubleshooting.md) — common first-run issues, causes and solutions
 - [Development guide](docs/development.md) — local checks and disposable integration fixtures
-- [Growth workspace](docs/growth.md) · [Debts and credits](docs/financial-commitments.md)
+- [Growth workspace](docs/growth.md) · [Debts and credits](docs/financial-commitments.md) · [Email and daily summary](docs/email.md)
 
 ## Donations
 

@@ -64,6 +64,10 @@ if ($relativePath === 'users.php') {
     require __DIR__ . '/users.php';
     return true;
 }
+if ($relativePath === 'mail.php') {
+    require __DIR__ . '/mail.php';
+    return true;
+}
 
 if ($relativePath === '') {
     $relativePath = 'index.html';

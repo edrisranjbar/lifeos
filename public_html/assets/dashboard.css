@@ -351,3 +351,41 @@
 .growth-review a{display:inline-flex;align-items:center;gap:5px;margin-inline-start:auto;color:var(--accent);font-weight:600;text-decoration:none}
 @media(max-width:900px){.growth-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:520px){.growth-summary-grid{grid-template-columns:1fr;gap:10px}.growth-dim{row-gap:12px;padding:14px}.growth-review a{margin-inline-start:0}}
+
+/* Email: summary and inbox when connected, a single invitation card otherwise. */
+.mail-row.is-disconnected{grid-template-columns:1fr}
+.mail-row.is-disconnected .mail-card,.mail-row:not(.is-disconnected) .mail-connect{display:none}
+.mail-card{display:flex;flex-direction:column;min-height:0}
+.mail-head-side{display:flex;align-items:center;gap:10px}
+.mail-refresh{display:inline-grid;place-items:center;width:30px;height:30px;flex:0 0 auto;border:1px solid var(--border);border-radius:7px;background:transparent;color:var(--text-secondary);cursor:pointer}
+.mail-refresh:hover{color:var(--accent);border-color:var(--accent)}
+.mail-refresh:disabled{opacity:.5;cursor:wait}
+.mail-refresh.is-spinning svg{animation:mail-spin 1s linear infinite}
+@keyframes mail-spin{to{transform:rotate(360deg)}}
+.mail-summary,.mail-inbox{max-height:380px;overflow-y:auto;overscroll-behavior:contain}
+.mail-summary-body{font-size:13px;line-height:1.6;color:var(--text)}
+.mail-summary-lead{margin:0 0 10px;font-size:14px;color:var(--text)}
+.mail-summary-text{margin:8px 0;color:var(--text-secondary)}
+.mail-summary-head{margin:14px 0 6px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700}
+.mail-summary-list{margin:0;padding-inline-start:18px;color:var(--text-secondary)}
+.mail-summary-list li{margin:4px 0}
+.mail-summary-list li::marker{color:var(--accent)}
+.mail-foot{margin:14px 0 0;padding-top:10px;border-top:1px solid var(--border);font-size:11px;color:var(--text-tertiary);overflow-wrap:anywhere}
+.mail-foot:empty{display:none}
+.mail-empty a{color:var(--accent)}
+.mail-list{list-style:none;margin:0;padding:0}
+.mail-list li+li{border-top:1px solid var(--border)}
+.mail-item{display:grid;gap:2px;padding:10px 4px 10px 14px;position:relative;color:inherit;text-decoration:none;border-radius:6px}
+a.mail-item:hover{background:var(--surface-2)}
+.mail-item.is-unread::before{content:"";position:absolute;inset-inline-start:2px;top:16px;width:6px;height:6px;border-radius:50%;background:var(--accent)}
+.mail-item-top{display:flex;justify-content:space-between;gap:10px;min-width:0}
+.mail-from{font-size:12.5px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mail-item.is-unread .mail-from,.mail-item.is-unread .mail-subject{color:var(--text);font-weight:600}
+.mail-time{flex:0 0 auto;font:500 11px var(--font-mono);color:var(--text-tertiary)}
+.mail-subject{font-size:13px;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mail-snippet{font-size:12px;color:var(--text-tertiary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mail-connect{display:flex;align-items:center;justify-content:space-between;gap:20px}
+.mail-connect p{margin:8px 0 0;font-size:13px;color:var(--text-secondary);line-height:1.55;max-width:560px}
+.mail-connect-link{flex:0 0 auto;padding:10px 15px;border-radius:7px;background:var(--accent);color:var(--bg);font-size:12px;font-weight:600;text-decoration:none}
+@media(max-width:650px){.mail-connect{flex-direction:column;align-items:flex-start}.mail-summary,.mail-inbox{max-height:none}}
+@media(prefers-reduced-motion:reduce){.mail-refresh.is-spinning svg{animation:none}}

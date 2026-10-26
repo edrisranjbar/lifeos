@@ -21,7 +21,7 @@
   async function loadAccount() {
     try {
       const data = await request('/credentials.php');
-      csrf = data.csrf; currentUserId = data.user_id; setAccount(data.username);
+      csrf = data.csrf; currentUserId = data.user_id; setAccount(data.username); loadMail();
       isAdmin = data.role === 'admin';
       $('accountRole').textContent = `${roleName(data.role)} · Private workspace`;
       // Only administrators can manage accounts; members never see the section.
@@ -154,5 +154,73 @@
     });
     sync();
   }).catch(()=>{ $('dueNotifyToggle').hidden=true; });
+  // Email summary: credentials go to /mail.php and are never read back into the page.
+  let mailSettings = null, mailBusy = false;
+  async function mailRequest(body, query = 'view=settings') {
+    const response = await fetch(`/mail.php${body ? '' : '?' + query}`, {method: body ? 'POST' : 'GET', redirect: 'error', cache: 'no-store', headers: {Accept:'application/json', ...(body ? {'Content-Type':'application/json','X-CSRF-Token':csrf} : {})}, ...(body ? {body:JSON.stringify(body)} : {})});
+    let payload;
+    try { payload = await response.json(); } catch { throw new Error('The server could not complete this request. Reload and try again.'); }
+    if (!response.ok) throw new Error(payload.error?.message || 'Could not complete the request.');
+    return payload.data;
+  }
+  function renderMail() {
+    const settings = mailSettings, provider = $('aiProvider').value;
+    $('mailSave').textContent = settings.connected ? 'Save' : 'Connect';
+    $('mailDisconnect').hidden = !settings.connected;
+    $('imapPasswordSaved').hidden = !settings.imap.hasPassword;
+    $('aiFields').hidden = provider === '';
+    $('aiBaseWrap').hidden = provider !== 'openai_compatible';
+    const keySaved = settings.ai.hasKey && settings.ai.provider === provider;
+    $('aiKeyNote').textContent = keySaved ? 'saved · leave blank to keep' : provider === 'openai_compatible' ? 'optional for local servers' : '';
+  }
+  function setMailBusy(busy) {
+    mailBusy = busy;
+    for (const id of ['mailSave', 'mailDisconnect', 'loadModels']) $(id).disabled = busy;
+  }
+  async function loadMail() {
+    try {
+      mailSettings = await mailRequest();
+      for (const provider of mailSettings.providers) $('aiProvider').append(new Option(provider.name, provider.id));
+      $('imapHost').value = mailSettings.imap.host; $('imapUser').value = mailSettings.imap.user;
+      $('aiProvider').value = mailSettings.ai.provider; $('aiModel').value = mailSettings.ai.model; $('aiBaseUrl').value = mailSettings.ai.baseUrl;
+      renderMail(); setMailBusy(false);
+    } catch (error) { status('mailMessage', error.message, 'error'); }
+  }
+  $('aiProvider').addEventListener('change', () => { $('aiModel').value = ''; $('aiModels').replaceChildren(); renderMail(); });
+  $('loadModels').addEventListener('click', async () => {
+    if (mailBusy) return;
+    setMailBusy(true); status('mailMessage', 'Loading models…');
+    try {
+      const {models} = await mailRequest({action:'models', ai_provider:$('aiProvider').value, ai_base_url:$('aiBaseUrl').value.trim(), ai_key:$('aiKey').value.trim()});
+      $('aiModels').replaceChildren(...models.map(model => new Option(model.name === model.id ? model.id : model.name, model.id)));
+      status('mailMessage', models.length ? `${models.length} models available. Pick one from the Model field.` : 'This provider listed no models; type a model ID instead.', models.length ? 'success' : '');
+      $('aiModel').focus();
+    } catch (error) { status('mailMessage', error.message, 'error'); }
+    finally { setMailBusy(false); }
+  });
+  $('mailForm').addEventListener('submit', async event => {
+    event.preventDefault();
+    if (mailBusy) return;
+    if (!$('imapHost').reportValidity() || !$('imapUser').reportValidity()) return;
+    setMailBusy(true); status('mailMessage', mailSettings.connected ? 'Saving…' : 'Signing in to your mailbox…');
+    try {
+      mailSettings = await mailRequest({action:'save', imap_host:$('imapHost').value.trim(), imap_user:$('imapUser').value.trim(), imap_password:$('imapPassword').value,
+        ai_provider:$('aiProvider').value, ai_model:$('aiModel').value.trim(), ai_base_url:$('aiBaseUrl').value.trim(), ai_key:$('aiKey').value.trim()});
+      $('imapPassword').value = ''; $('aiKey').value = '';
+      renderMail();
+      status('mailMessage', 'Email connected. Your inbox and summary appear on the Overview.', 'success');
+    } catch (error) { status('mailMessage', error.message, 'error'); }
+    finally { setMailBusy(false); }
+  });
+  $('mailDisconnect').addEventListener('click', async () => {
+    if (mailBusy || !confirm('Disconnect this mailbox? The saved app password, AI key and summaries are deleted from LifeOS.')) return;
+    setMailBusy(true);
+    try {
+      mailSettings = await mailRequest({action:'disconnect'});
+      $('imapPassword').value = ''; $('aiKey').value = ''; $('aiProvider').value = ''; $('aiModel').value = '';
+      renderMail(); status('mailMessage', 'Mailbox disconnected.', 'success');
+    } catch (error) { status('mailMessage', error.message, 'error'); }
+    finally { setMailBusy(false); }
+  });
   loadAccount();
 })();
