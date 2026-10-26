@@ -6,7 +6,7 @@
 
 [![Última versión](https://img.shields.io/github/v/release/edrisranjbar/lifeos?color=39e6ad)](https://github.com/edrisranjbar/lifeos/releases) [![Estrellas en GitHub](https://img.shields.io/github/stars/edrisranjbar/lifeos?style=flat&color=f3c969)](https://github.com/edrisranjbar/lifeos/stargazers) [![Licencia MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![Docker](https://img.shields.io/badge/docker-compose_up-2496ed?logo=docker&logoColor=white)](#con-docker-recomendado) [![Servidor MCP](https://img.shields.io/badge/MCP-15_tools-39e6ad)](#conversa-con-tu-life-os-con-ia) [![PHP 8.1+](https://img.shields.io/badge/PHP-8.1%2B-777bb4?logo=php&logoColor=white)](#requisitos)
 
-**[Sitio web](https://edrisranjbar.github.io/lifeos/)** · [Inicio rápido](#inicio-rápido) · [Recorrido](#un-recorrido-rápido) · [IA / MCP](#conversa-con-tu-life-os-con-ia) · [Despliegue](docs/deployment.md) · [API](docs/api.md) · **[English](README.md)**
+**[Sitio web](https://edrisranjbar.github.io/lifeos/)** · [Inicio rápido](#inicio-rápido) · [Recorrido](#un-recorrido-rápido) · [IA / MCP](#conversa-con-tu-life-os-con-ia) · [Despliegue](docs/deployment.md) · [API](docs/api.md) · **[English](README.md)** · **[فارسی](README.fa.md)**
 
 <br>
 

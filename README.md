@@ -6,7 +6,7 @@
 
 [![Latest release](https://img.shields.io/github/v/release/edrisranjbar/lifeos?color=39e6ad)](https://github.com/edrisranjbar/lifeos/releases) [![GitHub stars](https://img.shields.io/github/stars/edrisranjbar/lifeos?style=flat&color=f3c969)](https://github.com/edrisranjbar/lifeos/stargazers) [![MIT license](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![Docker](https://img.shields.io/badge/docker-compose_up-2496ed?logo=docker&logoColor=white)](#with-docker-recommended) [![MCP server](https://img.shields.io/badge/MCP-15_tools-39e6ad)](#talk-to-your-life-os-with-ai) [![PHP 8.1+](https://img.shields.io/badge/PHP-8.1%2B-777bb4?logo=php&logoColor=white)](#requirements)
 
-**[Website](https://edrisranjbar.github.io/lifeos/)** · [Quick start](#quick-start) · [Tour](#a-quick-tour) · [AI / MCP](#talk-to-your-life-os-with-ai) · [Deploy](docs/deployment.md) · [API](docs/api.md) · [Donate](#donations) · [Contact](#contact) · **[Español](README.es.md)**
+**[Website](https://edrisranjbar.github.io/lifeos/)** · [Quick start](#quick-start) · [Tour](#a-quick-tour) · [AI / MCP](#talk-to-your-life-os-with-ai) · [Deploy](docs/deployment.md) · [API](docs/api.md) · [Donate](#donations) · [Contact](#contact) · **[Español](README.es.md)** · **[فارسی](README.fa.md)**
 
 <br>
 
