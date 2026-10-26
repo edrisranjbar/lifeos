@@ -6,7 +6,7 @@
 
 [![Latest release](https://img.shields.io/github/v/release/edrisranjbar/lifeos?color=39e6ad)](https://github.com/edrisranjbar/lifeos/releases) [![GitHub stars](https://img.shields.io/github/stars/edrisranjbar/lifeos?style=flat&color=f3c969)](https://github.com/edrisranjbar/lifeos/stargazers) [![MIT license](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![Docker](https://img.shields.io/badge/docker-compose_up-2496ed?logo=docker&logoColor=white)](#with-docker-recommended) [![MCP server](https://img.shields.io/badge/MCP-15_tools-39e6ad)](#talk-to-your-life-os-with-ai) [![PHP 8.1+](https://img.shields.io/badge/PHP-8.1%2B-777bb4?logo=php&logoColor=white)](#requirements)
 
-**[Website](https://edrisranjbar.github.io/lifeos/)** · [Quick start](#quick-start) · [Tour](#a-quick-tour) · [AI / MCP](#talk-to-your-life-os-with-ai) · [Deploy](docs/deployment.md) · [API](docs/api.md) · [Donate](#donations) · [Contact](#contact) · **[Español](README.es.md)**
+**[Website](https://edrisranjbar.github.io/lifeos/)** · [Quick start](#quick-start) · [Tour](#a-quick-tour) · [AI / MCP](#talk-to-your-life-os-with-ai) · [Deploy](docs/deployment.md) · [API](docs/api.md) · [Donate](#donations) · [Contact](#contact) · **[Español](README.es.md)** · **[فارسی](README.fa.md)**
 
 <br>
 
@@ -89,7 +89,8 @@ Most of us run our lives across a to-do app, a habit tracker, a budgeting spread
 | **Focus** | Timed sessions with short and long breaks, session history and a focus soundtrack. |
 | **Finance** | Expenses, income and budgets in the currency you choose in Settings (Toman by default). Debts you owe and credits owed to you, one-time or recurring, recorded straight into the ledger. [Guide](docs/financial-commitments.md) |
 | **Habittify** | Daily habits with completion, streaks and monthly progress, on a Gregorian or Jalali calendar (Gregorian by default, set in Settings). |
-| **Kanban** | Draggable cards and lists with priorities, labels, dates, checklists, comments and file attachments. Any card can be moved to Goals, where its checklist becomes the goal's tasks. |
+| **Todo** | Everyday tasks with subtasks, due dates, priorities, descriptions and your own lists. Today, Upcoming and Completed views, search, and undo for completed or deleted tasks. Undoing Clear completed restores only removed tasks, preserving subsequent additions and edits. |
+| **Kanban** | Draggable cards and lists with priorities, labels, dates, checklists, comments and file attachments. An **All projects** view shows every board's cards together, grouped by list name. Any card can be moved to Goals, where its checklist becomes the goal's tasks. |
 | **Calendar** | Due cards and financial dues across all boards in Month or Schedule view. |
 | **Goals** | SMART goals with measures, deadlines, priorities, editable and sortable checklists — or progress driven by a habit. Click a checklist title to edit it; save with Enter or cancel with Escape. |
 | **Notepad** | Markdown notes with preview and export. Persian/Arabic and Hebrew notes automatically use RTL writing; mixed-language preview blocks detect their own direction, while code stays LTR. |

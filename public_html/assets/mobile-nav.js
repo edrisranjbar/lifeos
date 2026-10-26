@@ -28,7 +28,7 @@ export function mountMobileNavigation() {
   let previousOverflow = '';
   const close = () => { if (dialog.open) dialog.close(); };
   const updatePageName = () => {
-    const names = { dashboard: 'Overview', growth: 'Growth', focus: 'Focus', finance: 'Finance', habittify: 'Habittify', kanban: 'Kanban', calendar: 'Calendar', goals: 'Goals', notepad: 'Notepad', notes: 'Notes', settings: 'Settings' };
+    const names = { dashboard: 'Overview', growth: 'Growth', focus: 'Focus', finance: 'Finance', habittify: 'Habittify', todo: 'Todo', kanban: 'Kanban', calendar: 'Calendar', goals: 'Goals', notepad: 'Notepad', notes: 'Notes', settings: 'Settings' };
     pageName.textContent = names[location.hash.slice(1)] || 'Overview';
   };
   const syncLayout = () => {

@@ -109,4 +109,26 @@ $legacy = array_values(array_filter(view($month)['occurrences'], fn ($o) => $o['
 check($legacy['direction'] === 'debt', 'legacy plan reads as a debt');
 check(view($month)['totals']['committed'] === 575, 'legacy plan counted with debts');
 
+// Totals beyond the viewed month: a credit due next month still counts as owed to you.
+$fresh = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
+$fresh->exec('CREATE TABLE app_state (user_id INTEGER NOT NULL DEFAULT 1, state_key TEXT NOT NULL, state_value TEXT NOT NULL, PRIMARY KEY (user_id, state_key))');
+$store = new StateStore($fresh);
+$nextMonth = (new DateTimeImmutable($month . '-01'))->modify('+1 month');
+$server = act(['action' => 'create', 'plan' => ['title' => 'Server', 'payee' => 'Saeed', 'type' => 'once', 'direction' => 'credit', 'amount' => 2200, 'startDate' => $nextMonth->modify('+1 day')->format('Y-m-d')]]);
+act(['action' => 'create', 'plan' => ['title' => 'Far away', 'type' => 'once', 'direction' => 'credit', 'amount' => 300, 'startDate' => $nextMonth->modify('+4 months')->format('Y-m-d')]]);
+$rent = act(['action' => 'create', 'plan' => ['title' => 'Rent in', 'type' => 'recurring', 'direction' => 'credit', 'amount' => 1000, 'startDate' => $month . '-01', 'frequency' => 'monthly']]);
+act(['action' => 'create', 'plan' => ['title' => 'Phone', 'type' => 'recurring', 'direction' => 'debt', 'amount' => 50, 'startDate' => $month . '-01', 'frequency' => 'monthly', 'count' => 3]]);
+$v = view($month);
+check($v['creditTotals']['later'] === 2500, 'credits due after this month are totalled');
+check($v['creditTotals']['openEnded'] === 1, 'open-ended credits are counted, not summed');
+check($v['totals']['later'] === 100 && $v['totals']['openEnded'] === 0, 'remaining fixed-count debts are totalled');
+check(!in_array($server['id'], array_column($v['occurrences'], 'planId'), true), 'month list keeps only this month');
+$coming = array_column(array_filter($v['upcoming'], fn ($o) => $o['direction'] === 'credit'), 'title');
+check(in_array('Server', $coming, true) && !in_array('Far away', $coming, true), 'upcoming lists the next six weeks only');
+check(in_array('Rent in', $coming, true), 'open-ended plans appear in upcoming');
+$plans = array_column($v['plans'], null, 'id');
+check($plans[$server['id']]['nextDue']['date'] === $nextMonth->modify('+1 day')->format('Y-m-d') && $plans[$server['id']]['nextDue']['amount'] === 2200, 'plan shows its next due');
+act(['action' => 'cancel', 'planId' => $rent['id'], 'cancelFrom' => $nextMonth->modify('+2 months')->format('Y-m-d')]);
+check(view($month)['creditTotals']['later'] === 4500 && view($month)['creditTotals']['openEnded'] === 0, 'stopped plan totals only the dues before it stops');
+
 echo "obligations_test: $checks checks passed\n";
