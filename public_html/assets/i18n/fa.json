@@ -1499,5 +1499,9 @@
   "{board} has no \"{list}\" list": "پروژه {board} فهرست «{list}» ندارد",
   "Create period…": "ساخت دوره…",
   "Enter a Persian month as YYYY/MM (for example 1405/08).": "سال و ماه شمسی را به شکل YYYY/MM وارد کنید (مثلاً ۱۴۰۵/۰۸).",
-  "Enter a valid Persian year and month.": "سال و ماه شمسی معتبر وارد کنید."
+  "Enter a valid Persian year and month.": "سال و ماه شمسی معتبر وارد کنید.",
+  "Apply amount from": "اعمال مبلغ از تاریخ",
+  "New amounts apply to unpaid dues on or after this date. Earlier dues and recorded receipts or payments stay unchanged.": "مبلغ جدید برای سررسیدهای پرداخت‌نشده از این تاریخ اعمال می‌شود. سررسیدهای قبلی و پرداخت‌ها یا دریافت‌های ثبت‌شده تغییر نمی‌کنند.",
+  "Due dates and repeat frequency stay as scheduled.": "تاریخ سررسیدها و فاصلهٔ تکرار طبق برنامهٔ قبلی می‌مانند.",
+  "Due dates stay fixed. Recurring amounts can be changed from a chosen date without rewriting earlier dues or recorded payments.": "سررسیدها ثابت می‌مانند. مبلغ تکرارشونده را می‌توانید از تاریخ انتخابی تغییر دهید، بدون تغییر سررسیدهای قبلی یا پرداخت‌های ثبت‌شده."
 }

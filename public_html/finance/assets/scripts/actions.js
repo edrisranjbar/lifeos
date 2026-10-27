@@ -248,6 +248,18 @@ function saveEditedExpense(id) {
 }
 
 // ── CONTEXT MENU ──────────────────────────────────────────────────────────────
+function editLinkedIncomePlan(id) {
+  try {
+    const decisions = JSON.parse(appStorage.getItem('edi_obligations_v1') || '{}').decisions || {};
+    const linked = Object.entries(decisions).find(([, payment]) => payment.status === 'paid' && payment.period === activePeriod && String(payment.incomeId) === String(id));
+    if (!linked) return false;
+    dispatchEvent(new CustomEvent('finance-edit-plan', {detail: {id: linked[0].split(':')[0]}}));
+    return true;
+  } catch {
+    showToast(window.lifeOsI18n.t('Unable to check payment links. Reload before changing this expense.'), 'error');
+    return true;
+  }
+}
 function protectLinkedExpense(id, kind = 'expense') {
   try {
     const decisions = JSON.parse(appStorage.getItem('edi_obligations_v1') || '{}').decisions || {};

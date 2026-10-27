@@ -17,11 +17,13 @@ Both directions support the same schedules:
 - **Recurring, same amount each time:** daily, weekly, monthly or yearly, every 1–12 periods. It can run with no end, for a number of payments, or until a date. A recurring payment you owe can be marked as an optional subscription so single periods can be skipped.
 - **Recurring, split a total:** a total (including any agreed charges) divided into a fixed number of payments. Amounts are whole units of the chosen currency; the rounding remainder goes into the last payment.
 
-Amounts and dates are fixed after creation, so changing a plan cannot rewrite past dues. You can still:
+Due dates and repeat frequency stay fixed after creation. Recurring amounts can be edited from today or a future effective date; unpaid dues from that date use the new amount, while earlier dues and already recorded receipts/payments retain their original amounts. Amount changes are stored as dated revisions on the plan. You can also:
 
 - **Edit details:** name, person/company and notes.
 - **Stop future dues** of a recurring same-amount plan from a date; earlier dues and decisions remain.
 - **Delete** a plan entered by mistake, but only while none of its dues are paid or received. Undo those first.
+
+Edit details is available in the **⋯** menu of every due and plan. It supports name, payer/payee, notes and dated recurring amount changes.
 
 Delete is available in the **⋯** menu on every due item in both **I owe** and **Owed to me**, as well as the plan list. It opens a confirmation for deleting the entire credit/debt plan and its schedule, including unpaid overdue dues; it does not delete just one installment. The backend rejects deletion while recorded payments/receipts remain, so ledger entries are never silently erased.
 
@@ -54,7 +56,7 @@ For a debt, choose either **Add a new expense** (with a category) or **Link an e
 
 The payment decision and the expense are committed in one MySQL transaction. Revision checks cover the commitments document and both ledger documents after their rows are locked. Retried/double submissions cannot append a second expense to an already paid occurrence.
 
-Undo atomically returns the due to pending. An unchanged expense created by that payment is removed. A preexisting expense that was merely linked, or an expense edited since payment, is retained and unlinked. Editing or deleting a linked expense or income through the normal Finance controls is blocked until the payment or receipt is undone. “View expense” selects its period and highlights the transaction.
+Undo atomically returns the due to pending. An unchanged expense created by that payment is removed. A preexisting expense that was merely linked, or an expense edited since payment, is retained and unlinked. Editing a linked income opens its credit plan editor; changing a recorded ledger receipt itself still requires undoing the receipt first. Direct edits to linked expenses and deletion of linked entries remain blocked until the payment or receipt is undone. “View expense” selects its period and highlights the transaction.
 
 Bulk reset/import can replace expenses. If a linked expense disappears or its amount no longer matches, the commitment is shown as needing reconciliation and counted as unpaid. Undo the stale payment, review the retained expense if present, then record/link the correct payment. Payment changes have an audit history.
 

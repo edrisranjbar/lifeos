@@ -193,7 +193,7 @@ function openEditBudgetModal(id) {
 }
 
 function openEditIncomeModal(id) {
-  if (protectLinkedExpense(id, 'income')) return;
+  if (editLinkedIncomePlan(id)) return;
   const inc = state.incomes.find((i) => i.id === id);
   if (!inc) return;
   openModal(`

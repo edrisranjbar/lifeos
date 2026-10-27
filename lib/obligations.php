@@ -40,9 +40,18 @@ function obligation_due(array $plan, int $index): string
 
 function obligation_amount(array $plan, int $index): int
 {
-    if ($plan['type'] === 'recurring') return $plan['amount'];
+    if ($plan['type'] === 'recurring') return obligation_recurring_amount($plan, obligation_due($plan, $index));
     $base = intdiv($plan['totalAmount'], $plan['count']);
     return $base + ($index === $plan['count'] - 1 ? $plan['totalAmount'] % $plan['count'] : 0);
+}
+
+function obligation_recurring_amount(array $plan, string $date): int
+{
+    $amount = (int) $plan['amount'];
+    foreach ($plan['amountChanges'] ?? [] as $change) {
+        if ($change['from'] <= $date) $amount = (int) $change['amount'];
+    }
+    return $amount;
 }
 
 function obligation_record(array $plan, int $index, array $decisions, array $periods): array
@@ -51,6 +60,8 @@ function obligation_record(array $plan, int $index, array $decisions, array $per
     $decision = $decisions[$id] ?? [];
     $amount = obligation_amount($plan, $index);
     $status = $decision['status'] ?? 'pending';
+    // A recorded receipt/payment keeps its original amount after future edits.
+    if ($status === 'paid' && isset($decision['expenseSnapshot']['amount'])) $amount = (int) $decision['expenseSnapshot']['amount'];
     $paymentIssue = false;
     if ($status === 'paid') {
         $linked = null;
@@ -102,7 +113,10 @@ function obligation_view(array $doc, array $periods, string $start, string $end)
         $plan['progress'] = ['paid' => $paid, 'remaining' => $plan['totalAmount'] - $paid, 'paidCount' => $paidCount];
     }
     unset($plan);
-    foreach ($plans as &$plan) $plan['direction'] = obligation_direction($plan);
+    foreach ($plans as &$plan) {
+        $plan['direction'] = obligation_direction($plan);
+        if ($plan['type'] === 'recurring') $plan['currentAmount'] = obligation_recurring_amount($plan, api_today());
+    }
     unset($plan);
     // `totals` keeps its original meaning (debts) for existing clients.
     return ['plans' => $plans, 'occurrences' => $occurrences, 'totals' => $byDirection['debt'], 'creditTotals' => $byDirection['credit'], 'history' => array_slice($doc['history'] ?? [], -30), 'start' => $start, 'end' => $end];
@@ -165,10 +179,21 @@ function obligation_mutate(StateStore $store, array $body): array
             return $plan;
         }
         if ($action === 'update') {
-            // Only descriptive fields change; amounts and dates stay fixed so past dues keep their meaning.
+            // Amount revisions apply from a date; the original schedule remains stable.
             if (!is_array($body['plan'] ?? null)) throw new ApiException(422, 'validation_error', 'plan must be an object.');
-            api_fields($body['plan'], ['title', 'payee', 'notes']);
+            api_fields($body['plan'], ['title', 'payee', 'notes', 'amount', 'effectiveFrom']);
             foreach ($doc['plans'] as &$plan) if ($plan['id'] === ($body['planId'] ?? null)) {
+                if (array_key_exists('amount', $body['plan'])) {
+                    if ($plan['type'] !== 'recurring') throw new ApiException(422, 'validation_error', 'Only recurring amounts can be changed.');
+                    $amount = obligation_integer($body['plan']['amount'], 'amount', 1, 1000000000000);
+                    $from = api_date($body['plan']['effectiveFrom'] ?? null, 'effectiveFrom');
+                    if (!$from || $from < api_today() || $from > (new DateTimeImmutable(api_today()))->modify('+5 years')->format('Y-m-d')) throw new ApiException(422, 'validation_error', 'Choose an effective date from today up to five years ahead.');
+                    $changes = array_values(array_filter($plan['amountChanges'] ?? [], fn ($change) => $change['from'] !== $from));
+                    $changes[] = ['from' => $from, 'amount' => $amount];
+                    usort($changes, fn ($a, $b) => strcmp($a['from'], $b['from']));
+                    if (count($changes) > 600) throw new ApiException(422, 'limit_reached', 'Too many amount changes.');
+                    $plan['amountChanges'] = $changes;
+                }
                 $plan['title'] = api_text($body['plan']['title'] ?? $plan['title'], 'title', 180, true);
                 $plan['payee'] = api_text($body['plan']['payee'] ?? $plan['payee'], 'payee', 180);
                 $plan['notes'] = api_text($body['plan']['notes'] ?? $plan['notes'], 'notes', 3000);
