@@ -61,7 +61,7 @@ function obligation_record(array $plan, int $index, array $decisions, array $per
     $amount = obligation_amount($plan, $index);
     $status = $decision['status'] ?? 'pending';
     // A recorded receipt/payment keeps its original amount after future edits.
-    if ($status === 'paid' && isset($decision['expenseSnapshot']['amount'])) $amount = (int) $decision['expenseSnapshot']['amount'];
+    if ($status === 'paid') $amount = (int) ($decision['expenseSnapshot']['amount'] ?? $decision['recordedAmount'] ?? $amount);
     $paymentIssue = false;
     if ($status === 'paid') {
         $linked = null;
@@ -181,14 +181,22 @@ function obligation_mutate(StateStore $store, array $body): array
         if ($action === 'update') {
             // Amount revisions apply from a date; the original schedule remains stable.
             if (!is_array($body['plan'] ?? null)) throw new ApiException(422, 'validation_error', 'plan must be an object.');
-            api_fields($body['plan'], ['title', 'payee', 'notes', 'amount', 'effectiveFrom']);
+            api_fields($body['plan'], ['title', 'payee', 'notes', 'amount', 'effectiveFrom', 'applyToUnpaid']);
             foreach ($doc['plans'] as &$plan) if ($plan['id'] === ($body['planId'] ?? null)) {
                 if (array_key_exists('amount', $body['plan'])) {
                     if ($plan['type'] !== 'recurring') throw new ApiException(422, 'validation_error', 'Only recurring amounts can be changed.');
                     $amount = obligation_integer($body['plan']['amount'], 'amount', 1, 1000000000000);
-                    $from = api_date($body['plan']['effectiveFrom'] ?? null, 'effectiveFrom');
-                    if (!$from || $from < api_today() || $from > (new DateTimeImmutable(api_today()))->modify('+5 years')->format('Y-m-d')) throw new ApiException(422, 'validation_error', 'Choose an effective date from today up to five years ahead.');
-                    $changes = array_values(array_filter($plan['amountChanges'] ?? [], fn ($change) => $change['from'] !== $from));
+                    $allUnpaid = api_bool($body['plan']['applyToUnpaid'] ?? false, 'applyToUnpaid');
+                    $from = $allUnpaid ? $plan['startDate'] : api_date($body['plan']['effectiveFrom'] ?? null, 'effectiveFrom');
+                    if (!$from || $from < $plan['startDate'] || $from > (new DateTimeImmutable(api_today()))->modify('+5 years')->format('Y-m-d')) throw new ApiException(422, 'validation_error', 'Choose an effective date on or after the first due date, up to five years ahead.');
+                    // Freeze legacy paid amounts before revising any schedule amounts.
+                    foreach ($doc['decisions'] as $id => &$decision) {
+                        if (str_starts_with((string) $id, $plan['id'] . ':') && ($decision['status'] ?? '') === 'paid' && !isset($decision['expenseSnapshot']['amount'])) {
+                            $decision['recordedAmount'] ??= obligation_amount($plan, (int) substr((string) $id, strlen($plan['id']) + 1));
+                        }
+                    }
+                    unset($decision);
+                    $changes = $allUnpaid ? [] : array_values(array_filter($plan['amountChanges'] ?? [], fn ($change) => $change['from'] !== $from));
                     $changes[] = ['from' => $from, 'amount' => $amount];
                     usort($changes, fn ($a, $b) => strcmp($a['from'], $b['from']));
                     if (count($changes) > 600) throw new ApiException(422, 'limit_reached', 'Too many amount changes.');

@@ -1503,5 +1503,7 @@
   "Apply amount from": "اعمال مبلغ از تاریخ",
   "New amounts apply to unpaid dues on or after this date. Earlier dues and recorded receipts or payments stay unchanged.": "مبلغ جدید برای سررسیدهای پرداخت‌نشده از این تاریخ اعمال می‌شود. سررسیدهای قبلی و پرداخت‌ها یا دریافت‌های ثبت‌شده تغییر نمی‌کنند.",
   "Due dates and repeat frequency stay as scheduled.": "تاریخ سررسیدها و فاصلهٔ تکرار طبق برنامهٔ قبلی می‌مانند.",
-  "Due dates stay fixed. Recurring amounts can be changed from a chosen date without rewriting earlier dues or recorded payments.": "سررسیدها ثابت می‌مانند. مبلغ تکرارشونده را می‌توانید از تاریخ انتخابی تغییر دهید، بدون تغییر سررسیدهای قبلی یا پرداخت‌های ثبت‌شده."
+  "Due dates stay fixed. Recurring amounts can be changed from a chosen date without rewriting earlier dues or recorded payments.": "سررسیدها ثابت می‌مانند. مبلغ تکرارشونده را می‌توانید از تاریخ انتخابی تغییر دهید، بدون تغییر سررسیدهای قبلی یا پرداخت‌های ثبت‌شده.",
+  "Apply to all unpaid dues, including overdue": "اعمال برای همهٔ سررسیدهای پرداخت‌نشده، شامل معوق‌ها",
+  "With all unpaid dues selected, overdue and upcoming unpaid amounts are updated together. Otherwise the chosen date applies. Recorded payments and receipts never change.": "با انتخاب همهٔ سررسیدهای پرداخت‌نشده، مبالغ معوق و آینده با هم تغییر می‌کنند؛ در غیر این صورت تاریخ انتخابی ملاک است. پرداخت‌ها و دریافت‌های ثبت‌شده تغییر نمی‌کنند."
 }

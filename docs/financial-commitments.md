@@ -17,7 +17,7 @@ Both directions support the same schedules:
 - **Recurring, same amount each time:** daily, weekly, monthly or yearly, every 1–12 periods. It can run with no end, for a number of payments, or until a date. A recurring payment you owe can be marked as an optional subscription so single periods can be skipped.
 - **Recurring, split a total:** a total (including any agreed charges) divided into a fixed number of payments. Amounts are whole units of the chosen currency; the rounding remainder goes into the last payment.
 
-Due dates and repeat frequency stay fixed after creation. Recurring amounts can be edited from today or a future effective date; unpaid dues from that date use the new amount, while earlier dues and already recorded receipts/payments retain their original amounts. Amount changes are stored as dated revisions on the plan. You can also:
+Due dates and repeat frequency stay fixed after creation. Recurring amount edits default to all unpaid dues, including overdue and future dues. This replaces dated amount revisions with one amount across the unpaid schedule. Uncheck that option to apply an amount from a selected date (on or after the first due). Recorded receipts/payments retain their original amounts in both modes. Saving the same amount can therefore also correct previously missed overdue dues. Amount changes are stored as dated revisions on the plan. You can also:
 
 - **Edit details:** name, person/company and notes.
 - **Stop future dues** of a recurring same-amount plan from a date; earlier dues and decisions remain.
