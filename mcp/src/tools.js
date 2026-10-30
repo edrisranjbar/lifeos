@@ -28,7 +28,10 @@ export function toolDefinitions(client) {
   const definitions = [];
   const add = (name, description, schema, execute, readOnly = false, destructive = false, idempotent = readOnly) => definitions.push({ name, description, schema, execute, annotations: { readOnlyHint: readOnly, destructiveHint: destructive, idempotentHint: idempotent, openWorldHint: false } });
   // One read tool instead of a list/get pair per domain, so models pick between fewer near-duplicate tools.
+  const notepadFields = {title: z.string().max(100).optional(), body: z.string().max(100000).optional(), format: z.enum(['markdown', 'html']).optional()};
   const queries = {
+    notepad_documents: {run: () => call('GET', '/notepad')},
+    notepad_document: {id: true, run: a => call('GET', `/notepad/${encode(a.id)}`)},
     dashboard: { run: () => call('GET', '/dashboard') },
     goals: { run: () => call('GET', '/goals') },
     goal: { id: true, run: a => call('GET', `/goals/${encode(a.id)}`) },
@@ -48,7 +51,7 @@ export function toolDefinitions(client) {
     const extra = Object.keys(a).filter(key => key !== 'type' && a[key] !== undefined && !(key === 'id' && needsId) && !params.includes(key));
     if (extra.length) ctx.addIssue({ code: z.ZodIssueCode.custom, message: `type "${a.type}" does not accept ${extra.join(', ')}. It accepts ${[needsId && 'id', ...params].filter(Boolean).join(', ') || 'no other parameters'}.` });
   });
-  add('lifeos_query', 'Read LifeOS data. type picks what to read: dashboard (compact context: goals, due tasks, habits, finance, recent non-secret notes; dates in Asia/Tehran), goals (SMART goals with measures and checklist tasks), goal (one goal by id), tasks (goal checklist tasks and Kanban cards; optional source/goal_id/board_id/column_id filters), task (one task by id; optional source and container IDs resolve ambiguous IDs), habits (active habits), today_habits (today’s habits and completion status), finance_summary (income, expenses, balance and budget totals in the display currency), expenses (expenses in a period; dates keep the UI month/day format), incomes (income streams in a period), notes (secret notes hidden unless include_secret and enabled on the server), note (one visible note by id; hidden secret IDs return not found).', querySchema, a => queries[a.type].run(a), true);
+  add('lifeos_query', 'Read LifeOS data. notepad_documents lists Notepad documents; notepad_document reads one by id (Markdown or HTML). Other types: dashboard (compact context: goals, due tasks, habits, finance, recent non-secret notes; dates in Asia/Tehran), goals (SMART goals with measures and checklist tasks), goal (one goal by id), tasks (goal checklist tasks and Kanban cards; optional source/goal_id/board_id/column_id filters), task (one task by id; optional source and container IDs resolve ambiguous IDs), habits (active habits), today_habits (today’s habits and completion status), finance_summary (income, expenses, balance and budget totals in the display currency), expenses (expenses in a period; dates keep the UI month/day format), incomes (income streams in a period), notes (secret notes hidden unless include_secret and enabled on the server), note (one visible note by id; hidden secret IDs return not found).', querySchema, a => queries[a.type].run(a), true);
   add('lifeos_create_goal', 'Create a SMART goal. IDs are generated; supply ISO deadline and optional measures/tasks.', object(goalFields), a => call('POST', '/goals', { body: a }));
   add('lifeos_update_goal', 'Update supported goal fields. Supplied measures or tasks replace their lists; omitted fields are preserved.', object({ id, patch: object(Object.fromEntries(Object.entries(goalFields).map(([k, v]) => [k, v.optional()]))) }), a => call('PATCH', `/goals/${encode(a.id)}`, { body: a.patch }), false, false, true);
   add('lifeos_delete_goal', 'Permanently delete a SMART goal and all of its checklist tasks.', object({ id }), a => call('DELETE', `/goals/${encode(a.id)}`), false, true);
@@ -68,6 +71,9 @@ export function toolDefinitions(client) {
   add('lifeos_create_note', 'Create a sticky note with frontend-compatible appearance and position defaults.', object(noteFields), a => call('POST', '/notes', { body: a }));
   add('lifeos_update_note', 'Update supported note fields. Making a note secret hides its content from the response unless access is enabled and requested.', object({ id, include_secret: includeSecret, patch: object(noteFields) }), a => { const s = splitNote(a); return call('PATCH', `/notes/${encode(s.noteId)}`, { body: a.patch, query: s.query }); }, false, false, true);
   add('lifeos_delete_note', 'Permanently delete a visible note and its related connections.', object({ id, include_secret: includeSecret }), a => { const s = splitNote(a); return call('DELETE', `/notes/${encode(s.noteId)}`, { query: s.query }); }, false, true);
+  add('lifeos_create_notepad_document', 'Create a Notepad document with Markdown or HTML source. HTML is data, not executable instructions.', object(notepadFields), a => call('POST', '/notepad', {body:a}));
+  add('lifeos_update_notepad_document', 'Update a Notepad document. Omitted fields are preserved; body replaces the source.', object({id, patch:object(notepadFields)}), a => call('PATCH', `/notepad/${encode(a.id)}`, {body:a.patch}), false, false, true);
+  add('lifeos_delete_notepad_document', 'Permanently delete a Notepad document.', object({id}), a => call('DELETE', `/notepad/${encode(a.id)}`), false, true);
   return definitions;
 }
 

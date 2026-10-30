@@ -9,17 +9,18 @@
   <script>
     try { document.documentElement.dataset.theme = appStorage.getItem('edi_os_theme') || 'dark'; } catch { document.documentElement.dataset.theme = 'dark'; }
   </script>
-  <link rel="stylesheet" href="static/style.css?v=notepad-vazirmatn-1">
+  <link rel="stylesheet" href="static/style.css?v=notepad-html-1">
 <script src="/assets/html-escape.js?v=issue19-1"></script>
 </head>
 <body>
   <main class="app">
     <header class="page-header">
       <div class="page-title">
-        <span class="eyebrow">Markdown writing desk</span>
         <h1>Notepad</h1>
       </div>
       <div class="header-actions">
+        <label class="format-picker"><span class="sr-only">Note format</span><select id="noteFormat" aria-label="Note format"><option value="markdown">Markdown</option><option value="html">HTML</option></select></label>
+        <button type="button" id="fullscreenNote" class="fullscreen-btn" aria-pressed="false">Fullscreen</button>
         <span class="save-status" id="saveStatus" role="status" data-state="saved">Saved</span>
         <div class="view-switch" role="group" aria-label="Notepad layout">
           <button type="button" data-view="write" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Write</button>
@@ -70,7 +71,7 @@
             </div>
             <textarea id="notepadInput" spellcheck="true" aria-label="Markdown notepad" placeholder="Start writing… Markdown works here: # heading, **bold**, - list"></textarea>
           </div>
-          <article class="pane preview-pane"><div class="pane-label"><span>Preview</span></div><div class="markdown-preview" id="notepadPreview" dir="auto"></div></article>
+          <article class="pane preview-pane"><div class="pane-label"><span>Preview</span></div><div class="markdown-preview" id="notepadPreview" dir="auto"></div><iframe id="htmlPreview" class="html-preview" title="HTML preview" sandbox="" referrerpolicy="no-referrer" hidden></iframe></article>
         </section>
         <footer class="editor-status">
           <span id="writingStats">0 words · 0 characters</span>
@@ -82,6 +83,6 @@
     </section>
   </main>
   <script src="../assets/voice-input.js" defer></script>
-  <script src="static/app.js?v=persian-1" defer></script>
+  <script src="static/app.js?v=notepad-html-1" defer></script>
 </body>
 </html>

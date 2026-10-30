@@ -84,7 +84,20 @@ document.addEventListener('DOMContentLoaded', async () => {
   const renderPreview = () => {
     input.dir = noteDirection(input.value);
     preview.dir = input.dir;
-    preview.innerHTML = markdown(input.value);
+    const html = $('noteFormat').value === 'html';
+    preview.hidden = html;
+    $('htmlPreview').hidden = !html;
+    document.querySelector('.md-toolbar').hidden = html;
+    if (html) {
+      // HTML/CSS preview is isolated from LifeOS storage, scripts and forms.
+      const policy = "default-src 'none'; script-src 'none'; style-src 'unsafe-inline'; img-src https: data:; font-src data:; form-action 'none'; base-uri 'none'";
+      $('htmlPreview').srcdoc = '<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="' + policy + '"></head><body>' + input.value + '</body></html>';
+    } else {
+      $('htmlPreview').removeAttribute('srcdoc');
+      preview.innerHTML = markdown(input.value);
+    }
+    $('downloadNote').lastChild.textContent = html ? 'Export .html' : t('Export .md');
+    $('downloadNote').title = html ? t('Download this note as HTML') : t('Download this note as Markdown');
   };
   const data = saved && Array.isArray(saved.notes) ? saved : {notes: [], sort: 'manual'};
   data.notes = data.notes.filter(note => note && typeof note.id === 'string');
@@ -93,6 +106,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     id: note.id,
     title: typeof note.title === 'string' ? note.title : t('Untitled note'),
     body: typeof note.body === 'string' ? note.body : '',
+    format: note.format === 'html' ? 'html' : 'markdown',
     updatedAt: Number(note.updatedAt) || Date.now(),
   }));
   data.sort = ['manual', 'title', 'recent'].includes(data.sort) ? data.sort : 'manual';
@@ -168,6 +182,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     data.activeId = id;
     titleInput.value = note.title;
     input.value = note.body;
+    $('noteFormat').value = note.format || 'markdown';
     renderPreview();
     updateWritingStats();
     renderTabs();
@@ -184,9 +199,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     save();
   };
 
+  $('noteFormat').addEventListener('change', () => {
+    activeNote().format = $('noteFormat').value;
+    activeNote().updatedAt = Date.now();
+    renderPreview(); save();
+  });
+  $('fullscreenNote').addEventListener('click', async () => {
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen();
+      else await document.documentElement.requestFullscreen();
+    } catch { status.textContent = t('Fullscreen unavailable in this browser.'); }
+  });
+  document.addEventListener('fullscreenchange', () => {
+    const full = !!document.fullscreenElement;
+    $('fullscreenNote').textContent = t(full ? 'Exit fullscreen' : 'Fullscreen');
+    $('fullscreenNote').setAttribute('aria-pressed', String(full));
+  });
   const voiceButton = window.addVoiceInputButton(input, 'notepad-voice-input');
   document.querySelector('.write-pane').append(voiceButton);
   sortInput.value = data.sort;
+  $('noteFormat').value = activeNote().format || 'markdown';
   input.value = activeNote().body;
   titleInput.value = activeNote().title;
   renderPreview();
@@ -233,10 +265,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderTabs(); save();
   });
   $('downloadNote').addEventListener('click', () => {
-    const blob = new Blob([input.value], {type: 'text/markdown;charset=utf-8'});
+    const html = activeNote().format === 'html';
+    const blob = new Blob([input.value], {type: html ? 'text/html;charset=utf-8' : 'text/markdown;charset=utf-8'});
     const url = URL.createObjectURL(blob), link = document.createElement('a');
     link.href = url;
-    link.download = displayTitle(activeNote()).replace(/[\\/:*?"<>|]/g, '-') + '.md';
+    link.download = displayTitle(activeNote()).replace(/[\\/:*?"<>|]/g, '-') + (html ? '.html' : '.md');
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   });
@@ -362,14 +395,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     if ((event.ctrlKey || event.metaKey) && !event.altKey) {
       if (event.key.toLowerCase() === 's') { event.preventDefault(); save(); return; }
       const kind = { b: 'bold', i: 'italic', k: 'link' }[event.key.toLowerCase()];
-      if (kind) { event.preventDefault(); applyMdFormat(kind); }
+      if (kind && $('noteFormat').value !== 'html') { event.preventDefault(); applyMdFormat(kind); }
     }
     if (event.key === 'Tab' && !event.shiftKey && !event.ctrlKey && !event.metaKey && !event.altKey) {
       event.preventDefault();
       input.setRangeText('  ', input.selectionStart, input.selectionEnd, 'end');
       input.dispatchEvent(new Event('input', {bubbles: true}));
     }
-    if (event.key === 'Enter' && !event.shiftKey && input.selectionStart === input.selectionEnd) {
+    if ($('noteFormat').value !== 'html' && event.key === 'Enter' && !event.shiftKey && input.selectionStart === input.selectionEnd) {
       const caret = input.selectionStart, start = input.value.lastIndexOf('\n', caret - 1) + 1;
       const line = input.value.slice(start, caret);
       const match = line.match(/^(\s*)([-*+] |\d+\. |> )(\[[ xX]\] )?(.*)$/);

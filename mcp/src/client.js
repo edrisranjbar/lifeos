@@ -23,7 +23,7 @@ export function createClient({ baseUrl = process.env.LIFEOS_BASE_URL, token = pr
 
   return {
     async request(method, path, { body, query } = {}) {
-      if (!/^\/(dashboard|goals|tasks|habits|finance|notes)(\/|$)/.test(path)) throw new LifeOsError('invalid_path', 'Unsupported API path.');
+      if (!/^\/(dashboard|goals|tasks|habits|finance|notes|notepad)(\/|$)/.test(path)) throw new LifeOsError('invalid_path', 'Unsupported API path.');
       const url = new URL('/api/v1' + path, base);
       for (const [key, value] of Object.entries(query || {})) if (value !== undefined) url.searchParams.set(key, String(value));
       const controller = new AbortController();

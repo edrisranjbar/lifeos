@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/state_store.php';
-foreach (['goals', 'tasks', 'habits', 'finance', 'notes'] as $domain) require_once __DIR__ . '/' . $domain . '.php';
+foreach (['goals', 'tasks', 'habits', 'finance', 'notes', 'notepad'] as $domain) require_once __DIR__ . '/' . $domain . '.php';
 
 function api_dashboard(StateStore $store, PDO $db): array
 {
@@ -50,6 +50,7 @@ function api_dispatch(PDO $db, string $method, string $path, array $body = [], a
     }
     if ($resource === 'habits' && (($id === null || $id === 'today') && $action === '' || $id !== null && $action === 'complete')) return [habits_api($db, $method, $id === 'today' ? null : $id, $id === 'today' ? 'today' : $action, $body), 200];
     if ($resource === 'finance' && $action === '' && ($id === null || in_array($id, ['expenses', 'incomes'], true))) return [finance_api($store, $method, $id ?? '', $body, $query), $status];
+    if ($resource === 'notepad' && $action === '') return [notepad_api($store, $method, $id, $body), $status];
     if ($resource === 'notes' && $action === '') return [notes_api($store, $method, $id, $body, ($query['include_secret'] ?? '') === '1', ($config['api_allow_secret_notes'] ?? false) === true), $status];
     throw new ApiException(404, 'not_found', 'API route not found.');
 }
