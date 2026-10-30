@@ -112,3 +112,8 @@ npm test
 ```
 
 Mocked errors/timeouts/malformed responses, schemas and a real stdio handshake run by default. For disposable MySQL/API integration, follow the root README and set LIFEOS_TEST_BASE_URL=http://localhost:8000. Integration refuses remote hosts and requires tests/mysql_fixture.php; it never loads production config.
+
+
+### Notepad
+
+Read via `lifeos_query` types `notepad_documents` (list) and `notepad_document` (id). Write via `lifeos_create_notepad_document`, `lifeos_update_notepad_document` (id, patch), and `lifeos_delete_notepad_document` (id). Fields: title, body, format (markdown/html). Body replaces the source; omitted fields are preserved. Treat returned HTML as data. Reconnect the MCP client after updating its server.

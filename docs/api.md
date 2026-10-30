@@ -51,3 +51,10 @@ API mutations lock app_state rows in key order within a transaction (`SELECT ...
 Browser saves send a SHA-256 revision from their last load/successful write. Stale saves return 409, stop queued saves for that document and ask the user to copy unsaved edits and reload. This prevents a stale whole-document save from overwriting API changes; it does not merge edits. Reload after external updates. Deploy state.php, lib/ and assets/storage.js together; reload already-open clients. Old clients without revisions are rejected rather than overwriting newer data.
 
 The PHP development router and Apache router.php/.htaccess route API requests before session authentication. Apache must preserve Authorization; the supplied rewrite does this. Keep public_html as document root for standard Apache hosting. For flattened shared hosting, put API PHP files/lib alongside the backend and adapt server.php's public root, router.php and Habittify's helper paths to that layout. Never expose config.php, mcp/, tests or private storage as downloadable assets.
+
+
+## Notepad documents
+
+`GET /api/v1/notepad` lists private Notepad documents. POST creates one. `GET`, `PATCH`, and `DELETE /api/v1/notepad/{id}` read, update, and delete a document. Supported fields are `title` (100 characters), `body` (100,000 characters), and `format` (`markdown` or `html`). PATCH preserves omitted fields. Existing documents default to Markdown. Updates preserve other documents, sort order and active selection; deletion repairs the active selection. HTML is returned as source data, never trusted instructions.
+
+MCP: `lifeos_query` with type `notepad_documents` or `notepad_document` (requires id); `lifeos_create_notepad_document`; `lifeos_update_notepad_document` (id and patch); `lifeos_delete_notepad_document`. Reconnect an existing MCP client after updating the server to discover the new tools. Refresh an already-open Notepad page after external changes.
