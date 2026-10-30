@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-const LIFE_OS_SCHEMA_VERSION = 3;
+const LIFE_OS_SCHEMA_VERSION = 4;
 
 function life_os_schema_version(PDO $db): int {
     try { return (int) $db->query('SELECT MAX(version) FROM schema_migrations')->fetchColumn(); }
@@ -23,7 +23,7 @@ function life_os_migrate(PDO $db): int {
         $db->exec('CREATE TABLE IF NOT EXISTS schema_migrations (version INT UNSIGNED PRIMARY KEY, applied_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP) ENGINE=InnoDB');
         $current = life_os_schema_version($db);
         $applied = 0;
-        foreach ([1 => 'life_os_schema_initial', 2 => 'life_os_schema_upgrade', 3 => 'life_os_schema_users'] as $version => $migration) {
+        foreach ([1 => 'life_os_schema_initial', 2 => 'life_os_schema_upgrade', 3 => 'life_os_schema_users', 4 => 'life_os_schema_mail'] as $version => $migration) {
             if ($version <= $current) continue;
             $migration($db);
             $db->prepare('INSERT INTO schema_migrations (version) VALUES (?)')->execute([$version]);
@@ -33,6 +33,35 @@ function life_os_migrate(PDO $db): int {
     } finally {
         $release = $db->prepare('SELECT RELEASE_LOCK(?)'); $release->execute([$lock]);
     }
+}
+
+/** Mail credentials live only in these server-side tables, never in app_state documents. */
+function life_os_schema_mail(PDO $db): void
+{
+    $db->exec("CREATE TABLE IF NOT EXISTS mail_accounts (
+        user_id INT UNSIGNED PRIMARY KEY,
+        imap_host VARCHAR(253) NOT NULL,
+        imap_user VARCHAR(255) NOT NULL,
+        imap_secret TEXT NOT NULL,
+        ai_provider VARCHAR(32) NOT NULL DEFAULT '',
+        ai_model VARCHAR(200) NOT NULL DEFAULT '',
+        ai_base_url VARCHAR(255) NOT NULL DEFAULT '',
+        ai_secret TEXT NULL,
+        inbox_json MEDIUMTEXT NULL,
+        inbox_at INT UNSIGNED NULL,
+        digest_attempt_at INT UNSIGNED NULL,
+        updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    $db->exec("CREATE TABLE IF NOT EXISTS mail_digests (
+        user_id INT UNSIGNED NOT NULL,
+        digest_date DATE NOT NULL,
+        summary MEDIUMTEXT NOT NULL,
+        message_count INT UNSIGNED NOT NULL,
+        total_count INT UNSIGNED NOT NULL,
+        model VARCHAR(200) NOT NULL DEFAULT '',
+        created_at INT UNSIGNED NOT NULL,
+        PRIMARY KEY (user_id, digest_date)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
 }
 
 /** Idempotent DDL permits resuming a partially applied MySQL migration. */

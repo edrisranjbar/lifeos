@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Edi Life OS | برنامهٔ متن‌باز مدیریت زندگی، عادت‌ها و مالی شخصی</title>
+<meta name="description" content="عادت‌ها، هدف‌ها، تمرکز، پروژه‌ها و حساب‌وکتاب شخصی در یک داشبورد رایگان و متن‌باز روی سرور خودتان؛ با تقویم شمسی، تومان و اتصال به هوش مصنوعی.">
+<link rel="canonical" href="https://edrisranjbar.github.io/lifeos/fa/">
+<link rel="alternate" hreflang="en" href="https://edrisranjbar.github.io/lifeos/">
+<link rel="alternate" hreflang="fa" href="https://edrisranjbar.github.io/lifeos/fa/">
+<link rel="alternate" hreflang="x-default" href="https://edrisranjbar.github.io/lifeos/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Edi Life OS">
+<meta property="og:locale" content="fa_IR">
+<meta property="og:locale:alternate" content="en_US">
+<meta property="og:title" content="Edi Life OS: زندگی‌تان، یک‌جا">
+<meta property="og:description" content="داشبورد متن‌باز و رایگان برای عادت‌ها، هدف‌ها، تمرکز و مالی شخصی؛ روی سرور خودتان، با تقویم شمسی و اتصال به هوش مصنوعی.">
+<meta property="og:url" content="https://edrisranjbar.github.io/lifeos/fa/">
+<meta property="og:image" content="https://edrisranjbar.github.io/lifeos/assets/og.jpg">
+<meta property="og:image:alt" content="داشبورد Edi Life OS با امتیاز بهره‌وری روزانه، عادت‌ها، هدف‌ها و تمرکز">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Edi Life OS: زندگی‌تان، یک‌جا">
+<meta name="twitter:description" content="داشبورد متن‌باز و رایگان برای عادت‌ها، هدف‌ها، تمرکز و مالی شخصی؛ روی سرور خودتان.">
+<meta name="theme-color" content="#05070a">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/site.css">
+<style>
+  /* Persian: Vazirmatn throughout, no letter-spacing (it breaks joined letters), no faux italics. */
+  :root { --serif: 'Vazirmatn', system-ui, sans-serif; --sans: 'Vazirmatn', system-ui, sans-serif; }
+  body { line-height: 1.85; }
+  h1, h2, h3, .eyebrow, .card .tag, .chat-top .label, .hero-lead { letter-spacing: 0 !important; text-transform: none; }
+  .hero h1 { font-weight: 800; font-size: clamp(46px, 8vw, 104px); line-height: 1.2; }
+  h2 { font-weight: 700; font-size: clamp(32px, 4.4vw, 54px); line-height: 1.3; }
+  .cta h2 { font-size: clamp(38px, 6vw, 80px); }
+  .hero h1 em, .cta h2 em, .problem blockquote { font-style: normal; }
+  .hero-lead { font-family: var(--sans); line-height: 1.75; max-width: 30ch; }
+  .eyebrow { font-size: 14px; }
+  .problem blockquote { font-size: 26px; font-weight: 600; line-height: 1.6; }
+  .principle .num { font-weight: 700; }
+  /* Code and tool calls read left to right. */
+  .code, .tool, .float code { direction: ltr; }
+  .code-top { direction: rtl; }
+  /* Mirror the decorative cards around the screenshot. */
+  .float-habit { left: auto; right: -56px; }
+  .float-focus { right: auto; left: -48px; }
+  .float-ai { right: auto; left: 6%; }
+  @media (max-width: 600px) { .float-ai { left: 50%; right: auto; margin-right: 0; margin-left: -130px; } }
+</style>
+<noscript><style>.reveal{opacity:1;transform:none}</style></noscript>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Edi Life OS","alternateName":"لایف او اس","url":"https://edrisranjbar.github.io/lifeos/fa/","inLanguage":"fa","description":"عادت‌ها، هدف‌ها، تمرکز، پروژه‌ها و حساب‌وکتاب شخصی در یک داشبورد رایگان و متن‌باز روی سرور خودتان؛ با تقویم شمسی، تومان، رابط راست‌به‌چپ و اتصال به هوش مصنوعی Claude.","applicationCategory":"LifestyleApplication","operatingSystem":"Any (self-hosted PHP 8.1+ and MySQL, or Docker)","license":"https://opensource.org/licenses/MIT","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"image":"https://edrisranjbar.github.io/lifeos/assets/og.jpg","screenshot":"https://edrisranjbar.github.io/lifeos/assets/dashboard.webp","author":{"@type":"Person","name":"Edris Ranjbar","alternateName":"ادریس رنجبر","url":"https://github.com/edrisranjbar"},"sameAs":["https://github.com/edrisranjbar/lifeos"]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","inLanguage":"fa","mainEntity":[
+{"@type":"Question","name":"آیا Edi Life OS رایگان است؟","acceptedAnswer":{"@type":"Answer","text":"بله. Edi Life OS کاملاً رایگان و متن‌باز با مجوز MIT است. اشتراک ماهانه، تبلیغ یا ردیابی ندارد و روی سرور خودتان اجرا می‌شود."}},
+{"@type":"Question","name":"آیا روی هاست اشتراکی ایرانی کار می‌کند؟","acceptedAnswer":{"@type":"Answer","text":"بله. هر هاستی که PHP 8.1 به بالا و MySQL 8 یا MariaDB داشته باشد کافی است، از جمله هاست‌های اشتراکی cPanel و DirectAdmin. فایل zip آخرین نسخه را در پوشهٔ اصلی هاست باز کنید و اطلاعات پایگاه داده را وارد کنید."}},
+{"@type":"Question","name":"آیا از تقویم شمسی و تومان پشتیبانی می‌کند؟","acceptedAnswer":{"@type":"Answer","text":"بله. تاریخ‌ها به وقت تهران هستند، Habittify می‌تواند تقویم جلالی (شمسی) را نشان دهد، ارز پیش‌فرض بخش مالی تومان است و یادداشت‌های فارسی خودکار راست‌به‌چپ نوشته می‌شوند."}},
+{"@type":"Question","name":"داده‌های من کجا ذخیره می‌شود؟","acceptedAnswer":{"@type":"Answer","text":"فقط در پایگاه دادهٔ MySQL خودتان، روی سروری که خودتان انتخاب می‌کنید. هیچ داده‌ای به سرور دیگری فرستاده نمی‌شود."}},
+{"@type":"Question","name":"چطور با هوش مصنوعی کار می‌کند؟","acceptedAnswer":{"@type":"Answer","text":"Edi Life OS یک سرور MCP اختیاری دارد که ۱۵ ابزار را در اختیار Claude و دستیارهای دیگر می‌گذارد. دستیار فقط از راه API محافظت‌شده با توکن کار می‌کند و به پایگاه داده یا رمزها دسترسی ندارد."}}
+]}</script>
+</head>
+<body>
+<a class="skip" href="#features">رفتن به محتوا</a>
+
+<header class="nav" id="nav">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="صفحهٔ اصلی Edi Life OS">
+      <svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#39e6ad"/><path d="M9 11h12M9 16h9M9 21h12M9 11v10" stroke="#05070a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="24" cy="21" r="1.5" fill="#05070a"/></svg>
+      <span dir="ltr">Edi Life OS</span>
+    </a>
+    <nav class="nav-links" aria-label="بخش‌ها">
+      <a href="#features">ویژگی‌ها</a>
+      <a href="#ai">هوش مصنوعی</a>
+      <a href="#install">نصب</a>
+      <a href="#faq">پرسش‌ها</a>
+    </nav>
+    <a class="gh-btn" href="https://github.com/edrisranjbar/lifeos">
+      <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+      گیت‌هاب
+      <span class="gh-stars" id="stars" hidden aria-label="ستاره‌های گیت‌هاب">★ <span id="starCount"></span></span>
+    </a>
+    <a class="lang-btn" href="../" hreflang="en" lang="en" title="English version">English</a>
+  </div>
+</header>
+
+<main id="top">
+
+  <section class="hero">
+    <div class="wrap">
+      <h1 class="reveal">زندگی‌تان، <em>یک‌جا.</em></h1>
+      <p class="hero-lead reveal">عادت‌ها، هدف‌ها، تمرکز و پول.<br><strong>یک برنامهٔ آرام، روی سرور خودتان.</strong></p>
+      <div class="hero-ctas reveal">
+        <a class="btn btn-primary" href="#install">شروع کنید
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+        </a>
+        <a class="btn btn-ghost" href="https://github.com/edrisranjbar/lifeos/blob/main/README.fa.md">راهنمای فارسی در گیت‌هاب</a>
+      </div>
+      <div class="stage reveal" id="stage">
+        <div class="tilt">
+          <div class="frame">
+            <div class="frame-bar" aria-hidden="true"><i></i><i></i><i></i></div>
+            <img src="../assets/dashboard.webp" width="1600" height="1000" fetchpriority="high" alt="نمای کلی Edi Life OS: امتیاز بهره‌وری روزانه بر اساس تمرکز، عادت‌ها، هدف‌ها و کارها، همراه با شش بُعد زندگی">
+          </div>
+        </div>
+        <div class="float float-habit" aria-hidden="true">
+          <span class="ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+          <span><b>تأمل صبحگاهی</b>۱۲ روز پیاپی</span>
+        </div>
+        <div class="float float-focus" aria-hidden="true">
+          <span class="ring"></span>
+          <span><b>۱۷:۱۲ مانده</b>کار عمیق · جلسهٔ ۲</span>
+        </div>
+        <div class="float float-ai" aria-hidden="true">
+          <span class="ico">✦</span>
+          <span><b>Claude یک هزینه ثبت کرد</b><code>lifeos_log_expense</code></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="strip">
+    <div class="wrap strip-row reveal" aria-label="فضاهای کاری">
+      <span class="chip" style="--c:#39e6ad"><i></i>نمای کلی</span>
+      <span class="chip" style="--c:#b69ce0"><i></i>رشد</span>
+      <span class="chip" style="--c:#f3c969"><i></i>هدف‌ها</span>
+      <span class="chip" style="--c:#39e6ad"><i></i>Habittify</span>
+      <span class="chip" style="--c:#c49bff"><i></i>تمرکز</span>
+      <span class="chip" style="--c:#f3c969"><i></i>مالی</span>
+      <span class="chip" style="--c:#39e6ad"><i></i>کارها</span>
+      <span class="chip" style="--c:#7da5ee"><i></i>کانبان</span>
+      <span class="chip" style="--c:#6bc6ce"><i></i>تقویم</span>
+      <span class="chip" style="--c:#b79cff"><i></i>دفترچه</span>
+      <span class="chip" style="--c:#ff9ec4"><i></i>یادداشت‌ها</span>
+    </div>
+  </div>
+
+  <section>
+    <div class="wrap problem">
+      <div class="scatter reveal" aria-hidden="true">
+        <span>فهرست کارها</span><span>ردیاب عادت</span><span>اکسل بودجه</span><span>تایمر پومودورو</span><span>برنامهٔ یادداشت</span>
+      </div>
+      <div class="reveal problem-text stack-sm">
+        <p class="eyebrow">چرا ساخته شد</p>
+        <h2>پنج برنامه، و هیچ‌کدام با هم حرف نمی‌زنند.</h2>
+        <p class="lead">هر ابزار به‌تنهایی خوب است، اما کنار هم نمی‌توانند به تنها سؤالی که واقعاً مهم است جواب بدهند:</p>
+        <blockquote>«آیا به سمت زندگی‌ای که می‌خواهم پیش می‌روم؟»</blockquote>
+      </div>
+    </div>
+  </section>
+
+  <section id="features" class="flush-top">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <p class="eyebrow">یک‌جا و به هم پیوسته</p>
+        <h2>یازده فضای کاری. یک طراحی. یک پایگاه داده.</h2>
+        <p class="lead">یک عادت می‌تواند پیشرفت یک هدف را جلو ببرد، کارت‌ها در تقویم‌تان می‌نشینند و نمای کلی همه را به یک امتیاز روزانه تبدیل می‌کند.</p>
+      </div>
+      <div class="bento">
+        <article class="card span-4 reveal" style="--c:#b69ce0">
+          <span class="tag">رشد</span>
+          <h3>شش بُعد زندگی، یک مسیر</h3>
+          <p>معنویت، سلامت، خانواده، مالی، یادگیری و استراحت؛ هر کدام وصل به هدف‌های بلندمدت و عادت‌هایی که پشتشان است. مرور هفتگی فقط یک یادداشت صادقانه و یک قدم بعدی از شما می‌خواهد.</p>
+          <img class="shot" src="../assets/growth.webp" loading="lazy" width="1600" height="1000" alt="صفحهٔ رشد با شش بُعد زندگی و پیشرفت هدف‌های SMART">
+        </article>
+        <article class="card span-2 reveal">
+          <span class="tag">Habittify</span>
+          <h3>قدم‌های کوچک، هر روز</h3>
+          <p>عادت‌هایی آن‌قدر کوچک که در شلوغ‌ترین روز هم انجام شوند؛ با زنجیرهٔ روزها و تقویم شمسی یا میلادی.</p>
+          <img class="shot" src="../assets/habittify.webp" loading="lazy" width="1600" height="1000" alt="فهرست عادت‌های روزانه با نمودار انجام هفت روز اخیر">
+        </article>
+        <article class="card span-3 reveal" style="--c:#c49bff">
+          <span class="tag">تمرکز</span>
+          <h3>کار عمیق، با حال خوب</h3>
+          <p>تایمر پومودورو با موسیقی و آسمانی که با ساعت روز عوض می‌شود.</p>
+          <img class="shot" src="../assets/focus.webp" loading="lazy" width="1600" height="1000" alt="تایمر تمرکز روی منظره‌ای تصویرسازی‌شده">
+        </article>
+        <article class="card span-3 reveal" style="--c:#7da5ee">
+          <span class="tag">کانبان</span>
+          <h3>پروژه‌هایی که جلو می‌روند</h3>
+          <p>بوردهایی با برچسب، اولویت، موعد، چک‌لیست، نظر و پیوست. هر کارت را می‌توانید به یک هدف تبدیل کنید.</p>
+          <img class="shot" src="../assets/kanban.webp" loading="lazy" width="1600" height="1000" alt="بورد کانبان با ستون‌های در صف، در حال انجام، بازبینی و انجام‌شده">
+        </article>
+        <article class="card mini span-2 reveal" style="--c:#f3c969">
+          <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></span>
+          <h3>حساب‌وکتابی که جور درمی‌آید</h3>
+          <p>هزینه و بودجه به تومان یا هر ارز دیگر، به‌علاوهٔ بدهی‌ها و طلب‌ها، یک‌باره یا قسطی، که مستقیم در دفتر حساب ثبت می‌شوند.</p>
+        </article>
+        <article class="card mini span-2 reveal" style="--c:#f3c969">
+          <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg></span>
+          <h3>هدف‌هایی که سنجیدنی‌اند</h3>
+          <p>هدف‌های SMART که با چک‌لیست، معیار سنجش یا پایبندی به یک عادت پیش می‌روند.</p>
+        </article>
+        <article class="card mini span-2 reveal" style="--c:#6bc6ce">
+          <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 11h18"/></svg></span>
+          <h3>یک تقویم برای همه چیز</h3>
+          <p>موعد کارت‌ها و سررسیدهای مالی کنار هم، با علامت برای موارد عقب‌افتاده.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="ai" id="ai">
+    <div class="wrap ai-grid">
+      <div class="reveal stack-sm">
+        <p class="eyebrow">آمادهٔ هوش مصنوعی</p>
+        <h2>از Claude دربارهٔ زندگی واقعی‌تان بپرسید.</h2>
+        <p class="lead">سرور MCP داخلی، ۱۵ ابزار در اختیار Claude و دستیارهای دیگر می‌گذارد؛ برای داشبورد، هدف‌ها، کارها، عادت‌ها، امور مالی و یادداشت‌ها.</p>
+        <ul class="checks">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg><span><b>فقط از راه API.</b> با یک API محافظت‌شده با توکن حرف می‌زند، هرگز مستقیم با پایگاه داده.</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg><span><b>قبل از حذف می‌پرسد.</b> ابزارهای حذف علامت‌گذاری شده‌اند تا اول از شما تأیید گرفته شود.</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg><span><b>خصوصی، خصوصی می‌ماند.</b> یادداشت‌های محرمانه پنهان می‌مانند، مگر خودتان اجازه بدهید.</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg><span><b>بدون بازنویسی بی‌صدا.</b> بررسی نسخه، از ویرایش‌های شما و هوش مصنوعی به یک اندازه محافظت می‌کند.</span></li>
+        </ul>
+      </div>
+      <div class="chat reveal" role="img" aria-label="نمونهٔ گفتگو: درخواست از Claude برای انجام‌شده زدن یک عادت و ثبت یک هزینه">
+        <div class="chat-top"><span class="dot"></span><span dir="ltr">Claude · LifeOS MCP</span><span class="label">نمونه</span></div>
+        <div class="chat-body">
+          <div class="msg me">مطالعه را برای امروز انجام‌شده بزن.</div>
+          <div class="tool">⚙ <b>lifeos_complete_habit</b> · Reading · today</div>
+          <div class="msg ai">انجام شد. <b>مطالعه</b> برای امروز تیک خورد.</div>
+          <div class="msg me">یک هزینهٔ ۴۵۰ هزار تومانی برای غذا ثبت کن.</div>
+          <div class="tool">⚙ <b>lifeos_log_expense</b> · 450,000 · Food</div>
+          <div class="msg ai"><b>۴۵۰٬۰۰۰ تومان</b> در دستهٔ غذا، در دورهٔ فعلی ثبت شد.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="install">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <p class="eyebrow">نصب در چند دقیقه</p>
+        <h2>مال خودتان، هر جا که بخواهید.</h2>
+        <p class="lead">PHP، MySQL و جاوااسکریپت ساده؛ بدون فریم‌ورک، بدون مرحلهٔ build و بدون چیزی که با به‌روزرسانی خراب شود.</p>
+      </div>
+      <div class="install">
+        <div class="code reveal">
+          <div class="code-top"><span>ترمینال</span><span class="sr-only" id="copyStatus" role="status" aria-live="polite"></span><button class="copy" type="button" aria-describedby="copyStatus" data-copy="git clone https://github.com/edrisranjbar/lifeos.git && cd lifeos
+cp .env.example .env
+docker compose up -d">کپی</button></div>
+<pre><code><span class="c"># Get the code</span>
+<span class="p">$ </span>git clone https://github.com/edrisranjbar/lifeos.git && cd lifeos
+<span class="c"># Set your sign-in and passwords</span>
+<span class="p">$ </span>cp .env.example .env
+<span class="c"># Start the app and MySQL</span>
+<span class="p">$ </span>docker compose up -d
+<span class="c"># Open http://localhost:8080</span></code></pre>
+        </div>
+        <div class="ways">
+          <div class="way reveal">
+            <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg></span>
+            <div><h3>داکر (Docker Compose)</h3><p>برنامه و MySQL با volume جدا برای داده‌ها و پیوست‌ها. به‌روزرسانی فقط یک build دوباره است.</p></div>
+          </div>
+          <div class="way reveal">
+            <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><path d="M3.3 7L12 12l8.7-5M12 22V12"/></svg></span>
+            <div><h3>هاست اشتراکی</h3><p>فایل zip آخرین نسخه را دانلود کنید، در پوشهٔ اصلی هاست باز کنید و اطلاعات MySQL را وارد کنید. تمام.</p></div>
+          </div>
+          <div class="way reveal">
+            <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg></span>
+            <div><h3>PHP ساده</h3><p>هر هاست با PHP 8.1 به بالا و MySQL 8 یا MariaDB. برای اجرای محلی، سرور داخلی PHP کافی است.</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="flush-top">
+    <div class="wrap principles">
+      <div class="principle reveal"><span class="num">۰۱</span><h3>داده‌های شما، مال خودتان</h3><p>همه چیز در پایگاه دادهٔ MySQL خودتان. بدون اشتراک ماهانه و بدون ارسال داده به جایی.</p></div>
+      <div class="principle reveal"><span class="num">۰۲</span><h3>متن‌باز</h3><p>با مجوز MIT. بخوانید، fork کنید، تغییرش دهید و مال خودتان کنید.</p></div>
+      <div class="principle reveal"><span class="num">۰۳</span><h3>آرام و فارسی‌دوست</h3><p>تم تیره و روشن، مناسب موبایل، با رابط راست‌به‌چپ، تقویم شمسی و تومان.</p></div>
+      <div class="principle reveal"><span class="num">۰۴</span><h3>ساخته‌شده در فضای باز</h3><p>Issueها باز است و از مشارکت‌کنندگان تازه‌کار استقبال می‌شود.</p></div>
+    </div>
+  </section>
+
+  <section id="faq">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <p class="eyebrow">پرسش‌های رایج</p>
+        <h2>پیش از شروع، شاید بپرسید…</h2>
+      </div>
+      <div class="faq reveal">
+        <details open><summary>آیا Edi Life OS رایگان است؟</summary><p>بله. Edi Life OS کاملاً رایگان و متن‌باز با مجوز MIT است. اشتراک ماهانه، تبلیغ یا ردیابی ندارد و روی سرور خودتان اجرا می‌شود.</p></details>
+        <details><summary>آیا روی هاست اشتراکی ایرانی کار می‌کند؟</summary><p>بله. هر هاستی که PHP 8.1 به بالا و MySQL 8 یا MariaDB داشته باشد کافی است، از جمله هاست‌های اشتراکی cPanel و DirectAdmin. فایل zip <a href="https://github.com/edrisranjbar/lifeos/releases/latest">آخرین نسخه</a> را در پوشهٔ اصلی هاست باز کنید و اطلاعات پایگاه داده را وارد کنید.</p></details>
+        <details><summary>آیا از تقویم شمسی و تومان پشتیبانی می‌کند؟</summary><p>بله. تاریخ‌ها به وقت تهران هستند، Habittify می‌تواند تقویم جلالی (شمسی) را نشان دهد، ارز پیش‌فرض بخش مالی تومان است و یادداشت‌های فارسی خودکار راست‌به‌چپ نوشته می‌شوند.</p></details>
+        <details><summary>داده‌های من کجا ذخیره می‌شود؟</summary><p>فقط در پایگاه دادهٔ MySQL خودتان، روی سروری که خودتان انتخاب می‌کنید. هیچ داده‌ای به سرور دیگری فرستاده نمی‌شود.</p></details>
+        <details><summary>چطور با هوش مصنوعی کار می‌کند؟</summary><p>Edi Life OS یک سرور MCP اختیاری دارد که ۱۵ ابزار را در اختیار Claude و دستیارهای دیگر می‌گذارد. دستیار فقط از راه API محافظت‌شده با توکن کار می‌کند و به پایگاه داده یا رمزها دسترسی ندارد.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta">
+    <div class="wrap">
+      <p class="eyebrow reveal">همین امروز شروع کنید</p>
+      <h2 class="reveal">در <em>همهٔ</em> ابعاد زندگی رشد کنید.</h2>
+      <p class="lead reveal">رایگان، متن‌باز و در چند دقیقه روی سرور خودتان.</p>
+      <div class="hero-ctas reveal">
+        <a class="btn btn-primary" href="https://github.com/edrisranjbar/lifeos">ستاره در گیت‌هاب</a>
+        <a class="btn btn-ghost" href="https://github.com/edrisranjbar/lifeos/releases/latest">دانلود آخرین نسخه</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>© ۲۰۲۶ ادریس رنجبر · مجوز MIT</span>
+    <nav aria-label="پانویس">
+      <a href="https://github.com/edrisranjbar/lifeos">گیت‌هاب</a>
+      <a href="https://github.com/edrisranjbar/lifeos/blob/main/README.fa.md">راهنمای فارسی</a>
+      <a href="https://github.com/edrisranjbar/lifeos/blob/main/CONTRIBUTING.md">مشارکت</a>
+      <a href="https://github.com/edrisranjbar/lifeos/issues">گزارش مشکل</a>
+      <a href="../" hreflang="en" lang="en">English</a>
+    </nav>
+  </div>
+</footer>
+
+<script src="../assets/site.js" defer></script>
+</body>
+</html>

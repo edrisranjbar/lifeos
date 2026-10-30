@@ -23,7 +23,8 @@ function database(): PDO {
 }
 try {
     $db = database();
-    check(life_os_migrate($db) === 3, 'Fresh database receives all three migrations');
+    check(life_os_migrate($db) === 4, 'Fresh database receives all four migrations');
+    check((int) $db->query('SELECT COUNT(*) FROM mail_accounts')->fetchColumn() === 0 && (int) $db->query('SELECT COUNT(*) FROM mail_digests')->fetchColumn() === 0, 'Mail tables created empty');
     check((int) $db->query("SELECT COUNT(*) FROM app_users WHERE id = 1 AND role = 'admin' AND active = 1")->fetchColumn() === 1, 'Fresh database has an active original administrator');
     check((int) $db->query('SELECT COUNT(*) FROM habits')->fetchColumn() === 3, 'First setup seeds defaults');
     $db->exec('DELETE FROM habits');
@@ -34,7 +35,7 @@ try {
     // Simulate an existing installation that has no migration history.
     $db->exec('DROP TABLE schema_migrations');
     file_put_contents($fixture . '/config.php', "<?php return ['db_host'=>'127.0.0.1','db_name'=>'unused','db_user'=>'root','db_password'=>''];");
-    check(life_os_migrate($db) === 3, 'Unversioned installation upgrades without bootstrap password');
+    check(life_os_migrate($db) === 4, 'Unversioned installation upgrades without bootstrap password');
     check($db->query('SELECT password_hash FROM app_users WHERE id = 1')->fetchColumn() === $hash, 'Original account keeps its password hash');
     check((int) $db->query("SELECT user_id FROM app_state WHERE state_key='preserve'")->fetchColumn() === 1, 'Existing records belong to the original account');
     check($db->query("SELECT GROUP_CONCAT(column_name ORDER BY seq_in_index) FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'app_state' AND index_name = 'PRIMARY'")->fetchColumn() === 'user_id,state_key', 'State documents are unique per account');
@@ -45,7 +46,7 @@ try {
     check((int) $db->query('SELECT COUNT(*) FROM habits')->fetchColumn() === 0, 'Existing empty installation not seeded');
     $db->exec('DELETE FROM schema_migrations WHERE version >= 2');
     $db->exec('DROP TABLE login_throttle');
-    check(life_os_migrate($db) === 2, 'Prototype version one upgrades');
+    check(life_os_migrate($db) === 3, 'Prototype version one upgrades');
     check((int) $db->query('SELECT COUNT(*) FROM login_throttle')->fetchColumn() === 0, 'Throttle table restored by upgrade');
     // A real version 2 installation upgrades to accounts with its data owned by the original account.
     file_put_contents($fixture . '/config.php', '<?php return ' . var_export($fixtureConfig, true) . ';');
@@ -55,7 +56,7 @@ try {
     $old->exec('INSERT INTO schema_migrations (version) VALUES (1), (2)');
     $old->exec("INSERT INTO app_state (state_key, state_value) VALUES ('edi_notes_v1', 'owner notes')");
     $oldHash = $old->query('SELECT password_hash FROM app_credentials')->fetchColumn();
-    check(life_os_migrate($old) === 1, 'Version 2 installation applies only the accounts migration');
+    check(life_os_migrate($old) === 2, 'Version 2 installation applies the accounts and mail migrations');
     check($old->query("SELECT CONCAT(role, ':', active, ':', password_hash) FROM app_users WHERE id = 1")->fetchColumn() === 'admin:1:' . $oldHash, 'Original sign-in becomes the active administrator');
     check((int) $old->query("SELECT user_id FROM app_state WHERE state_key = 'edi_notes_v1'")->fetchColumn() === 1, 'Version 2 records belong to the original account');
     check((int) $old->query('SELECT COUNT(*) FROM habits WHERE user_id = 1')->fetchColumn() === (int) $old->query('SELECT COUNT(*) FROM habits')->fetchColumn(), 'Version 2 habits belong to the original account');

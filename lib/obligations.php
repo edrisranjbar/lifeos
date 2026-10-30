@@ -14,7 +14,10 @@ function obligation_ledger(array $plan): string { return obligation_direction($p
 function obligation_entry_id(array $decision): string { return (string) ($decision['incomeId'] ?? $decision['expenseId'] ?? ''); }
 // The store keeps an emptied JSON object as {} (stdClass); decisions are always read as an array.
 function obligation_doc(array $doc): array { if (($doc['decisions'] ?? null) instanceof stdClass) $doc['decisions'] = (array) $doc['decisions']; return $doc; }
-function obligation_totals(): array { return ['scheduled' => 0, 'committed' => 0, 'paid' => 0, 'remaining' => 0, 'skipped' => 0, 'overdue' => 0, 'carryOver' => 0]; }
+// `later`: unpaid dues after the viewed month on plans that end; `openEnded`: plans that never end,
+// so their future dues cannot be totalled.
+function obligation_totals(): array { return ['scheduled' => 0, 'committed' => 0, 'paid' => 0, 'remaining' => 0, 'skipped' => 0, 'overdue' => 0, 'carryOver' => 0, 'later' => 0, 'openEnded' => 0]; }
+const OBLIGATION_UPCOMING_DAYS = 42;
 
 function obligation_audit(array &$doc, string $action, string $id, array $before, array $after): void
 {
@@ -78,16 +81,32 @@ function obligation_view(array $doc, array $periods, string $start, string $end)
 {
     $doc = obligation_doc($doc);
     $occurrences = [];
+    $upcoming = [];
+    $nextDue = [];
+    $horizon = (new DateTimeImmutable($end))->modify('+' . OBLIGATION_UPCOMING_DAYS . ' days')->format('Y-m-d');
     $byDirection = ['debt' => obligation_totals(), 'credit' => obligation_totals()];
     foreach ($doc['plans'] as $plan) {
         $totals =& $byDirection[obligation_direction($plan)];
+        $cancelFrom = $plan['cancelFrom'] ?? null;
+        // A plan with a count, end date or stop date has a knowable total; others run forever.
+        $finite = $plan['count'] !== null || $plan['endDate'] || $cancelFrom;
+        if (!$finite) $totals['openEnded']++;
+        $stop = max($horizon, $plan['endDate'] ?: '', $cancelFrom ?: '');
+        $next = null;
         for ($index = 0; $index < ($plan['count'] ?? 20000); $index++) {
             $due = obligation_due($plan, $index);
-            if ($due > $end) break;
+            if (($plan['endDate'] && $due > $plan['endDate']) || ($plan['count'] === null && $due > $stop)) break;
             $decision = $doc['decisions'][$plan['id'] . ':' . $index] ?? null;
-            if (($plan['endDate'] && $due > $plan['endDate']) || (($plan['cancelFrom'] ?? null) && $due >= $plan['cancelFrom'] && !$decision)) continue;
+            if ($cancelFrom && $due >= $cancelFrom && !$decision) continue;
             $item = obligation_record($plan, $index, $doc['decisions'], $periods);
             $unpaid = $item['status'] !== 'paid' && !$item['skipped'];
+            if ($unpaid && $next === null) $next = ['date' => $due, 'amount' => $item['amount'], 'occurrenceId' => $item['id']];
+            if ($due > $end) {
+                if (!$unpaid) continue;
+                if ($finite) $totals['later'] += $item['amount'];
+                if ($due <= $horizon) $upcoming[] = $item;
+                continue;
+            }
             if ($due < $start) {
                 if ($unpaid) { $totals['carryOver'] += $item['amount']; $occurrences[] = $item; }
                 continue;
@@ -100,8 +119,11 @@ function obligation_view(array $doc, array $periods, string $start, string $end)
             else { $totals['remaining'] += $item['amount']; if ($item['overdue']) $totals['overdue'] += $item['amount']; }
         }
         unset($totals);
+        $nextDue[$plan['id']] = $next;
     }
-    usort($occurrences, fn ($a, $b) => strcmp($a['date'] . $a['id'], $b['date'] . $b['id']));
+    $byDate = fn ($a, $b) => strcmp($a['date'] . $a['id'], $b['date'] . $b['id']);
+    usort($occurrences, $byDate);
+    usort($upcoming, $byDate);
     $plans = $doc['plans'];
     foreach ($plans as &$plan) if ($plan['type'] !== 'recurring') {
         $paid = 0; $paidCount = 0;
@@ -115,11 +137,12 @@ function obligation_view(array $doc, array $periods, string $start, string $end)
     unset($plan);
     foreach ($plans as &$plan) {
         $plan['direction'] = obligation_direction($plan);
+        $plan['nextDue'] = $nextDue[$plan['id']] ?? null;
         if ($plan['type'] === 'recurring') $plan['currentAmount'] = obligation_recurring_amount($plan, api_today());
     }
     unset($plan);
     // `totals` keeps its original meaning (debts) for existing clients.
-    return ['plans' => $plans, 'occurrences' => $occurrences, 'totals' => $byDirection['debt'], 'creditTotals' => $byDirection['credit'], 'history' => array_slice($doc['history'] ?? [], -30), 'start' => $start, 'end' => $end];
+    return ['plans' => $plans, 'occurrences' => $occurrences, 'upcoming' => $upcoming, 'upcomingEnd' => $horizon, 'totals' => $byDirection['debt'], 'creditTotals' => $byDirection['credit'], 'history' => array_slice($doc['history'] ?? [], -30), 'start' => $start, 'end' => $end];
 }
 
 function obligation_new_plan(array $body): array

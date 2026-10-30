@@ -6,7 +6,7 @@
 
 [![Latest release](https://img.shields.io/github/v/release/edrisranjbar/lifeos?color=39e6ad)](https://github.com/edrisranjbar/lifeos/releases) [![GitHub stars](https://img.shields.io/github/stars/edrisranjbar/lifeos?style=flat&color=f3c969)](https://github.com/edrisranjbar/lifeos/stargazers) [![MIT license](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![Docker](https://img.shields.io/badge/docker-compose_up-2496ed?logo=docker&logoColor=white)](#with-docker-recommended) [![MCP server](https://img.shields.io/badge/MCP-15_tools-39e6ad)](#talk-to-your-life-os-with-ai) [![PHP 8.1+](https://img.shields.io/badge/PHP-8.1%2B-777bb4?logo=php&logoColor=white)](#requirements)
 
-**[Website](https://edrisranjbar.github.io/lifeos/)** · [Quick start](#quick-start) · [Tour](#a-quick-tour) · [AI / MCP](#talk-to-your-life-os-with-ai) · [Deploy](docs/deployment.md) · [API](docs/api.md) · [Donate](#donations) · [Contact](#contact) · **[Español](README.es.md)**
+**[Website](https://edrisranjbar.github.io/lifeos/)** · [Quick start](#quick-start) · [Tour](#a-quick-tour) · [AI / MCP](#talk-to-your-life-os-with-ai) · [Deploy](docs/deployment.md) · [API](docs/api.md) · [Donate](#donations) · [Contact](#contact) · **[Español](README.es.md)** · **[فارسی](README.fa.md)**
 
 <br>
 
@@ -84,6 +84,7 @@ Most of us run our lives across a to-do app, a habit tracker, a budgeting spread
 | Workspace | What you can do |
 | --- | --- |
 | **Overview** | A live productivity score, focus and habit trends, goals, finances and a seven-day weather forecast. |
+| **Email** | Your recent inbox on the Overview and an AI summary of the last 24 hours each morning, from any IMAP mailbox with your own Claude, OpenAI, Gemini or OpenAI-compatible key. Read-only. [Guide](docs/email.md) |
 | **Growth** | Connect six life dimensions to long-term goals, SMART goals, habits and tasks. Run weekly, monthly or quarterly reviews. [Guide](docs/growth.md) |
 | **Focus** | Timed sessions with short and long breaks, session history and a focus soundtrack. |
 | **Finance** | Expenses, income and budgets in the currency you choose in Settings (Toman by default). Debts you owe and credits owed to you, one-time or recurring, recorded straight into the ledger. [Guide](docs/financial-commitments.md) |
@@ -241,7 +242,7 @@ Built with PHP, MySQL and vanilla JavaScript — no frontend build step, no fram
 - [Deployment guide](docs/deployment.md) — Apache, shared hosting, backups and migration
 - [Troubleshooting](docs/troubleshooting.md) — common first-run issues, causes and solutions
 - [Development guide](docs/development.md) — local checks and disposable integration fixtures
-- [Growth workspace](docs/growth.md) · [Debts and credits](docs/financial-commitments.md)
+- [Growth workspace](docs/growth.md) · [Debts and credits](docs/financial-commitments.md) · [Email and daily summary](docs/email.md)
 
 ## Donations
 

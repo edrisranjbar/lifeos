@@ -4,12 +4,12 @@
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Settings · Edi Life OS</title>
   <script src="/assets/storage.js?v=calendar-i18n-1"></script><script src="/assets/i18n.js?v=persian-1"></script><script src="/assets/currency.js?v=currency-4"></script>
-  <link rel="stylesheet" href="../assets/base.css"><link rel="stylesheet" href="style.css?v=i18n-1"><script src="app.js?v=calendar-i18n-1" defer></script>
+  <link rel="stylesheet" href="../assets/base.css"><link rel="stylesheet" href="style.css?v=mail-1"><script src="app.js?v=mail-1" defer></script>
 </head>
 <body><main class="settings-shell">
   <header class="page-header"><div><p class="eyebrow">MAKE IT YOURS</p><h1>Settings</h1><p class="lead">Your preferences, your account, your space.</p></div><div class="account-pill"><span class="avatar" id="accountAvatar" aria-hidden="true">·</span><div><strong id="accountName">Loading account…</strong><span id="accountRole">Private workspace</span></div></div></header>
   <div class="settings-layout">
-    <nav class="settings-nav" aria-label="Settings sections"><a href="#preferences" aria-current="location">Preferences</a><a href="#account">My account</a><a href="#people" id="peopleNav">Accounts</a><a href="#about">About LifeOS</a></nav>
+    <nav class="settings-nav" aria-label="Settings sections"><a href="#preferences" aria-current="location">Preferences</a><a href="#email">Email</a><a href="#account">My account</a><a href="#people" id="peopleNav">Accounts</a><a href="#about">About LifeOS</a></nav>
     <div class="settings-content">
       <section class="settings-card" id="preferences" aria-labelledby="preferencesTitle"><header class="section-heading"><span class="section-number" aria-hidden="true">01</span><div><h2 id="preferencesTitle">Preferences</h2><p>A familiar space, wherever you sign in.</p></div></header>
         <div class="preference-row"><div><h3>Language</h3><p>Sets the interface language and text direction.</p></div><label class="sr-only" for="language">Language</label><select id="language" disabled></select></div>
@@ -18,18 +18,34 @@
         <div class="preference-row"><div><h3>Calendar</h3><p>Used for Habittify months and day labels. Saved dates do not change.</p></div><label class="sr-only" for="calendar">Calendar</label><select id="calendar" disabled><option value="gregorian">Gregorian</option><option value="jalali">Jalali (Persian)</option></select></div>
         <div class="preference-row"><div><h3>Due-date notifications</h3><p id="dueNotifyHint">Get a browser notification when a Kanban card, goal deadline or payment is due. Applies to this device while LifeOS is open.</p></div><button type="button" class="secondary" id="dueNotifyToggle" disabled>Turn on</button></div><p class="status" id="preferenceMessage" role="status" aria-live="polite"></p>
       </section>
-      <section class="settings-card" id="account" aria-labelledby="accountTitle"><header class="section-heading"><span class="section-number" aria-hidden="true">02</span><div><h2 id="accountTitle">My account</h2><p>Keep your sign-in details up to date.</p></div></header>
+      <section class="settings-card" id="email" aria-labelledby="emailTitle"><header class="section-heading"><span class="section-number" aria-hidden="true">02</span><div><h2 id="emailTitle">Email summary</h2><p>Your recent inbox and a daily summary on the Overview.</p></div></header>
+        <form id="mailForm" autocomplete="off" novalidate>
+          <h3 class="form-subhead">Mailbox</h3>
+          <div class="form-grid"><div><label for="imapHost">IMAP server</label><input id="imapHost" maxlength="253" required spellcheck="false" placeholder="imap.gmail.com"></div><div><label for="imapUser">Email address</label><input id="imapUser" type="email" maxlength="255" required spellcheck="false"></div></div>
+          <label for="imapPassword">App password <span class="optional" id="imapPasswordSaved" hidden>saved · leave blank to keep</span></label><input id="imapPassword" type="password" maxlength="500" autocomplete="new-password">
+          <p class="hint">Use an app password, not your normal password. For Gmail, turn on 2-Step Verification, then create one at <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener noreferrer">myaccount.google.com/apppasswords</a>. LifeOS only reads your inbox: it never sends, deletes or marks mail as read.</p>
+          <h3 class="form-subhead">AI summary</h3>
+          <div class="form-grid"><div><label for="aiProvider">Provider</label><select id="aiProvider"><option value="">No AI summary</option></select></div><div id="aiBaseWrap" hidden><label for="aiBaseUrl">API address</label><input id="aiBaseUrl" maxlength="255" spellcheck="false" placeholder="https://openrouter.ai/api/v1"></div></div>
+          <div id="aiFields" hidden>
+            <label for="aiKey">API key <span class="optional" id="aiKeyNote"></span></label><input id="aiKey" type="password" maxlength="500" autocomplete="off">
+            <div class="model-row"><div><label for="aiModel">Model</label><input id="aiModel" list="aiModels" maxlength="200" spellcheck="false" placeholder="Load the list, or type a model ID"><datalist id="aiModels"></datalist></div><button type="button" class="secondary" id="loadModels">Load models</button></div>
+            <p class="hint">Once a day, the text of the last 24 hours of email is sent to this provider with your key to write the summary. Your key is stored encrypted on this server.</p>
+          </div>
+          <div class="form-footer"><p class="status" id="mailMessage" role="status" aria-live="polite"></p><div class="footer-actions"><button type="button" class="secondary" id="mailDisconnect" hidden>Disconnect</button><button class="primary" id="mailSave" type="submit" disabled>Connect</button></div></div>
+        </form>
+      </section>
+      <section class="settings-card" id="account" aria-labelledby="accountTitle"><header class="section-heading"><span class="section-number" aria-hidden="true">03</span><div><h2 id="accountTitle">My account</h2><p>Keep your sign-in details up to date.</p></div></header>
         <form id="credentialsForm"><label for="username">Username</label><input id="username" autocomplete="username" maxlength="190" required>
           <div class="form-grid"><div><label for="newPassword">New password <span class="optional">optional</span></label><input id="newPassword" type="password" autocomplete="new-password" minlength="12" maxlength="72"></div><div><label for="confirmPassword">Confirm new password</label><input id="confirmPassword" type="password" autocomplete="new-password" maxlength="72"></div></div><p class="hint">Leave blank to keep your current password. New passwords need 12–72 bytes.</p>
           <div class="confirmation"><label for="currentPassword">Current password</label><input id="currentPassword" type="password" autocomplete="current-password" required><p class="hint">Confirm it is you before changing your sign-in details.</p></div>
           <div class="form-footer"><p class="status" id="message" role="status" aria-live="polite"></p><button class="primary" id="save" type="submit" disabled>Save changes</button></div>
         </form><div class="session-row"><div><h3>Current session</h3><p>Sign out on this browser.</p></div><button class="secondary" id="signOut" type="button" disabled>Sign out</button></div><p class="status" id="signOutMessage" role="status" aria-live="polite"></p>
       </section>
-      <section class="settings-card" id="people" aria-labelledby="peopleTitle" hidden><header class="section-heading"><span class="section-number" aria-hidden="true">03</span><div><h2 id="peopleTitle">Accounts <span class="count" id="accountCount">—</span></h2><p>Every account is an administrator with its own private workspace.</p></div><button class="secondary" id="addUser" type="button" disabled>+ Add account</button></header>
+      <section class="settings-card" id="people" aria-labelledby="peopleTitle" hidden><header class="section-heading"><span class="section-number" aria-hidden="true">04</span><div><h2 id="peopleTitle">Accounts <span class="count" id="accountCount">—</span></h2><p>Every account is an administrator with its own private workspace.</p></div><button class="secondary" id="addUser" type="button" disabled>+ Add account</button></header>
         <div id="usersList" class="users-list" aria-live="polite"><p class="hint">Loading accounts…</p></div><p class="status" id="usersMessage" role="status"></p><button class="secondary" id="retryUsers" type="button" hidden>Retry</button>
         <p class="privacy-note">You never see anyone else's records here. Administrators can reset another account's password, which would let them sign in as that person, so only make people administrators if you trust them. Deactivating an account keeps its data.</p>
       </section>
-      <section class="settings-card" id="about" aria-labelledby="aboutTitle"><header class="section-heading"><span class="section-number" aria-hidden="true">04</span><div><h2 id="aboutTitle">A little more about LifeOS</h2><p>A space to build a life with intention.</p></div></header><p class="about-copy">Free and open source, under the MIT license. Help shape what comes next.</p><div class="about-links"><a href="https://github.com/edrisranjbar/lifeos" target="_blank" rel="noopener noreferrer">Star on GitHub ↗</a><a href="https://github.com/edrisranjbar/lifeos/issues" target="_blank" rel="noopener noreferrer">Share an idea ↗</a></div></section>
+      <section class="settings-card" id="about" aria-labelledby="aboutTitle"><header class="section-heading"><span class="section-number" aria-hidden="true">05</span><div><h2 id="aboutTitle">A little more about LifeOS</h2><p>A space to build a life with intention.</p></div></header><p class="about-copy">Free and open source, under the MIT license. Help shape what comes next.</p><div class="about-links"><a href="https://github.com/edrisranjbar/lifeos" target="_blank" rel="noopener noreferrer">Star on GitHub ↗</a><a href="https://github.com/edrisranjbar/lifeos/issues" target="_blank" rel="noopener noreferrer">Share an idea ↗</a></div></section>
     </div>
   </div>
 </main>

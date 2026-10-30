@@ -26,11 +26,21 @@
 .ob-side-label{font-size:13px;font-weight:600;color:var(--tone)}
 .ob-side strong{font-size:26px;font-weight:650;letter-spacing:-.5px;font-variant-numeric:tabular-nums;line-height:1.1}
 .ob-side strong small{font-size:12px;font-weight:400;color:var(--muted-2)}
-.ob-side-meta{font-size:12px;color:var(--muted-2)}
+.ob-side-caption{font-size:12px;color:var(--muted-2);margin-top:-4px}
+.ob-side-meta{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;font-size:12px;color:var(--muted);padding-top:10px;margin-top:4px;border-top:1px solid var(--ink-line)}
+.ob-side-meta i{font-style:normal;color:var(--muted-2)}
+.ob-side-meta span[title]{text-decoration:underline dotted;text-underline-offset:3px;cursor:help}
 .ob-side-meta em{font-style:normal;color:var(--rust-text)}
 
 /* Selected side */
-.ob-stats{display:flex;flex-wrap:wrap;gap:8px 32px;padding-bottom:20px;margin-bottom:16px;border-bottom:1px solid var(--ink-line)}
+.ob-stats{display:grid;gap:16px;padding:20px;margin-bottom:24px;border:1px solid var(--ink-line);border-radius:14px;background:color-mix(in srgb,var(--ink-soft) 55%,transparent)}
+.ob-period{display:flex;align-items:center;gap:12px}
+.ob-period>span{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.ob-period small{font-size:12px;color:var(--muted-2);white-space:nowrap;font-variant-numeric:tabular-nums}
+.ob-period-bar{flex:1;height:6px;border-radius:6px;background:var(--ink-line);overflow:hidden}
+.ob-period-bar span{display:block;height:100%;border-radius:6px;background:var(--ob-debt);transition:width .4s ease}
+.obligations:has(#obTab-credit[aria-selected=true]) .ob-period-bar span{background:var(--ob-credit)}
+.ob-stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px 24px}
 .ob-stat span{display:block;font-size:12px;color:var(--muted-2);margin-bottom:4px}
 .ob-stat strong{font-size:17px;font-weight:600;font-variant-numeric:tabular-nums}
 .ob-stat.good strong{color:var(--jade-text)}
@@ -67,6 +77,14 @@
 .ob-empty{display:grid;gap:6px;padding:40px 24px;text-align:center;font-size:13px;line-height:1.6;color:var(--muted-2);border:1px dashed var(--ink-line);border-radius:12px;margin:8px 0}
 .ob-empty strong{color:var(--text);font-weight:600}
 
+/* To do groups */
+.ob-group+.ob-group{margin-top:20px}
+.ob-group-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin:8px 0 0;padding:0 4px 8px;border-bottom:1px solid var(--ink-line);font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.ob-group-head span:last-child{font-size:13px;letter-spacing:0;text-transform:none;color:var(--text);font-variant-numeric:tabular-nums}
+.ob-group-head small{font-size:11px;font-weight:400;color:var(--muted-2)}
+.ob-group-head.bad{color:var(--rust-text)}
+.ob-group-head.bad span:last-child{color:var(--rust-text)}
+
 /* Overflow menu */
 .ob-more{position:relative}
 .ob-more summary{list-style:none;display:grid;place-items:center;width:32px;height:32px;border-radius:8px;color:var(--muted);cursor:pointer;font-size:18px;line-height:1}
@@ -86,6 +104,7 @@
 .ob-plan h4{font-size:14px;font-weight:600;margin:0 0 4px}
 .ob-plan p{font-size:12px;color:var(--muted-2);line-height:1.5}
 .ob-plan-side{display:flex;align-items:center;gap:8px;flex:none}
+.ob-plan-figures{display:grid;justify-items:end;gap:6px}
 .ob-plan-side strong{font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
 .ob-plan-side small{font-size:11px;font-weight:400;color:var(--muted-2)}
 .ob-progress{height:4px;max-width:320px;margin:10px 0 6px;border-radius:4px;background:var(--ink-line);overflow:hidden}

@@ -18,9 +18,11 @@ const UNITS={daily:['day','days'],weekly:['week','weeks'],monthly:['month','mont
 const repeatLabel=(frequency,interval)=>interval===1?tr({daily:'Daily',weekly:'Weekly',monthly:'Monthly',yearly:'Yearly'}[frequency]):tr('Every {count} {unit}',{count:money(interval),unit:tr(UNITS[frequency][1])});
 // Words that change with direction, so every screen reads naturally.
 const WORDS={
-  debt:{tab:window.lifeOsI18n.t('I owe'),kicker:window.lifeOsI18n.t('You owe'),pay:window.lifeOsI18n.t('Pay'),paid:window.lifeOsI18n.t('Paid'),done:window.lifeOsI18n.t('paid'),party:window.lifeOsI18n.t('Pay to'),partyHint:window.lifeOsI18n.t('Person, bank or company'),name:window.lifeOsI18n.t('Rent, loan, phone plan…'),left:window.lifeOsI18n.t('Still to pay'),record:window.lifeOsI18n.t('Record payment'),defer:window.lifeOsI18n.t('Defer'),empty:window.lifeOsI18n.t('Nothing you owe in this view.')},
-  credit:{tab:window.lifeOsI18n.t('Owed to me'),kicker:window.lifeOsI18n.t('Owed to you'),pay:window.lifeOsI18n.t('Mark received'),paid:window.lifeOsI18n.t('Received'),done:window.lifeOsI18n.t('received'),party:window.lifeOsI18n.t('From'),partyHint:window.lifeOsI18n.t('Who pays you'),name:window.lifeOsI18n.t('Loan to a friend, rent from tenant…'),left:window.lifeOsI18n.t('Still to collect'),record:window.lifeOsI18n.t('Record money received'),defer:window.lifeOsI18n.t('Mark late'),empty:window.lifeOsI18n.t('Nobody owes you anything in this view.')}
+  debt:{tab:window.lifeOsI18n.t('I owe'),kicker:window.lifeOsI18n.t('You owe'),pay:window.lifeOsI18n.t('Pay'),paid:window.lifeOsI18n.t('Paid'),done:window.lifeOsI18n.t('paid'),party:window.lifeOsI18n.t('Pay to'),partyHint:window.lifeOsI18n.t('Person, bank or company'),name:window.lifeOsI18n.t('Rent, loan, phone plan…'),left:window.lifeOsI18n.t('Still to pay'),total:tr('Total still to pay'),plans:tr('What you owe'),record:window.lifeOsI18n.t('Record payment'),defer:window.lifeOsI18n.t('Defer'),empty:window.lifeOsI18n.t('Nothing you owe in this view.')},
+  credit:{tab:window.lifeOsI18n.t('Owed to me'),kicker:window.lifeOsI18n.t('Owed to you'),pay:window.lifeOsI18n.t('Mark received'),paid:window.lifeOsI18n.t('Received'),done:window.lifeOsI18n.t('received'),party:window.lifeOsI18n.t('From'),partyHint:window.lifeOsI18n.t('Who pays you'),name:window.lifeOsI18n.t('Loan to a friend, rent from tenant…'),left:window.lifeOsI18n.t('Still to collect'),total:tr('Total still to collect'),plans:tr('What you are owed'),record:window.lifeOsI18n.t('Record money received'),defer:window.lifeOsI18n.t('Mark late'),empty:window.lifeOsI18n.t('Nobody owes you anything in this view.')}
 };
+const shortDate=date=>fmt(date,{day:'numeric',month:'short'});
+const sum=items=>items.reduce((total,item)=>total+item.amount,0);
 const params=new URLSearchParams(location.search);
 let requested=params.get('payment'), payment=null, view=null, sequence=0, mutating=false, refreshTimer, action=null, editing=null;
 let direction='debt', filter='open';
@@ -28,8 +30,8 @@ let month=/^\d{4}-(0[1-9]|1[0-2])/.test(params.get('due')||'')?params.get('due')
 
 const root=document.createElement('section');root.id='obligations';root.className='obligations ledger-card';root.setAttribute('aria-labelledby','obHeading');
 root.innerHTML=`<header class="ob-head">
-  <div><span class="eyebrow">${window.lifeOsI18n.t("DEBTS &amp; CREDITS")}</span><h2 id="obHeading">${window.lifeOsI18n.t("Who owes what")}</h2><p>${window.lifeOsI18n.t("Money you owe and money owed to you, one-time or recurring. Paying or receiving updates your ledger.")}</p></div>
-  <div class="ob-head-actions"><label class="ob-month"><span class="sr-only">${window.lifeOsI18n.t("Month")}</span><input id="obMonth" type="month" value="${month}" required aria-label="${window.lifeOsI18n.t("Month")}"></label><button id="obRefresh" class="ob-icon-btn" aria-label="${window.lifeOsI18n.t("Refresh")}" title="${window.lifeOsI18n.t("Refresh")}"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg></button><button id="obNew" class="btn-primary" disabled>${window.lifeOsI18n.t("＋ New")}</button></div>
+  <div><span class="eyebrow">DEBTS &amp; CREDITS</span><h2 id="obHeading">Who owes what</h2><p>Money you owe and money owed to you. Totals include every open due, not just this month; paying or receiving adds it to your ledger.</p></div>
+  <div class="ob-head-actions"><label class="ob-month"><span class="sr-only">Month</span><input id="obMonth" type="month" value="${month}" required aria-label="Month"></label><button id="obRefresh" class="ob-icon-btn" aria-label="Refresh" title="Refresh"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg></button><button id="obNew" class="btn-primary" disabled>＋ New</button></div>
 </header>
 <p id="obStatus" role="status" aria-live="polite">${window.lifeOsI18n.t("Loading…")}</p>
 <div class="ob-sides" role="tablist" aria-label="${window.lifeOsI18n.t("Debts and credits")}">
@@ -43,7 +45,7 @@ root.innerHTML=`<header class="ob-head">
   <section class="ob-plans" aria-labelledby="obPlansHeading"><header><h3 id="obPlansHeading">${window.lifeOsI18n.t("Plans")}</h3><span class="ob-muted" id="obPlansCount"></span></header><div id="obPlans"></div></section>
 </div>
 <details class="ob-history"><summary>${window.lifeOsI18n.t("Recent activity")}</summary><div id="obHistory"></div></details>`;
-document.querySelector('#pageRoot .main-grid').before(root);
+document.querySelector('#pageRoot .main-grid').after(root);
 
 function dialog(id,html){const d=document.createElement('dialog');d.id=id;d.className='ob-dialog';d.innerHTML=html;document.body.append(d);return d;}
 const closeBtn=window.lifeOsI18n.markup('<button type="button" class="ob-close" data-close aria-label="Close">✕</button>');
@@ -85,22 +87,30 @@ function scheduleLabel(o){
   const repeat=repeatLabel(o.frequency,o.interval);
   return o.count?tr('{repeat} · {current} of {total}',{repeat,current:money(o.index+1),total:money(o.count)}):repeat;
 }
+const openDue=o=>o.status!=='paid'&&!o.skipped;
+const findDue=id=>view.occurrences.find(o=>o.id===id)||view.upcoming.find(o=>o.id===id);
 function render(){
   if(!view)return;
+  const monthName=fmt(month+'-15',{month:'long'})+(month.slice(0,4)!==today().slice(0,4)?' '+month.slice(0,4):'');
   for(const dir of ['debt','credit']){
     const t=totalsFor(dir),w=WORDS[dir],tab=$('obTab-'+dir);
     tab.setAttribute('aria-selected',String(dir===direction));tab.tabIndex=dir===direction?0:-1;
-    const due=t.remaining+t.carryOver;
-    tab.innerHTML=`<span class="ob-side-label">${w.tab}</span><strong>${money(due)} <small>${esc(unit())}</small></strong><span class="ob-side-meta">${t.overdue+t.carryOver?`<em>${tr('{amount} overdue',{amount:money(t.overdue+t.carryOver)})}</em>`:tr('{label} by month end',{label:w.left})}</span>`;
+    // Everything still open: earlier months, this month, and later dues of plans that end.
+    const outstanding=t.carryOver+t.remaining+t.later,late=t.overdue+t.carryOver;
+    const next=[...view.occurrences,...view.upcoming].filter(o=>o.direction===dir&&openDue(o)&&o.date>=today()).sort((a,b)=>a.date.localeCompare(b.date))[0];
+    const meta=[late?`<em>${money(late)} overdue</em>`:'',next?`Next: <span dir="auto">${esc(next.title)}</span> · ${shortDate(next.date)}`:'',t.openEnded?`<span title="Plans with no end date count only up to this month">${t.openEnded} ongoing</span>`:''].filter(Boolean).map(part=>`<span>${part}</span>`).join('<i aria-hidden="true">·</i>');
+    tab.innerHTML=`<span class="ob-side-label">${w.tab}</span><strong>${money(outstanding)} <small>${esc(unit())}</small></strong><span class="ob-side-caption">${w.total}</span><span class="ob-side-meta">${meta||'Nothing open'}</span>`;
   }
-  const t=totalsFor(direction),w=WORDS[direction];
-  $('obStats').innerHTML=[[tr('Due in {month}',{month:fmt(month+'-15',{month:'long'})}),t.committed,''],[w.paid,t.paid,'good'],[w.left,t.remaining,t.remaining?'warn':''],...(t.carryOver?[[tr('From earlier months'),t.carryOver,'bad']]:[])].map(([label,value,tone])=>`<div class="ob-stat ${tone}"><span>${label}</span><strong>${money(value)}</strong></div>`).join('');
-  $('obFilterPaid').textContent=direction==='credit'?window.lifeOsI18n.t('Received'):window.lifeOsI18n.t('Paid');
-  $('obFilterRejected').textContent=direction==='credit'?window.lifeOsI18n.t('Late'):window.lifeOsI18n.t('Deferred');
+  const t=totalsFor(direction),w=WORDS[direction],pct=t.committed?Math.round(t.paid/t.committed*100):0;
+  const stats=[[`Due in ${monthName}`,t.committed,''],[w.paid,t.paid,'good'],[w.left,t.remaining,t.remaining?'warn':''],...(t.carryOver?[['From earlier months',t.carryOver,'bad']]:[]),...(t.later?[[`After ${monthName}`,t.later,'']]:[])];
+  $('obStats').innerHTML=`<div class="ob-period"><span>${esc(monthName)}</span><div class="ob-period-bar" role="progressbar" aria-label="${esc(monthName)}: ${pct}% ${w.done}" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><span style="width:${pct}%"></span></div><small>${t.committed?`${pct}% ${w.done}`:'Nothing due'}</small></div><div class="ob-stat-grid">${stats.map(([label,value,tone])=>`<div class="ob-stat ${tone}"><span>${label}</span><strong>${money(value)}</strong></div>`).join('')}</div>`;
+  $('obFilterPaid').textContent=direction==='credit'?'Received':'Paid';
+  $('obFilterRejected').textContent=direction==='credit'?'Late':'Deferred';
   root.querySelectorAll('[data-filter]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.filter===filter)));
   const q=$('obSearch').value.toLowerCase();
-  const list=view.occurrences.filter(o=>o.direction===direction&&(filter==='all'||(filter==='open'?o.status!=='paid'&&!o.skipped:o.status===filter))&&`${o.title} ${o.payee}`.toLowerCase().includes(q));
-  $('obList').innerHTML=list.length?list.map(o=>{
+  const matches=o=>o.direction===direction&&`${o.title} ${o.payee}`.toLowerCase().includes(q);
+  const list=view.occurrences.filter(o=>matches(o)&&(filter==='all'||(filter==='open'?openDue(o):o.status===filter)));
+  const row=o=>{
     const [label,tone]=statusOf(o),paid=o.decision.status==='paid';
     const more=paid?`<button data-ledger="${esc(o.decision.period)}" data-entry="${esc(o.decision.incomeId??o.decision.expenseId)}" data-kind="${o.direction==='credit'?'income':'expense'}">${window.lifeOsI18n.t("View in ledger")}</button><button data-action="undo" data-occurrence="${esc(o.id)}">${window.lifeOsI18n.t("Undo")}</button>`
       :o.status==='rejected'?`<button data-action="restore" data-occurrence="${esc(o.id)}">${window.lifeOsI18n.t("Mark as expected again")}</button>`
@@ -111,17 +121,27 @@ function render(){
       <div class="ob-when" aria-label="${esc(longDate(o.date))}"><strong>${fmt(o.date,{day:'numeric'})}</strong><span>${fmt(o.date,{month:'short'})}${o.date.slice(0,4)!==month.slice(0,4)?' '+o.date.slice(0,4):''}</span></div>
       <div class="ob-info"><h4 dir="auto">${esc(o.title)}</h4><p>${o.payee?`<span dir="auto">${esc(o.payee)}</span> · `:''}${esc(scheduleLabel(o))}${o.optional?' · '+tr('optional'):''}</p>${o.decision.note?`<p class="ob-row-note" dir="auto">${esc(o.decision.note)}</p>`:''}${paid?`<p class="ob-row-note">${esc(w.paid)} ${esc(longDate(o.decision.paymentDate))} · ${esc(o.decision.period)}</p>`:''}</div>
       <div class="ob-amount"><strong>${money(o.amount)}</strong><span class="ob-pill ${tone}">${label}</span></div>
-      <div class="ob-row-actions">${paid?'':`<button class="btn-primary ob-pay" data-pay="${esc(o.id)}">${w.pay}</button>`}<details class="ob-more"><summary aria-label="More actions for ${esc(o.title)}">⋯</summary><div class="ob-menu">${editAction}${more}${deleteAction}</div></details></div>
+      <div class="ob-row-actions">${paid?'':`<button class="${o.date>today()?'btn-ghost':'btn-primary'} ob-pay" data-pay="${esc(o.id)}">${w.pay}</button>`}<details class="ob-more"><summary aria-label="More actions for ${esc(o.title)}">⋯</summary><div class="ob-menu">${editAction}${more}${deleteAction}</div></details></div>
     </article>`;
-  }).join(''):`<div class="ob-empty"><strong>${tr(filter==='open'?'All clear.':'Nothing here.')}</strong><span>${w.empty} ${tr('Use')} <b>${window.lifeOsI18n.t("＋ New")}</b> ${window.lifeOsI18n.t("to add one, or pick another month.")}</span></div>`;
+  };
+  const empty=`<div class="ob-empty"><strong>${filter==='open'?'All clear.':'Nothing here.'}</strong><span>${w.empty} Use <b>＋ New</b> to add one, or pick another month.</span></div>`;
+  if(filter==='open'){
+    // To do reads as a timeline: what is late, what is left this month, and what comes next.
+    const later=view.upcoming.filter(o=>matches(o)&&openDue(o));
+    const groups=[['Overdue',list.filter(o=>o.overdue),'bad'],[`Rest of ${monthName}`,list.filter(o=>!o.overdue),''],[`Coming up · next ${Math.round((Date.parse(view.upcomingEnd)-Date.parse(view.end))/604800000)} weeks`,later,'']].filter(([,items])=>items.length);
+    $('obList').innerHTML=groups.length?groups.map(([label,items,tone])=>`<section class="ob-group" aria-label="${esc(label)}"><h4 class="ob-group-head ${tone}"><span>${esc(label)}</span><span>${money(sum(items))} <small>${esc(unit())}</small></span></h4>${items.map(row).join('')}</section>`).join(''):empty;
+  }else $('obList').innerHTML=list.length?list.map(row).join(''):empty;
   const plans=view.plans.filter(p=>p.direction===direction);
+  $('obPlansHeading').textContent=`Plans · ${w.plans.toLowerCase()}`;
   $('obPlansCount').textContent=plans.length?`${plans.length}`:'';
   $('obPlans').innerHTML=plans.length?plans.map(p=>{
     const finite=p.type!=='recurring'&&p.count>1,pct=finite&&p.totalAmount?Math.round(p.progress.paid/p.totalAmount*100):0;
-    const terms=p.type==='once'?tr('One-time · due {date}',{date:longDate(p.startDate)}):tr('{repeat} · from {date}',{repeat:repeatLabel(p.frequency,p.interval),date:longDate(p.startDate)})+(p.count&&p.type==='recurring'?tr(' · {count} payments',{count:money(p.count)}):'')+(p.endDate?tr(' · until {date}',{date:longDate(p.endDate)}):'')+(p.cancelFrom?tr(' · stopped from {date}',{date:longDate(p.cancelFrom)}):'');
-    const amount=p.type==='recurring'?`${money(p.currentAmount??p.amount)} <small>${window.lifeOsI18n.t("each")}</small>`:`${money(p.totalAmount)} <small>${window.lifeOsI18n.t("total")}</small>`;
-    return `<article class="ob-plan"><div class="ob-plan-main"><h4 dir="auto">${esc(p.title)}</h4><p>${p.payee?`<span dir="auto">${esc(p.payee)}</span> · `:''}${terms}</p>${finite?`<div class="ob-progress" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100" aria-label="${esc(p.title)} progress"><span style="width:${pct}%"></span></div><p class="ob-progress-text">${money(p.progress.paid)} ${w.done} · ${tr('{amount} left',{amount:money(p.progress.remaining)})}${p.count>1?tr(' · {current} of {total}',{current:money(p.progress.paidCount),total:money(p.count)}):''}</p>`:''}${p.notes?`<p class="ob-row-note" dir="auto">${esc(p.notes)}</p>`:''}</div><div class="ob-plan-side"><strong>${amount}</strong><details class="ob-more"><summary aria-label="Plan actions for ${esc(p.title)}">⋯</summary><div class="ob-menu"><button data-edit="${esc(p.id)}">${window.lifeOsI18n.t("Edit details")}</button>${p.type==='recurring'&&!p.cancelFrom?`<button data-cancel="${esc(p.id)}">${window.lifeOsI18n.t("Stop future dues")}</button>`:''}<button data-delete="${esc(p.id)}" class="danger">${window.lifeOsI18n.t("Delete")}</button></div></details></div></article>`;
-  }).join(''):`<p class="ob-muted">${window.lifeOsI18n.t("No plans yet.")}</p>`;
+    const terms=p.type==='once'?`One-time · due ${longDate(p.startDate)}`:`${repeatLabel(p.frequency,p.interval)} · from ${longDate(p.startDate)}${p.count&&p.type==='recurring'?` · ${p.count} payments`:''}${p.endDate?` · until ${longDate(p.endDate)}`:''}${p.cancelFrom?` · stopped from ${longDate(p.cancelFrom)}`:''}`;
+    const amount=p.type==='recurring'?`${money(p.currentAmount??p.amount)} <small>each</small>`:`${money(p.totalAmount)} <small>total</small>`;
+    const next=p.nextDue,late=next&&next.date<today();
+    const state=next?`<span class="ob-pill ${late?'late':'soon'}">${late?'Overdue':'Next'} · ${shortDate(next.date)}</span>`:`<span class="ob-pill ${p.cancelFrom?'muted':'done'}">${p.cancelFrom?'Stopped':'All '+w.done}</span>`;
+    return `<article class="ob-plan"><div class="ob-plan-main"><h4 dir="auto">${esc(p.title)}</h4><p>${p.payee?`<span dir="auto">${esc(p.payee)}</span> · `:''}${terms}</p>${finite?`<div class="ob-progress" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100" aria-label="${esc(p.title)} progress"><span style="width:${pct}%"></span></div><p class="ob-progress-text">${money(p.progress.paid)} ${w.done} · ${money(p.progress.remaining)} left${p.count>1?` · ${p.progress.paidCount} of ${p.count}`:''}</p>`:''}${p.notes?`<p class="ob-row-note" dir="auto">${esc(p.notes)}</p>`:''}</div><div class="ob-plan-side"><div class="ob-plan-figures"><strong>${amount}</strong>${state}</div><details class="ob-more"><summary aria-label="Plan actions for ${esc(p.title)}">⋯</summary><div class="ob-menu"><button data-edit="${esc(p.id)}">Edit details</button>${p.type==='recurring'&&!p.cancelFrom?`<button data-cancel="${esc(p.id)}">Stop future dues</button>`:''}<button data-delete="${esc(p.id)}" class="danger">Delete</button></div></details></div></article>`;
+  }).join(''):`<p class="ob-muted">No plans yet.</p>`;
   const names=Object.fromEntries(view.plans.map(p=>[p.id,p.title]));
   const verbs={pay:'Recorded',undo:'Undid',reject:'Deferred',restore:'Restored',delete:'Deleted'};
   $('obHistory').innerHTML=view.history?.length?[...view.history].reverse().map(h=>`<p><span>${esc(new Date(h.at).toLocaleString(window.lifeOsI18n.locale('en-GB'),{timeZone:'Asia/Tehran',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}))}</span>${esc(tr(verbs[h.action]||h.action))} · ${esc(names[h.occurrenceId.split(':')[0]]||(h.action==='delete'?h.note:'')||tr('Removed entry'))}${h.note&&h.action!=='delete'?` · <i dir="auto">${esc(h.note)}</i>`:''}</p>`).join(''):window.lifeOsI18n.markup('<p class="ob-muted">No activity yet.</p>');
@@ -135,7 +155,7 @@ async function refresh(){
     await appStorage.sync();
     const response=await fetch(`/finance-obligations.php?start=${first}&end=${last}`,{cache:'no-store',redirect:'error'}),result=await response.json();
     if(!response.ok)throw Error(result.error?.message||'Unable to load debts and credits.');
-    if(token!==sequence)return;view=result.data;view.creditTotals??={scheduled:0,committed:0,paid:0,remaining:0,skipped:0,overdue:0,carryOver:0};
+    if(token!==sequence)return;view=result.data;view.creditTotals??={scheduled:0,committed:0,paid:0,remaining:0,skipped:0,overdue:0,carryOver:0};view.upcoming??=[];view.upcomingEnd??=view.end;for(const t of [view.totals,view.creditTotals]){t.later??=0;t.openEnded??=0;}
     render();$('obStatus').textContent='';
     if(requested){const row=[...root.querySelectorAll('[data-id]')].find(r=>r.dataset.id===requested);row?.scrollIntoView({block:'center',behavior:'auto'});requested=null;}
   }catch(error){if(token===sequence)$('obStatus').textContent=error.message;}
@@ -221,7 +241,7 @@ function paymentOptions(){
   $('obPayEntry').innerHTML=`<option value="">${choices.length?'Choose one':'None with this exact amount'}</option>`+choices.map(e=>`<option value="${esc(e.id)}">${esc(credit?e.name||'Income':`${e.date} · ${e.desc||'Expense'}`)} · ${money(e.amount)}</option>`).join('');
 }
 function openPay(id){
-  payment=view.occurrences.find(o=>o.id===id);if(!payment)return;
+  payment=findDue(id);if(!payment)return;
   const credit=payment.direction==='credit',w=WORDS[payment.direction];
   $('obPayHeading').textContent=w.record;
   $('obPaySummary').innerHTML=`<strong>${money(payment.amount)} <small>${esc(unit())}</small></strong><span dir="auto">${esc(payment.title)}${payment.payee?' · '+esc(payment.payee):''}</span><span>${esc(tr('Due {date}',{date:longDate(payment.date)}))}</span>`;
@@ -243,7 +263,7 @@ $('obPayForm').onsubmit=async event=>{
   }catch(error){$('obPayError').textContent=error.message;}finally{$('obSavePayment').disabled=false;}
 };
 function openAction(name,id){
-  const item=view.occurrences.find(o=>o.id===id),plan=view.plans.find(p=>p.id===id),credit=(item||plan)?.direction==='credit';
+  const item=findDue(id),plan=view.plans.find(p=>p.id===id),credit=(item||plan)?.direction==='credit';
   action={action:name,...(['cancel','delete'].includes(name)?{planId:id}:{occurrenceId:id})};
   $('obActionHeading').textContent={cancel:window.lifeOsI18n.t('Stop future dues'),delete:window.lifeOsI18n.t('Delete this entry?'),undo:credit?window.lifeOsI18n.t('Undo receipt'):window.lifeOsI18n.t('Undo payment'),reject:item?.optional?window.lifeOsI18n.t('Skip this period'):credit?window.lifeOsI18n.t('Mark as late'):window.lifeOsI18n.t('Defer payment'),restore:window.lifeOsI18n.t('Mark as expected again')}[name];
   $('obActionCopy').textContent={

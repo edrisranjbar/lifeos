@@ -14,6 +14,9 @@ return [
     // The operator API/MCP token can access only this active account's data.
     'api_user_id' => 1,
     'api_allow_secret_notes' => false,
+    // Optional: encrypts saved mail app passwords and AI keys. Empty = generated key file
+    // kept beside the attachment files, outside the web root.
+    'secret_key' => '',
     'timezone' => 'Asia/Tehran',
     'weather_latitude' => 26.9492,
     'weather_longitude' => 56.2691,

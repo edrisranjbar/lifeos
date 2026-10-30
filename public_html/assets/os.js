@@ -1,6 +1,6 @@
 import { mountFocusAudio } from './focus-audio.js?v=issue19-1';
 import { remainingSeconds, nextMode } from './timer.mjs';
-import { mountDashboard, refreshDashboard } from './dashboard.js?v=todo-i18n-2';
+import { mountDashboard, refreshDashboard } from './dashboard.js?v=notepad-html-1';
 import { mountMobileNavigation } from './mobile-nav.js?v=todo-i18n-2';
 import { mountDueAlerts } from './due-alerts.js?v=outside-dismiss-2';
 await window.appStorageReady;
