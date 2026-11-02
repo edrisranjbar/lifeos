@@ -266,9 +266,10 @@ function renderGoals() {
     return;
   }
 
-  main.innerHTML = list
-    .map((g, index) => goalCardHTML(g, index))
-    .join("");
+  const ongoing = list.filter(g => effectiveStatus(g) !== 'completed');
+  const completed = list.filter(g => effectiveStatus(g) === 'completed');
+  main.innerHTML = `${ongoing.length ? `<section class="goal-section" aria-label="${escapeHtml(tr('Goals'))}"><div class="goals-grid">${ongoing.map(g => goalCardHTML(g)).join('')}</div></section>` : ''}
+    ${completed.length ? `<section class="goal-section completed-section" aria-labelledby="completedGoalsHeading"><header class="completed-heading"><div><h2 id="completedGoalsHeading">${escapeHtml(tr('Completed'))} <span aria-hidden="true">🎉</span></h2><p>${escapeHtml(tr('Take a moment to celebrate how far you have come.'))}</p></div><span class="completed-count">${escapeHtml(num(completed.length))}</span></header><div class="goals-grid">${completed.map(g => goalCardHTML(g)).join('')}</div></section>` : ''}`;
 
   // bind clicks
   main.querySelectorAll(".goal-card").forEach((el) => {
@@ -288,11 +289,12 @@ function goalCardHTML(g, index = 0) {
   const priority = ['low', 'medium', 'high'].includes(g.priority) ? g.priority : 'medium';
   const when = status === 'completed' ? tr('✓ Completed') : status === 'archived' ? tr('Archived') : deadlineText(g);
   return `
-    <article class="goal-card ${status}" data-id="${g.id}" tabindex="0" role="button" aria-label="${escapeHtml(tr('Open goal: {title}', { title: g.title || tr('Untitled goal') }))}">
+    <article class="goal-card ${status}" data-id="${escapeHtml(g.id)}" tabindex="0" role="button" aria-label="${escapeHtml(tr('Open goal: {title}', { title: g.title || tr('Untitled goal') }))}">
+      <div class="goal-card-context"><span class="goal-category">${escapeHtml(g.category || tr('Uncategorized'))}</span>${status === 'completed' ? `<span class="achievement-mark" aria-label="${escapeHtml(tr('Goal achieved'))}">✦</span>` : ''}</div>
       <div class="goal-card-heading"><span class="priority-dot ${priority}" title="${escapeHtml(tr(`${priority} priority`))}" aria-label="${escapeHtml(tr(`${priority} priority`))}"></span><h3 dir="auto">${escapeHtml(g.title || tr("Untitled goal"))}</h3></div>
       <div class="progress-track" role="progressbar" aria-label="${escapeHtml(tr('Goal progress'))}" aria-valuemin="0" aria-valuemax="100" ${progress===null ? `aria-valuetext="${escapeHtml(tr('Unavailable'))}"` : `aria-valuenow="${progress}"`}><div class="progress-fill" style="width:${progress ?? 0}%"></div></div>
       <div class="footer-row">
-        <span class="deadline ${deadlineClass(g)}">${escapeHtml(when)}</span>
+        <span class="deadline ${status === 'completed' ? '' : deadlineClass(g)}">${escapeHtml(when)}</span>
         <strong class="goal-card-pct">${progress === null ? '—' : escapeHtml(pctText(progress))}</strong>
       </div>
     </article>
