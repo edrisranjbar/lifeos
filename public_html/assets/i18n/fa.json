@@ -1513,5 +1513,10 @@
   "Download this note as HTML": "دانلود این یادداشت به‌صورت HTML",
   "Fullscreen unavailable in this browser.": "حالت تمام‌صفحه در این مرورگر در دسترس نیست.",
   "Take a moment to celebrate how far you have come.": "لحظه‌ای برای جشن گرفتن پیشرفتت وقت بگذار.",
-  "Goal achieved": "هدف محقق شد"
+  "Goal achieved": "هدف محقق شد",
+  "Close notes sidebar": "بستن فهرست یادداشت‌ها",
+  "Open notes sidebar": "باز کردن فهرست یادداشت‌ها",
+  "Search notes": "جست‌وجوی یادداشت‌ها",
+  "No notes found.": "یادداشتی پیدا نشد.",
+  "Private document · Autosaved": "سند خصوصی · ذخیرهٔ خودکار"
 }

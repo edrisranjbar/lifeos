@@ -221,3 +221,70 @@ html:fullscreen .app { min-height: 100dvh; }
 .app { min-height: 100dvh; display: flex; flex-direction: column; }
 .notepad-workspace { flex: 1; }
 .editor-shell { min-height: calc(100dvh - 180px); }
+
+/* Document workspace: fixed chrome, independently scrolling library and pages. */
+html,body{height:100%;overflow:hidden}
+.app{width:100%;height:100dvh;min-height:0;margin:0;padding:0;--notepad-header-height:76px}
+.page-header{flex:none;align-items:center;gap:20px;min-height:76px;margin:0;padding:12px 22px;border-bottom:1px solid var(--border);background:var(--surface);z-index:10}
+.page-title{display:flex;align-items:center;gap:14px;min-width:0;flex:1}
+.sidebar-toggle{display:grid;place-items:center;width:38px;height:38px;flex:none;border-radius:9px;background:transparent;color:var(--text-secondary)}
+.sidebar-toggle:hover{background:var(--accent-soft);color:var(--accent)}
+.sidebar-toggle svg{width:21px;height:21px}
+.document-icon{display:grid;place-items:center;width:36px;height:42px;flex:none;border-radius:8px;background:var(--accent-soft);color:var(--accent)}
+.document-icon svg{width:25px;height:28px}
+.document-identity{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}
+.document-identity .note-title-input{padding:2px 4px;width:100%;font:500 18px/1.35 Inter,"Vazirmatn",system-ui,sans-serif;border-radius:4px;border:1px solid transparent;text-overflow:ellipsis}
+.document-identity .note-title-input:hover{border-color:var(--border)}
+.document-identity .note-title-input:focus{border-color:var(--accent)}
+.document-caption{padding-inline:5px;color:var(--muted);font-size:10px;line-height:1.4}
+.header-actions{gap:8px;justify-content:flex-end}
+.save-status{border:0;background:transparent;padding:6px;font-size:11px}
+.view-switch{border:0;padding:3px;border-radius:8px}
+.format-picker select,.fullscreen-btn{padding:8px 10px;font-size:11px;border-radius:7px}
+.notepad-workspace{display:grid;grid-template-columns:264px minmax(0,1fr);gap:0;flex:1;min-height:0;overflow:hidden;align-items:stretch}
+.notes-sidebar{position:sticky;top:0;height:100%;max-height:none;min-height:0;padding:22px 14px 12px;border:0;border-inline-end:1px solid var(--border);border-radius:0;box-shadow:none;background:var(--surface)}
+.notes-sidebar[hidden],[hidden]{display:none!important}
+.sidebar-closed .notepad-workspace{grid-template-columns:minmax(0,1fr)}
+.notes-sidebar-heading{padding:0 4px 18px}
+.notes-sidebar-heading h2{font-size:13px;letter-spacing:-.01em}
+.new-note-btn{border-radius:7px}
+.note-search{width:100%;flex:none;background:var(--surface-2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:11px 12px;margin-bottom:16px;font:12px Inter,"Vazirmatn",sans-serif}
+.note-search::placeholder{color:var(--muted)}
+.note-sort{flex:none;margin-bottom:14px;border-radius:7px}
+.note-tabs{flex:1;min-height:0;display:flex;flex-direction:column;overflow:auto;gap:6px;padding:0 2px 12px;margin-bottom:0;overscroll-behavior:contain}
+.note-tab{flex:none;border-radius:9px;min-width:0}
+.note-tab-open{padding:13px 12px}
+.note-tab-name{font-weight:500;font-size:12px;line-height:1.5}
+.note-tab-preview{font-size:11px;line-height:1.6}
+.note-tab-meta{font-size:9px}
+.no-note-matches{font-size:12px;color:var(--muted);padding:12px;text-align:center}
+.note-work-area{height:100%;min-height:0;gap:0;overflow:hidden;background:var(--bg)}
+.editor-shell{min-height:0;flex:1;border:0;border-radius:0;box-shadow:none;background:var(--bg);gap:0}
+.pane{min-height:0;overflow:hidden;grid-template-rows:auto minmax(0,1fr)}
+.md-toolbar,.pane-label{min-height:48px;background:var(--surface);border-bottom:1px solid var(--border);flex-wrap:nowrap}
+.md-toolbar{padding:7px 18px;gap:3px}
+.md-toolbar button{width:30px;height:30px;border-radius:5px}
+.md-toolbar-separator{margin-inline:4px;height:18px}
+.pane-label{letter-spacing:.03em;text-transform:none;font-size:11px;padding-inline:26px}
+.write-pane{border-inline-end:1px solid var(--border)}
+.write-pane textarea,.markdown-preview{margin:24px;width:calc(100% - 48px);height:calc(100% - 48px);min-height:0;padding:36px 40px 72px;background:var(--surface);border:1px solid var(--border);border-radius:3px;box-shadow:0 2px 8px #0000000a;font-size:15px;line-height:1.9;scrollbar-width:thin;overscroll-behavior:contain}
+.write-pane textarea{font-family:Inter,"Vazirmatn",system-ui,sans-serif}
+.markdown-preview{font-family:Inter,"Vazirmatn",system-ui,sans-serif;overflow:auto}
+.html-preview{width:calc(100% - 48px);height:calc(100% - 48px);margin:24px;border:1px solid var(--border);box-shadow:0 2px 8px #0000000a}
+.editor-status{flex:none;margin:0;padding:10px 24px;min-height:40px;background:var(--surface);border-top:1px solid var(--border);font-size:10px;gap:10px}
+.editor-status button{font-size:10px}
+.notes-backdrop{position:fixed;inset:var(--notepad-header-height) 0 0;z-index:20;background:#0008;border-radius:0;padding:0}
+.write-pane:has(.md-toolbar[hidden]){grid-template-rows:minmax(0,1fr)}
+@media(max-width:1100px){.page-header{gap:12px;padding-inline:14px}.header-actions{gap:5px}.view-switch button{padding:7px 9px}.notepad-workspace{grid-template-columns:228px minmax(0,1fr)}.write-pane textarea,.markdown-preview{padding:26px 24px 60px;margin:16px;width:calc(100% - 32px);height:calc(100% - 32px)}}
+@media(max-width:760px){
+  .page-header{flex-direction:column;align-items:stretch;padding:12px;gap:10px}.page-title{gap:10px}.document-icon{width:30px;height:36px}.document-identity .note-title-input{font-size:16px}.header-actions{justify-content:flex-start;flex-wrap:wrap;padding-inline-start:48px}.save-status{margin-inline-start:auto}.document-caption{font-size:9px}
+  .notepad-workspace{grid-template-columns:minmax(0,1fr)}
+  .notes-sidebar{position:fixed;top:var(--notepad-header-height);inset-inline-start:0;width:min(300px,calc(100vw - 44px));height:calc(100dvh - var(--notepad-header-height));z-index:21;box-shadow:var(--shadow)}
+  .note-tabs{flex-direction:column;overflow-x:hidden;overflow-y:auto}.note-tab{flex:none}.sort-label{display:block}
+  .editor-shell{grid-template-columns:minmax(0,1fr);min-height:0}
+  .editor-shell[data-view=split]{grid-template-rows:minmax(0,1fr) minmax(0,1fr)}
+  .editor-shell[data-view=split] .write-pane,.editor-shell[data-view=split] .preview-pane{min-height:0}
+  .write-pane textarea,.markdown-preview{padding:22px 20px 56px;margin:12px;width:calc(100% - 24px);height:calc(100% - 24px);font-size:14px}
+  .html-preview{margin:12px;width:calc(100% - 24px);height:calc(100% - 24px)}
+  .editor-status{padding:8px 12px;flex-wrap:wrap}.md-toolbar{padding-inline:10px}.status-dot{display:none}
+}

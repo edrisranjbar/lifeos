@@ -160,6 +160,45 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (seconds < 604800) return relative.format(-Math.round(seconds / 86400), 'day');
     return new Date(Number(timestamp)).toLocaleDateString(window.lifeOsI18n.locale(), {month: 'short', day: 'numeric'});
   };
+  const app = document.querySelector('.app'), sidebar = $('notesSidebar'), toggle = $('toggleNotes');
+  const mobileNotes = matchMedia('(max-width:760px)');
+  let sidebarPreference = true;
+  try { sidebarPreference = localStorage.getItem('lifeos-notepad-sidebar') !== 'closed'; } catch {}
+  function setSidebar(open, remember = false) {
+    sidebar.hidden = !open;
+    app.classList.toggle('sidebar-closed', !open);
+    $('notesBackdrop').hidden = !(open && mobileNotes.matches);
+    document.querySelector('.note-work-area').inert = open && mobileNotes.matches;
+    toggle.setAttribute('aria-expanded', String(open));
+    const label = t(open ? 'Close notes sidebar' : 'Open notes sidebar');
+    toggle.setAttribute('aria-label', label); toggle.title = label;
+    if (remember && !mobileNotes.matches) {
+      sidebarPreference = open;
+      try { localStorage.setItem('lifeos-notepad-sidebar', open ? 'open' : 'closed'); } catch {}
+    }
+  }
+  toggle.addEventListener('click', () => setSidebar(sidebar.hidden, true));
+  $('notesBackdrop').addEventListener('click', () => { setSidebar(false); toggle.focus(); });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && !sidebar.hidden && mobileNotes.matches) { setSidebar(false); toggle.focus(); }
+  });
+  mobileNotes.addEventListener('change', () => setSidebar(!mobileNotes.matches && sidebarPreference));
+  setSidebar(!mobileNotes.matches && sidebarPreference);
+  const headerObserver = new ResizeObserver(entries => {
+    app.style.setProperty('--notepad-header-height', `${entries[0].target.getBoundingClientRect().height}px`);
+  });
+  headerObserver.observe(document.querySelector('.page-header'));
+  function filterNotes() {
+    const query = $('noteSearch').value.trim().toLocaleLowerCase();
+    let visible = 0;
+    for (const row of tabs.children) {
+      const note = data.notes.find(note => note.id === row.dataset.noteId);
+      row.hidden = !!query && !`${note?.title || ''}\n${note?.body || ''}`.toLocaleLowerCase().includes(query);
+      if (!row.hidden) visible++;
+    }
+    $('noNoteMatches').hidden = visible > 0;
+  }
+  $('noteSearch').addEventListener('input', filterNotes);
   const renderTabs = () => {
     tabs.innerHTML = orderedNotes().map((note, index, notes) => `
       <li class="note-tab ${note.id === data.activeId ? 'active' : ''}" data-note-id="${escapeHtml(note.id)}" draggable="${data.sort === 'manual'}">
@@ -172,6 +211,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           <button type="button" data-delete-note="${escapeHtml(note.id)}" aria-label="${escapeHtml(t('Delete {name}', { name: displayTitle(note) }))}" ${data.notes.length === 1 ? 'disabled' : ''}>×</button>
         </span>
       </li>`).join('');
+    filterNotes();
   };
   const openNote = id => {
     const note = data.notes.find(item => item.id === id);
@@ -188,6 +228,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderTabs();
     status.textContent = t('Saved'); status.dataset.state = 'saved';
     try { appStorage.setItem(KEY, JSON.stringify(data)); } catch {}
+    if (mobileNotes.matches) { setSidebar(false); toggle.focus(); }
   };
   const reorderNote = (id, direction) => {
     if (data.sort !== 'manual') return;
@@ -244,6 +285,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
   titleInput.addEventListener('blur', save);
   $('newNoteBtn').addEventListener('click', () => {
+    $('noteSearch').value = '';
     save();
     const note = {id: crypto.randomUUID(), title: t('Untitled note'), body: '', updatedAt: Date.now()};
     data.notes.push(note);
