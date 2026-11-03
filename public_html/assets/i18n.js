@@ -5,7 +5,7 @@
   const KEY = 'edi_language_v1';
   // Per-device hint so the first paint already has the right direction.
   const HINT = 'lifeos-language';
-  const VERSION = 'persian-1';
+  const VERSION = 'translation-2';
   const LANGUAGES = [
     { code: 'en', name: 'English', dir: 'ltr', locale: null },
     { code: 'fa', name: 'فارسی', dir: 'rtl', locale: 'fa-IR-u-ca-gregory' },

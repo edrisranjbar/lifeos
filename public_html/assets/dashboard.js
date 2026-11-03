@@ -1,7 +1,7 @@
-import { mountMailCard } from './mail-card.js?v=mail-1';
+import { mountMailCard } from './mail-card.js?v=translation-2';
 import './html-escape.js?v=issue19-1';
 import './goal-progress.js?v=goal-measures-2';
-import { refreshWeatherCard } from './weather.js?v=issue19-1';
+import { refreshWeatherCard } from './weather.js?v=translation-2';
 import { remainingSeconds } from './timer.mjs';
 import { mountGrowthOverview, refreshGrowthOverview } from './growth-overview.js?v=persian-1';
 
@@ -24,7 +24,7 @@ const ARROW_DOWN = '<svg class="darr" viewBox="0 0 12 12" aria-hidden="true"><pa
 
 const tehranKeyNow = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Tehran', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 const tehranDayOfWeek = () => window.lifeOsI18n.date(new Date(), { timeZone: 'Asia/Tehran', weekday: 'long' });
-const tehranLongDate = () => window.lifeOsI18n.date(new Date(), { timeZone: 'Asia/Tehran', month: 'long', day: 'numeric', year: 'numeric' });
+const tehranLongDate = () => window.lifeOsI18n.date(new Date(), { timeZone: 'Asia/Tehran', month: 'long', day: 'numeric', year: 'numeric', calendar: appStorage.getItem('edi_calendar_v1') === 'jalali' ? 'persian' : 'gregory' });
 const tehranHour = () => Number(new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Tehran', hour: 'numeric', hourCycle: 'h23' }).format(new Date()));
 
 function addDaysISO(key, delta) {
@@ -176,7 +176,7 @@ export async function refreshDashboard() {
   const hour = tehranHour();
   const greeting = hour < 6 ? 'Working late' : hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : hour < 21 ? 'Good evening' : 'Winding down';
   $('dashboard-heading').textContent = t(greeting) + '.';
-  $('dashboard-heading').nextElementSibling.textContent = t('Live analytics across everything that moves your life and work forward.');
+  $('dashboard-heading').parentElement.querySelector('p')?.remove();
   $('dashboard-date').textContent = tehranLongDate();
   $('dashboard-weekday').textContent = tehranDayOfWeek();
 

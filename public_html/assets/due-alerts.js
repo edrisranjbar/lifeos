@@ -4,6 +4,8 @@
 // while LifeOS is open. Already-shown alerts are remembered per device, so the
 // shared Kanban document is never written from here.
 
+const tr = (...args) => globalThis.window?.lifeOsI18n?.t(...args) ?? args[0];
+const num = value => globalThis.window?.lifeOsI18n?.number(value) ?? String(value);
 const DAY = 86400000;
 const ICONS = {
   bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
@@ -59,7 +61,7 @@ export function collectDueItems({ boards = [], goals = [], payments = [], goalDo
   for (const goal of Array.isArray(goals) ? goals : []) {
     if (!goal || goal.status === 'archived' || !DATE.test(goal.deadline || '') || goalDone(goal)) continue;
     items.push({
-      key: `goal:${goal.id}`, source: 'goals', title: goal.title || 'Untitled goal', context: 'Goal deadline',
+      key: `goal:${goal.id}`, source: 'goals', title: goal.title || 'Untitled goal', context: tr('Goal deadline'),
       date: goal.deadline, time: '', timed: false, dueAt: dueAtOf(goal.deadline), reminderMinutes: 0,
       open: { page: 'goals', goalId: String(goal.id) },
     });
@@ -69,8 +71,8 @@ export function collectDueItems({ boards = [], goals = [], payments = [], goalDo
     const credit = payment.direction === 'credit';
     const amount = Number(payment.amount);
     items.push({
-      key: `payment:${payment.id}`, source: 'finance', title: `${credit ? 'Receive' : 'Pay'} · ${payment.title || 'Payment'}`,
-      context: Number.isFinite(amount) ? `${new Intl.NumberFormat('en-US').format(amount)}${currency ? ` ${currency}` : ''}` : 'Finance',
+      key: `payment:${payment.id}`, source: 'finance', title: `${tr(credit ? 'Receive' : 'Pay')} · ${payment.title || 'Payment'}`,
+      context: Number.isFinite(amount) ? `${num(amount)}${currency ? ` ${currency}` : ''}` : 'Finance',
       date: payment.date, time: '', timed: false, dueAt: dueAtOf(payment.date), reminderMinutes: 0,
       open: { page: 'finance', occurrenceId: String(payment.id), dueDate: payment.date },
     });
@@ -133,9 +135,9 @@ export function disableNotifications() { writeLocal(NOTIFY_PREF, false); }
 
 function whenText(item, now) {
   const today = tehranDay(now);
-  const day = item.date === today ? 'Today' : item.date === addDays(today, 1) ? 'Tomorrow' : item.date === addDays(today, -1) ? 'Yesterday'
-    : new Date(`${item.date}T12:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  return item.time ? `${day} · ${item.time}` : day;
+  const day = item.date === today ? tr('Today') : item.date === addDays(today, 1) ? tr('Tomorrow') : item.date === addDays(today, -1) ? tr('Yesterday')
+    : new Date(`${item.date}T12:00:00`).toLocaleDateString(window.lifeOsI18n.locale('en-US'), { month: 'short', day: 'numeric' });
+  return item.time ? `${day} · ${window.lifeOsI18n.digits(item.time)}` : day;
 }
 
 export function mountDueAlerts({ esc, openItem }) {
@@ -164,7 +166,7 @@ export function mountDueAlerts({ esc, openItem }) {
   function row(item, now) {
     return `<li><button type="button" class="due-item due-${item.source}" data-due-key="${esc(item.key)}">
       <span class="due-item-icon">${icon(item.source)}</span>
-      <span class="due-item-text"><strong dir="auto">${esc(item.title)}</strong><small>${esc(item.context)}</small></span>
+      <span class="due-item-text"><strong dir="auto">${esc(item.title)}</strong><small data-i18n-skip>${esc(item.context)}</small></span>
       <span class="due-item-when">${esc(whenText(item, now))}</span></button></li>`;
   }
 
@@ -173,20 +175,20 @@ export function mountDueAlerts({ esc, openItem }) {
     const groups = classify(items, now);
     const urgent = groups.overdue.length + groups.today.length;
     const count = bell.querySelector('.due-bell-count');
-    count.hidden = !urgent; count.textContent = urgent > 99 ? '99+' : String(urgent);
+    count.hidden = !urgent; count.textContent = urgent > 99 ? '99+' : num(urgent);
     bell.classList.toggle('has-overdue', groups.overdue.length > 0);
-    const label = urgent ? `${groups.overdue.length} overdue and ${groups.today.length} due today` : 'Nothing due today';
-    bell.title = label; bell.setAttribute('aria-label', `Due items: ${label}`);
+    const label = urgent ? tr('{overdue} overdue and {today} due today', {overdue:num(groups.overdue.length),today:num(groups.today.length)}) : tr('Nothing due today');
+    bell.title = label; bell.setAttribute('aria-label', tr('Due items: {label}', {label}));
 
     banner.hidden = !urgent;
     if (urgent) {
-      const parts = [groups.overdue.length && `${groups.overdue.length} overdue`, groups.today.length && `${groups.today.length} due today`].filter(Boolean);
+      const parts = [groups.overdue.length && tr('{count} overdue', {count:num(groups.overdue.length)}), groups.today.length && tr('{count} due today', {count:num(groups.today.length)})].filter(Boolean);
       banner.className = `due-banner${groups.overdue.length ? ' is-overdue' : ''}`;
-      banner.innerHTML = `${icon('bell')}<span><strong>${esc(parts.join(' · '))}</strong> across your tasks, goals and payments</span><span class="due-banner-action">Review</span>`;
+      banner.innerHTML = `${icon('bell')}<span><strong>${esc(parts.join(' · '))}</strong> ${esc(tr('across your tasks, goals and payments'))}</span><span class="due-banner-action">${esc(tr('Review'))}</span>`;
     }
 
     const section = (title, list, kind) => list.length
-      ? `<section class="due-group due-group-${kind}"><h3>${title}<span>${list.length}</span></h3><ul>${list.map(item => row(item, now)).join('')}</ul></section>` : '';
+      ? `<section class="due-group due-group-${kind}"><h3>${esc(tr(title))}<span>${num(list.length)}</span></h3><ul>${list.map(item => row(item, now)).join('')}</ul></section>` : '';
     const body = section('Overdue', groups.overdue, 'overdue') + section('Today', groups.today, 'today') + section('Coming up', groups.soon, 'soon');
     const notify = !notificationsSupported() ? '<p class="due-notify-note">This browser does not support notifications.</p>'
       : notificationsEnabled()
@@ -196,6 +198,7 @@ export function mountDueAlerts({ esc, openItem }) {
       <div class="due-body">${body || `<div class="due-empty">${icon('bell')}<strong>You're all caught up</strong><span>Nothing is overdue or due soon.</span></div>`}
       ${paymentsError ? '<p class="due-error">Finance payments could not be checked. They will be retried shortly.</p>' : ''}</div>
       <footer>${notify}${notifyError ? `<p class="due-error" role="alert">${esc(notifyError)}</p>` : ''}</footer>`;
+    window.lifeOsI18n.apply(panel);
   }
 
   function notify() {
@@ -205,7 +208,7 @@ export function mountDueAlerts({ esc, openItem }) {
     for (const [key, at] of Object.entries(shown)) if (now - at > 14 * DAY) delete shown[key];
     for (const { key, item, stage } of pendingNotifications(items, now, shown)) {
       shown[key] = now;
-      const lead = stage === 'due' ? (item.timed ? 'Due now' : 'Due today') : `Due ${whenText(item, now)}`;
+      const lead = stage === 'due' ? tr(item.timed ? 'Due now' : 'Due today') : tr('Due {date}', {date:whenText(item, now)});
       try {
         const note = new Notification(`${lead}: ${item.title}`, { body: item.context, tag: key });
         note.onclick = () => { window.focus(); openItem(item.open); note.close(); };

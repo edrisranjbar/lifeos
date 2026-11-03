@@ -185,13 +185,13 @@
   }
   function renderMail() {
     const settings = mailSettings, provider = $('aiProvider').value;
-    $('mailSave').textContent = settings.connected ? 'Save' : 'Connect';
+    $('mailSave').textContent = t(settings.connected ? 'Save' : 'Connect');
     $('mailDisconnect').hidden = !settings.connected;
     $('imapPasswordSaved').hidden = !settings.imap.hasPassword;
     $('aiFields').hidden = provider === '';
     $('aiBaseWrap').hidden = provider !== 'openai_compatible';
     const keySaved = settings.ai.hasKey && settings.ai.provider === provider;
-    $('aiKeyNote').textContent = keySaved ? 'saved · leave blank to keep' : provider === 'openai_compatible' ? 'optional for local servers' : '';
+    $('aiKeyNote').textContent = keySaved ? t('saved · leave blank to keep') : provider === 'openai_compatible' ? t('optional for local servers') : '';
   }
   function setMailBusy(busy) {
     mailBusy = busy;
@@ -213,7 +213,7 @@
     try {
       const {models} = await mailRequest({action:'models', ai_provider:$('aiProvider').value, ai_base_url:$('aiBaseUrl').value.trim(), ai_key:$('aiKey').value.trim()});
       $('aiModels').replaceChildren(...models.map(model => new Option(model.name === model.id ? model.id : model.name, model.id)));
-      status('mailMessage', models.length ? `${models.length} models available. Pick one from the Model field.` : 'This provider listed no models; type a model ID instead.', models.length ? 'success' : '');
+      status('mailMessage', models.length ? t('{count} models available. Pick one from the Model field.', {count:window.lifeOsI18n.number(models.length)}) : 'This provider listed no models; type a model ID instead.', models.length ? 'success' : '');
       $('aiModel').focus();
     } catch (error) { status('mailMessage', error.message, 'error'); }
     finally { setMailBusy(false); }
@@ -233,7 +233,7 @@
     finally { setMailBusy(false); }
   });
   $('mailDisconnect').addEventListener('click', async () => {
-    if (mailBusy || !confirm('Disconnect this mailbox? The saved app password, AI key and summaries are deleted from LifeOS.')) return;
+    if (mailBusy || !confirm(t('Disconnect this mailbox? The saved app password, AI key and summaries are deleted from LifeOS.'))) return;
     setMailBusy(true);
     try {
       mailSettings = await mailRequest({action:'disconnect'});

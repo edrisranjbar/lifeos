@@ -110,7 +110,7 @@ export function refreshWeatherCard() {
   card.setAttribute('aria-busy', 'true');
   inFlight = getJson().then(data => {
     const label = $('kish-weather-title');
-    if (label && typeof data.location === 'string') label.textContent = data.location;
+    if (label && typeof data.location === 'string') label.textContent = t(data.location);
     try { renderWeather(data.weather); }
     catch { showWeatherUnavailable(); }
     try { renderMarine(data.marine); }

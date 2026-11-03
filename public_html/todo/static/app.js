@@ -1,3 +1,5 @@
+const tr = (...args) => window.lifeOsI18n.t(...args);
+const num = value => window.lifeOsI18n.number(value);
 const KEY = 'edi_todos_v1';
 const $ = id => document.getElementById(id);
 const escapeHtml = globalThis.lifeOsHtml.escapeHtml;
@@ -30,11 +32,11 @@ const addDays = (days) => { const date = new Date(); date.setDate(date.getDate()
 function dueLabel(due) {
   if (!due) return '';
   const today = dayKey();
-  if (due === today) return 'Today';
-  if (due === addDays(1)) return 'Tomorrow';
-  if (due === addDays(-1)) return 'Yesterday';
+  if (due === today) return tr('Today');
+  if (due === addDays(1)) return tr('Tomorrow');
+  if (due === addDays(-1)) return tr('Yesterday');
   const date = new Date(`${due}T00:00`);
-  return date.toLocaleDateString(undefined, {month: 'short', day: 'numeric', ...(date.getFullYear() !== new Date().getFullYear() ? {year: 'numeric'} : {})});
+  return date.toLocaleDateString(window.lifeOsI18n.locale(), {month: 'short', day: 'numeric', ...(date.getFullYear() !== new Date().getFullYear() ? {year: 'numeric'} : {})});
 }
 const dueState = task => !task.due || task.done ? '' : task.due < dayKey() ? 'overdue' : task.due === dayKey() ? 'today' : '';
 
@@ -73,9 +75,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     lastSaved = JSON.stringify(data);
     try {
       appStorage.setItem(KEY, lastSaved);
-      status.textContent = 'Saved'; status.dataset.state = 'saved';
+      status.textContent = tr('Saved'); status.dataset.state = 'saved';
     } catch {
-      status.textContent = 'Save failed'; status.dataset.state = 'failed';
+      status.textContent = tr('Save failed'); status.dataset.state = 'failed';
     }
   };
   // Text fields save while typing, but not on every keystroke.
@@ -86,7 +88,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   let toastTimer;
   function toast(message, action) {
     const box = $('toast');
-    box.innerHTML = `<span>${escapeHtml(message)}</span>${action ? '<button type="button">Undo</button>' : ''}`;
+    box.innerHTML = `<span>${escapeHtml(message)}</span>${action ? '<button type="button">'+escapeHtml(tr('Undo'))+'</button>' : ''}`;
     if (action) box.querySelector('button').onclick = () => { action(); box.classList.remove('show'); };
     box.classList.add('show');
     clearTimeout(toastTimer);
@@ -129,11 +131,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const chips = [
       task.due ? `<span class="chip ${due}">${icon('calendar')}${escapeHtml(dueLabel(task.due))}</span>` : '',
       task.subtasks.length ? `<span class="chip ${doneSubs === task.subtasks.length ? 'complete' : ''}">${icon('subtasks')}${doneSubs}/${task.subtasks.length}</span>` : '',
-      task.priority !== 'none' ? `<span class="chip priority-${task.priority}">${task.priority[0].toUpperCase() + task.priority.slice(1)}</span>` : '',
+      task.priority !== 'none' ? `<span class="chip priority-${task.priority}">${escapeHtml(tr(task.priority[0].toUpperCase() + task.priority.slice(1)))}</span>` : '',
       list && data.view !== list.id ? `<span class="chip"><i class="list-dot" style="background:${list.color};margin:0"></i>${escapeHtml(list.name)}</span>` : ''
     ].join('');
     return `<li class="task${task.done ? ' done' : ''}${task.id === selectedId ? ' selected' : ''}" data-id="${escapeHtml(task.id)}" data-priority="${task.priority}">
-      <label class="check" title="${task.done ? 'Mark as not done' : 'Mark complete'}"><input type="checkbox" data-toggle ${task.done ? 'checked' : ''}><span aria-hidden="true"></span><span class="sr-only">${escapeHtml(task.title)}</span></label>
+      <label class="check" title="${task.done ? 'Mark as not done' : 'Mark complete'}"><input type="checkbox" data-toggle ${task.done ? 'checked' : ''}><span aria-hidden="true"></span><span class="sr-only" data-i18n-skip>${escapeHtml(task.title)}</span></label>
       <div class="task-body">
         <button type="button" class="sr-only" data-open>Open ${escapeHtml(task.title)}</button>
         <span class="task-title" dir="auto">${escapeHtml(task.title)}</span>
@@ -146,21 +148,21 @@ document.addEventListener('DOMContentLoaded', async () => {
   function renderSidebar() {
     const counts = Object.fromEntries(VIEWS.map(view => [view.id, data.tasks.filter(task => inView(task, view.id)).length]));
     const overdue = data.tasks.filter(task => dueState(task) === 'overdue').length;
-    $('viewList').innerHTML = VIEWS.map(view => `<button type="button" class="view-item" data-view="${view.id}" aria-current="${data.view === view.id}">${icon(view.id)}<span class="view-name">${view.name}</span><span class="view-count${view.id === 'today' && overdue ? ' alert' : ''}">${view.id === 'done' ? '' : counts[view.id] || ''}</span></button>`).join('');
+    $('viewList').innerHTML = VIEWS.map(view => `<button type="button" class="view-item" data-view="${view.id}" aria-current="${data.view === view.id}">${icon(view.id)}<span class="view-name">${escapeHtml(tr(view.name))}</span><span class="view-count${view.id === 'today' && overdue ? ' alert' : ''}">${view.id === 'done' ? '' : counts[view.id] || ''}</span></button>`).join('');
     $('customLists').innerHTML = data.lists.map(list => `<button type="button" class="view-item" data-view="${escapeHtml(list.id)}" aria-current="${data.view === list.id}"><i class="list-dot" style="background:${list.color}"></i><span class="view-name" dir="auto">${escapeHtml(list.name)}</span><span class="view-count">${data.tasks.filter(task => !task.done && task.listId === list.id).length || ''}</span></button>`).join('');
   }
 
   function listHint(list) {
     const open = data.tasks.filter(task => !task.done && task.listId === list.id).length;
-    return open ? `${open} open task${open === 1 ? '' : 's'}.` : 'Nothing left to do in this list.';
+    return open ? tr('{count} open tasks.', {count:num(open)}) : tr('Nothing left to do in this list.');
   }
 
   function renderTasks() {
     const view = VIEWS.find(item => item.id === data.view);
     const list = findList(data.view);
-    $('viewTitle').textContent = view ? view.name : list.name;
+    $('viewTitle').textContent = view ? tr(view.name) : list.name;
     $('viewTitle').dir = 'auto';
-    $('viewHint').textContent = query ? `Showing matches for “${query}”.` : view ? view.hint : listHint(list);
+    $('viewHint').textContent = query ? tr('Showing matches for “{query}”.', {query}) : view ? tr(view.hint) : listHint(list);
     $('listMenuBtn').hidden = $('deleteListBtn').hidden = !list;
     $('quickAdd').hidden = data.view === 'done';
     $('sortSelect').value = data.sort;
@@ -173,7 +175,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const done = doneInList(data.view).filter(matchesQuery).sort((a, b) => (b.completedAt || 0) - (a.completedAt || 0));
     $('doneSection').hidden = !done.length;
-    $('doneLabel').textContent = `Completed · ${done.length}`;
+    $('doneLabel').textContent = tr('Completed · {count}', {count:num(done.length)});
     $('doneList').innerHTML = done.map(taskRow).join('');
 
     const empty = !open.length;
@@ -183,16 +185,19 @@ document.addEventListener('DOMContentLoaded', async () => {
       $('emptyText').textContent = query ? 'Try a different search.' : data.view === 'done' ? 'Finished tasks will collect here.' : 'Add a task above to get started.';
     }
     const openTotal = data.tasks.filter(task => !task.done).length;
-    $('openCount').textContent = `${openTotal} open`;
+    $('openCount').textContent = tr('{count} open', {count:num(openTotal)});
+    window.lifeOsI18n.apply($('emptyState'));
+    window.lifeOsI18n.apply($('taskList'));
+    window.lifeOsI18n.apply($('doneList'));
   }
 
   function renderListOptions() {
-    $('detailList').innerHTML = `<option value="">Inbox</option>${data.lists.map(list => `<option value="${escapeHtml(list.id)}">${escapeHtml(list.name)}</option>`).join('')}`;
+    $('detailList').innerHTML = `<option value="">Inbox</option>${data.lists.map(list => `<option dir="auto" value="${escapeHtml(list.id)}">${escapeHtml(list.name)}</option>`).join('')}`;
   }
 
   function renderSubtasks(task) {
     const done = task.subtasks.filter(sub => sub.done).length;
-    $('subtaskCount').textContent = task.subtasks.length ? `${done} of ${task.subtasks.length}` : '';
+    $('subtaskCount').textContent = task.subtasks.length ? tr('{done} of {total}', {done:num(done),total:num(task.subtasks.length)}) : '';
     $('subtaskProgress').hidden = !task.subtasks.length;
     $('subtaskProgress').firstElementChild.style.width = task.subtasks.length ? `${(done / task.subtasks.length) * 100}%` : '0';
     $('subtaskList').innerHTML = task.subtasks.map(sub => `<li class="subtask${sub.done ? ' done' : ''}" data-sub="${escapeHtml(sub.id)}">
@@ -220,8 +225,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     $('detailList').value = task.listId || '';
     if (!keep($('detailNotes'))) $('detailNotes').value = task.notes;
     if (!$('subtaskList').contains(active)) renderSubtasks(task);
-    const created = new Date(task.createdAt).toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric'});
-    $('detailMeta').textContent = task.done && task.completedAt ? `Completed ${new Date(task.completedAt).toLocaleDateString(undefined, {month: 'short', day: 'numeric'})}` : `Created ${created}`;
+    const created = new Date(task.createdAt).toLocaleDateString(window.lifeOsI18n.locale(), {month: 'short', day: 'numeric', year: 'numeric'});
+    $('detailMeta').textContent = task.done && task.completedAt ? tr('Completed {date}', {date:new Date(task.completedAt).toLocaleDateString(window.lifeOsI18n.locale(), {month:'short',day:'numeric'})}) : tr('Created {date}', {date:created});
     requestAnimationFrame(fitTitle);
   }
 
@@ -229,6 +234,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderSidebar();
     renderTasks();
     renderDetail();
+    window.lifeOsI18n.apply(document.querySelector('.app') || document.body);
   }
 
   const touch = task => { task.updatedAt = Date.now(); };
@@ -267,7 +273,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   $('newListName').addEventListener('keydown', event => { if (event.key === 'Escape') { $('newListName').value = ''; $('newListName').blur(); } });
   $('listMenuBtn').onclick = () => {
     const list = findList(data.view);
-    const name = list && prompt('Rename list', list.name)?.trim();
+    const name = list && prompt(tr('Rename list'), list.name)?.trim();
     if (!name) return;
     list.name = name.slice(0, 60);
     commit();
@@ -276,7 +282,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const list = findList(data.view);
     if (!list) return;
     const count = data.tasks.filter(task => task.listId === list.id).length;
-    if (!confirm(count ? `Delete “${list.name}”? Its ${count} task${count === 1 ? '' : 's'} will move to the Inbox.` : `Delete “${list.name}”?`)) return;
+    if (!confirm(count ? tr('Delete “{name}”? Its {count} tasks will move to the Inbox.', {name:list.name,count:num(count)}) : tr('Delete “{name}”?', {name:list.name}))) return;
     for (const task of data.tasks) if (task.listId === list.id) task.listId = null;
     data.lists = data.lists.filter(item => item !== list);
     data.view = 'inbox';
@@ -310,7 +316,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   $('clearDoneBtn').onclick = event => {
     event.preventDefault();
     const done = doneInList(data.view);
-    if (!done.length || !confirm(`Delete ${done.length} completed task${done.length === 1 ? '' : 's'}?`)) return;
+    if (!done.length || !confirm(tr('Delete {count} completed tasks?', {count:num(done.length)}))) return;
     data.tasks = data.tasks.filter(task => !done.includes(task));
     if (done.some(task => task.id === selectedId)) selectedId = null;
     commit();

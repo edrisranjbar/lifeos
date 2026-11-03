@@ -1,5 +1,7 @@
 // Overview cards for the connected mailbox: the daily AI summary and the recent inbox.
 // Every string from mail is rendered with textContent, never as HTML.
+const t = (...args) => window.lifeOsI18n.t(...args);
+const num = value => window.lifeOsI18n.number(value);
 const REFRESH_MS = 10 * 60 * 1000;
 const REFRESH_ICON = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36L21 8"/><path d="M21 3v5h-5"/></svg>';
 
@@ -26,13 +28,13 @@ function when(seconds) {
   if (!seconds) return '';
   const date = new Date(seconds * 1000), now = new Date();
   return date.toDateString() === now.toDateString()
-    ? date.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})
-    : date.toLocaleDateString([], {weekday: 'short', day: 'numeric', month: 'short'});
+    ? date.toLocaleTimeString(window.lifeOsI18n.locale(), {hour: '2-digit', minute: '2-digit'})
+    : date.toLocaleDateString(window.lifeOsI18n.locale(), {weekday: 'short', day: 'numeric', month: 'short'});
 }
 
 function message(target, text, link) {
-  const box = el('div', 'empty-sm mail-empty', text);
-  if (link) { box.append(document.createElement('br')); const a = el('a', '', link); a.href = '#settings'; box.append(a); }
+  const box = el('div', 'empty-sm mail-empty', t(text));
+  if (link) { box.append(document.createElement('br')); const a = el('a', '', t(link)); a.href = '#settings'; box.append(a); }
   target.replaceChildren(box);
 }
 
@@ -82,10 +84,10 @@ async function loadSummary(generate = false) {
     if (!data.digest) { message(target, 'No summary yet today.'); return; }
     renderSummary(target, data.digest.summary);
     const d = data.digest;
-    foot.textContent = d.count ? `${d.count === d.total ? d.count : `Newest ${d.count} of ${d.total}`} email${d.total === 1 ? '' : 's'} · ${d.model} · ${when(d.createdAt)}` : `Checked ${when(d.createdAt)}`;
+    foot.textContent = d.count ? `${t('{count} emails of {total}', {count:num(d.count),total:num(d.total)})} · ${d.model} · ${when(d.createdAt)}` : t('Checked {time}', {time:when(d.createdAt)});
   } catch (error) {
     foot.textContent = '';
-    message(target, error.message, error.code === 'mail_secret_unreadable' || error.code === 'mail_auth_failed' ? 'Open Settings' : undefined);
+    message(target, t(error.message), error.code === 'mail_secret_unreadable' || error.code === 'mail_auth_failed' ? 'Open Settings' : undefined);
   } finally { setBusy('summary', false); }
 }
 
@@ -97,7 +99,7 @@ async function loadInbox(refresh = false) {
     const data = await mailApi(null, 'view=inbox' + (refresh ? '&refresh=1' : ''));
     state.loadedAt = Date.now();
     const unread = data.messages.filter(item => item.unread).length;
-    count.textContent = unread ? `${unread} unread` : 'All read';
+    count.textContent = unread ? t('{count} unread', {count:num(unread)}) : t('All read');
     if (!data.messages.length) { message(target, 'Your inbox is empty.'); return; }
     const list = el('ul', 'mail-list');
     for (const item of data.messages.slice(0, 12)) {
@@ -113,13 +115,13 @@ async function loadInbox(refresh = false) {
       const subject = el('span', 'mail-subject', item.subject);
       const snippet = el('span', 'mail-snippet', item.snippet);
       entry.append(top, subject, snippet);
-      if (item.unread) entry.setAttribute('aria-label', `Unread: ${item.fromName}, ${item.subject}`);
+      if (item.unread) entry.setAttribute('aria-label', t('Unread: {sender}, {subject}', {sender:item.fromName,subject:item.subject}));
       const li = el('li'); li.append(entry); list.append(li);
     }
     target.replaceChildren(list);
   } catch (error) {
     count.textContent = '';
-    message(target, error.message, error.code === 'mail_auth_failed' || error.code === 'mail_secret_unreadable' ? 'Open Settings' : undefined);
+    message(target, t(error.message), error.code === 'mail_auth_failed' || error.code === 'mail_secret_unreadable' ? 'Open Settings' : undefined);
   } finally { setBusy('inbox', false); }
 }
 
@@ -139,11 +141,12 @@ async function refreshMail(force = false) {
 export function mountMailCard(main) {
   row = document.createElement('section');
   row.className = 'dash-row two mail-row is-disconnected';
-  row.setAttribute('aria-label', 'Email');
+  row.setAttribute('aria-label', t('Email'));
   row.innerHTML = `
     <article class="dash-card mail-card"><div class="card-head"><div><span class="card-kicker">EMAIL · LAST 24 HOURS</span><h3 class="card-title">Morning summary</h3></div><button type="button" class="mail-refresh" data-mail-refresh="summary" aria-label="Write a new summary" title="Write a new summary">${REFRESH_ICON}</button></div><div id="mailSummary" class="mail-summary" aria-live="polite"></div><p class="mail-foot" id="mailSummaryFoot"></p></article>
     <article class="dash-card mail-card"><div class="card-head"><div><span class="card-kicker">INBOX</span><h3 class="card-title">Recent email</h3></div><div class="mail-head-side"><span class="card-extra" id="mailUnread"></span><button type="button" class="mail-refresh" data-mail-refresh="inbox" aria-label="Check for new email" title="Check for new email">${REFRESH_ICON}</button></div></div><div id="mailInbox" class="mail-inbox"></div></article>
     <article class="dash-card mail-connect"><div><span class="card-kicker">EMAIL</span><h3 class="card-title">Your inbox, summarized</h3><p>Connect your mailbox to see recent email here, with an AI summary of the last day each morning.</p></div><a class="mail-connect-link" href="#settings">Connect email</a></article>`;
+  window.lifeOsI18n.apply(row);
   main.querySelector('.dash-metrics').after(row);
   row.querySelector('[data-mail-refresh="summary"]').addEventListener('click', () => loadSummary(true));
   row.querySelector('[data-mail-refresh="inbox"]').addEventListener('click', () => loadInbox(true));
