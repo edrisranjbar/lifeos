@@ -1532,5 +1532,6 @@
   "Restore this version? Your current version will remain in history.": "این نسخه بازیابی شود؟ نسخهٔ فعلی در تاریخچه باقی می‌ماند.",
   "Unable to load history.": "بارگذاری تاریخچه امکان‌پذیر نیست.",
   "Restore failed.": "بازیابی ناموفق بود.",
+  "New habit": "عادت جدید",
   "Save failed. Copy your edits and reload before restoring.": "ذخیره ناموفق بود. پیش از بازیابی، ویرایش‌ها را کپی و صفحه را دوباره بارگذاری کنید."
 }
