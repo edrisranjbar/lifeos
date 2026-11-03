@@ -5,6 +5,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/user_context.php';
 
 require_once __DIR__ . '/api_response.php';
+require_once __DIR__ . '/notepad_history.php';
 
 final class StateStore
 {
@@ -37,6 +38,7 @@ final class StateStore
             $current = (string) $select->fetchColumn();
             $actual = $created ? null : hash('sha256', $current);
             if ($actual !== $revision) throw new ApiException(409, 'state_conflict', 'Saved data changed elsewhere. Reload before editing again.');
+            if ($key === 'edi_notepad_v1') notepad_capture_revisions($this->db, $created ? null : $current, $value);
             $write = $this->db->prepare('UPDATE app_state SET state_value = ? WHERE user_id = ' . life_os_user_id() . ' AND state_key = ?');
             $write->execute([$value, $key]);
             $this->db->commit();
@@ -96,6 +98,7 @@ final class StateStore
                 }
                 $json = json_encode(state_preserve_containers($value, $originals[$key]), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRESERVE_ZERO_FRACTION | JSON_THROW_ON_ERROR);
                 if (strlen($json) > 2_000_000) throw new ApiException(413, 'state_too_large', 'Document exceeds 2 MB.');
+                if ($key === 'edi_notepad_v1') notepad_capture_revisions($this->db, json_encode($originals[$key], JSON_THROW_ON_ERROR), $json);
                 $write->execute([$json, $key]);
             }
             $this->db->commit();

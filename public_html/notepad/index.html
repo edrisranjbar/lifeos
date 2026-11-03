@@ -9,7 +9,7 @@
   <script>
     try { document.documentElement.dataset.theme = appStorage.getItem('edi_os_theme') || 'dark'; } catch { document.documentElement.dataset.theme = 'dark'; }
   </script>
-  <link rel="stylesheet" href="static/style.css?v=notepad-docs-1">
+  <link rel="stylesheet" href="static/style.css?v=notepad-history-1">
 <script src="/assets/html-escape.js?v=issue19-1"></script>
 </head>
 <body>
@@ -21,6 +21,7 @@
         <div class="document-identity"><label class="sr-only" for="noteTitle">Note name</label><input id="noteTitle" class="note-title-input" dir="auto" maxlength="100" placeholder="Untitled note" autocomplete="off"><span class="document-caption">Private document · Autosaved</span></div>
       </div>
       <div class="header-actions">
+        <button type="button" id="noteHistory" class="fullscreen-btn" aria-haspopup="dialog">Version history</button>
         <label class="format-picker"><span class="sr-only">Note format</span><select id="noteFormat" aria-label="Note format"><option value="markdown">Markdown</option><option value="html">HTML</option></select></label>
         <button type="button" id="fullscreenNote" class="fullscreen-btn" aria-pressed="false">Fullscreen</button>
         <span class="save-status" id="saveStatus" role="status" data-state="saved">Saved</span>
@@ -84,6 +85,7 @@
     </section>
   </main>
   <script src="../assets/voice-input.js" defer></script>
-  <script src="static/app.js?v=notepad-docs-1" defer></script>
+  <script src="static/history.js?v=notepad-history-1" defer></script>
+  <script src="static/app.js?v=notepad-history-1" defer></script>
 </body>
 </html>

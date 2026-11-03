@@ -55,6 +55,10 @@ if ($relativePath === 'weather.php') {
     require __DIR__ . '/weather.php';
     return true;
 }
+if ($relativePath === 'notepad-history.php') {
+    require __DIR__ . '/notepad-history.php';
+    return true;
+}
 
 if ($relativePath === 'credentials.php') {
     require __DIR__ . '/credentials.php';

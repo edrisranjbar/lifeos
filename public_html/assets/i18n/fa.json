@@ -1518,5 +1518,19 @@
   "Open notes sidebar": "باز کردن فهرست یادداشت‌ها",
   "Search notes": "جست‌وجوی یادداشت‌ها",
   "No notes found.": "یادداشتی پیدا نشد.",
-  "Private document · Autosaved": "سند خصوصی · ذخیرهٔ خودکار"
+  "Private document · Autosaved": "سند خصوصی · ذخیرهٔ خودکار",
+  "Version history": "تاریخچهٔ نسخه‌ها",
+  "Preview a saved version. Restoring keeps your current text in history.": "نسخهٔ ذخیره‌شده را ببینید. با بازیابی، متن فعلی نیز در تاریخچه باقی می‌ماند.",
+  "Document": "سند",
+  "Saved versions": "نسخه‌های ذخیره‌شده",
+  "Version preview": "پیش‌نمایش نسخه",
+  "Restore this version": "بازیابی این نسخه",
+  "Load older versions": "نمایش نسخه‌های قدیمی‌تر",
+  "No saved versions yet.": "هنوز نسخه‌ای ذخیره نشده است.",
+  "Tehran time": "به وقت تهران",
+  "This document changed elsewhere. Copy your edits and reload.": "این سند در جای دیگری تغییر کرده است. ویرایش‌های خود را کپی کنید و صفحه را دوباره بارگذاری کنید.",
+  "Restore this version? Your current version will remain in history.": "این نسخه بازیابی شود؟ نسخهٔ فعلی در تاریخچه باقی می‌ماند.",
+  "Unable to load history.": "بارگذاری تاریخچه امکان‌پذیر نیست.",
+  "Restore failed.": "بازیابی ناموفق بود.",
+  "Save failed. Copy your edits and reload before restoring.": "ذخیره ناموفق بود. پیش از بازیابی، ویرایش‌ها را کپی و صفحه را دوباره بارگذاری کنید."
 }

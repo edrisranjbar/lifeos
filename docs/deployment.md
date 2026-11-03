@@ -222,6 +222,23 @@ The migration requires PHP `pdo_sqlite` and empty target categories, habits, and
 
 ## External services
 
+### Notepad revision storage
+
+Schema version 5 adds the private `notepad_revisions` table and seeds a baseline
+for existing notes on upgrade. Deploy `notepad-history.php`, `lib/schema.php`,
+`lib/state_store.php`, `lib/notepad_history.php`, `server.php` and the Notepad
+assets together. The flattened-host deployment allowlist must include
+`notepad-history.php`. Database backups must include this table to preserve history.
+
+History is captured in the same transaction as browser and MCP state writes.
+Title, body and format changes create versions; navigation and timestamps alone
+do not. Deleting a document retains its text in history. No history is pruned
+automatically, so storage grows with edits. Versions before installation cannot
+be reconstructed automatically. History is scoped to the authenticated user,
+excluded from general app-state sync, and includes paginated metadata plus
+on-demand snapshots. Restore requires session CSRF and the current state revision;
+it retains the overwritten content and changes only the selected document.
+
 The weather endpoint requires PHP cURL and outbound verified HTTPS access to Open-Meteo.
 
 The optional MCP server runs separately as a Node.js stdio process. It communicates with the application over HTTPS and needs only the application URL and API token. See the [MCP guide](../mcp/README.md).

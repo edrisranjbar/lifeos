@@ -123,15 +123,29 @@ document.addEventListener('DOMContentLoaded', async () => {
     $('cursorPosition').textContent = t('Ln {line}, Col {column}', { line: number(before.length), column: number(Array.from(before.at(-1)).length + 1) });
   }
   const activeNote = () => data.notes.find(note => note.id === data.activeId);
-  const save = () => {
+  let knownSnapshot = appStorage.getItem(KEY);
+  function checkSnapshot() {
+    if (appStorage.getItem(KEY) !== knownSnapshot) {
+      status.textContent = t('This document changed elsewhere. Copy your edits and reload.');
+      status.dataset.state = 'failed'; return false;
+    }
+    return true;
+  }
+  const save = async () => {
     clearTimeout(saveTimer);
+    if (!checkSnapshot()) return false;
     const note = activeNote();
     if (note) note.body = input.value;
     try {
-      appStorage.setItem(KEY, JSON.stringify(data));
-      status.textContent = t('Saved'); status.dataset.state = 'saved';
+      const snapshot = JSON.stringify(data);
+      appStorage.setItem(KEY, snapshot);
+      knownSnapshot = snapshot;
+      await appStorage.flush();
+      if (knownSnapshot === snapshot) { status.textContent = t('Saved'); status.dataset.state = 'saved'; }
+      return true;
     } catch {
       status.textContent = t('Save failed'); status.dataset.state = 'failed';
+      return false;
     }
   };
   const queueSave = () => {
@@ -214,6 +228,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     filterNotes();
   };
   const openNote = id => {
+    if (!checkSnapshot()) return;
     const note = data.notes.find(item => item.id === id);
     if (!note) return;
     clearTimeout(saveTimer);
@@ -226,8 +241,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderPreview();
     updateWritingStats();
     renderTabs();
-    status.textContent = t('Saved'); status.dataset.state = 'saved';
-    try { appStorage.setItem(KEY, JSON.stringify(data)); } catch {}
+    save();
     if (mobileNotes.matches) { setSidebar(false); toggle.focus(); }
   };
   const reorderNote = (id, direction) => {
@@ -257,6 +271,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     $('fullscreenNote').setAttribute('aria-pressed', String(full));
   });
   const voiceButton = window.addVoiceInputButton(input, 'notepad-voice-input');
+  window.mountNotepadHistory({ activeNote, save, checkSnapshot });
   document.querySelector('.write-pane').append(voiceButton);
   sortInput.value = data.sort;
   $('noteFormat').value = activeNote().format || 'markdown';

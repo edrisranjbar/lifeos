@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-const LIFE_OS_SCHEMA_VERSION = 4;
+const LIFE_OS_SCHEMA_VERSION = 5;
 
 function life_os_schema_version(PDO $db): int {
     try { return (int) $db->query('SELECT MAX(version) FROM schema_migrations')->fetchColumn(); }
@@ -23,7 +23,7 @@ function life_os_migrate(PDO $db): int {
         $db->exec('CREATE TABLE IF NOT EXISTS schema_migrations (version INT UNSIGNED PRIMARY KEY, applied_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP) ENGINE=InnoDB');
         $current = life_os_schema_version($db);
         $applied = 0;
-        foreach ([1 => 'life_os_schema_initial', 2 => 'life_os_schema_upgrade', 3 => 'life_os_schema_users', 4 => 'life_os_schema_mail'] as $version => $migration) {
+        foreach ([1 => 'life_os_schema_initial', 2 => 'life_os_schema_upgrade', 3 => 'life_os_schema_users', 4 => 'life_os_schema_mail', 5 => 'life_os_schema_notepad_history'] as $version => $migration) {
             if ($version <= $current) continue;
             $migration($db);
             $db->prepare('INSERT INTO schema_migrations (version) VALUES (?)')->execute([$version]);
@@ -36,6 +36,26 @@ function life_os_migrate(PDO $db): int {
 }
 
 /** Mail credentials live only in these server-side tables, never in app_state documents. */
+function life_os_schema_notepad_history(PDO $db): void
+{
+    $db->exec("CREATE TABLE IF NOT EXISTS notepad_revisions (
+        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        user_id INT UNSIGNED NOT NULL,
+        note_id VARCHAR(100) NOT NULL,
+        title TEXT NOT NULL,
+        snapshot LONGTEXT NOT NULL,
+        content_hash CHAR(64) NOT NULL,
+        event VARCHAR(16) NOT NULL,
+        created_at VARCHAR(32) NOT NULL,
+        INDEX idx_notepad_history (user_id,note_id,id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    require_once __DIR__ . '/notepad_history.php';
+    foreach ($db->query("SELECT user_id,state_value FROM app_state WHERE state_key = 'edi_notepad_v1'")->fetchAll() as $row) {
+        $doc = json_decode($row['state_value'], true);
+        foreach (($doc['notes'] ?? []) as $note) if (is_array($note)) notepad_record_snapshot($db, (int) $row['user_id'], $note, 'saved');
+    }
+}
+
 function life_os_schema_mail(PDO $db): void
 {
     $db->exec("CREATE TABLE IF NOT EXISTS mail_accounts (
