@@ -17,7 +17,7 @@ test('real SDK stdio initialization, tool schemas, invocation and errors', async
   try {
     await client.connect(transport);
     const { tools } = await client.listTools();
-    assert.equal(tools.length, 15);
+    assert.equal(tools.length, 18);
     for (const tool of tools) assert.equal(tool.inputSchema.type, 'object', tool.name);
     assert.ok(tools.find(t => t.name === 'lifeos_create_task').inputSchema.properties.source);
     const query = tools.find(t => t.name === 'lifeos_query');

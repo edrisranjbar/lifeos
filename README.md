@@ -71,7 +71,7 @@ Most of us run our lives across a to-do app, a habit tracker, a budgeting spread
   <source media="(prefers-color-scheme: light)" srcset="docs/media/kanban-light.webp">
   <img src="docs/media/kanban.webp" alt="Kanban board with backlog, in progress, review and done columns">
 </picture>
-<p><b>Kanban</b> — Boards with labels, priorities, due dates, checklists, comments and attachments.</p>
+<p><b>Kanban</b> — Boards with labels, priorities, due dates, checklists, comments, custom fields and attachments.</p>
 </td>
 </tr>
 </table>
@@ -90,7 +90,7 @@ Most of us run our lives across a to-do app, a habit tracker, a budgeting spread
 | **Finance** | Expenses, income and budgets in the currency you choose in Settings (Toman by default). Debts you owe and credits owed to you, one-time or recurring, recorded straight into the ledger. [Guide](docs/financial-commitments.md) |
 | **Habittify** | Daily habits with completion, streaks and monthly progress, on a Gregorian or Jalali calendar (Gregorian by default, set in Settings). |
 | **Todo** | Everyday tasks with subtasks, due dates, priorities, descriptions and your own lists. Today, Upcoming and Completed views, search, and undo for completed or deleted tasks. Undoing Clear completed restores only removed tasks, preserving subsequent additions and edits. |
-| **Kanban** | Draggable cards and lists with priorities, labels, dates, checklists, comments and file attachments. An **All projects** view shows every board's cards together, grouped by list name. Any card can be moved to Goals, where its checklist becomes the goal's tasks. |
+| **Kanban** | Draggable cards and lists with priorities, labels, dates, checklists, comments, custom fields and file attachments. An **All projects** view shows every board's cards together, grouped by list name. Any card can be moved to Goals, where its checklist becomes the goal's tasks. |
 | **Calendar** | Due cards and financial dues across all boards in Month or Schedule view. |
 | **Goals** | SMART goals with measures, deadlines, priorities, editable and sortable checklists — or progress driven by a habit. Click a checklist title to edit it; save with Enter or cancel with Escape. |
 | **Notepad** | Full-width Markdown and HTML notes with previews, matching .md/.html exports and a fullscreen toggle. Choose the format per note; HTML/CSS previews run in an isolated sandbox without access to the LifeOS session. Persian/Arabic and Hebrew notes automatically use RTL writing; mixed-language preview blocks detect their own direction, while code stays LTR. Persian text uses the bundled Vazirmatn font in the editor, preview, note titles and list, independently of the interface language. |
