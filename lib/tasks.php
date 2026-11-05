@@ -3,6 +3,9 @@
 declare(strict_types=1);
 
 const KANBAN_KEY = 'kanban_boards_v1';
+const TASK_CUSTOM_FIELDS_MAX = 50;
+const TASK_CUSTOM_FIELD_NAME_MAX = 60;
+const TASK_CUSTOM_FIELD_VALUE_MAX = 500;
 
 function tasks_done_column(array $column): bool
 {
@@ -13,7 +16,7 @@ function tasks_aggregate(array $goals, array $boards): array
 {
     $tasks = [];
     foreach ($goals['goals'] ?? [] as $goal) foreach ($goal['tasks'] ?? [] as $task) {
-        $tasks[] = ['id' => (string) $task['id'], 'source' => 'goal', 'goal_id' => (string) $goal['id'], 'title' => $task['title'], 'done' => ($task['done'] ?? false) === true, 'due_date' => $task['dueDate'] ?? $goal['deadline'] ?? null, 'priority' => $task['priority'] ?? $goal['priority'] ?? 'medium'];
+        $tasks[] = ['id' => (string) $task['id'], 'source' => 'goal', 'goal_id' => (string) $goal['id'], 'title' => $task['title'], 'done' => ($task['done'] ?? false) === true, 'due_date' => $task['dueDate'] ?? $goal['deadline'] ?? null, 'priority' => $task['priority'] ?? $goal['priority'] ?? 'medium', 'custom_fields' => []];
     }
     foreach ($boards['boards'] ?? [] as $board) foreach ($board['columns'] ?? [] as $column) foreach ($column['cards'] ?? [] as $card) {
         $tasks[] = ['id' => (string) $card['id'], 'source' => 'kanban', 'board_id' => (string) $board['id'], 'column_id' => (string) $column['id'], 'title' => $card['title'], 'done' => tasks_done_column($column), 'due_date' => ($card['dueDate'] ?? '') ?: null, 'priority' => $card['priority'] ?? 'medium', 'description' => $card['description'] ?? '', 'custom_fields' => is_array($card['customFields'] ?? null) ? array_values($card['customFields']) : []];
@@ -21,26 +24,43 @@ function tasks_aggregate(array $goals, array $boards): array
     return $tasks;
 }
 
+function tasks_search_text(array $task): string
+{
+    $parts = [$task['title'] ?? '', $task['description'] ?? ''];
+    foreach ($task['custom_fields'] ?? [] as $field) $parts[] = ($field['name'] ?? '') . ' ' . ($field['value'] ?? '');
+    return mb_strtolower(implode(' ', $parts));
+}
+
 function tasks_matches(array $task, array $query): bool
 {
     foreach (['source', 'goal_id', 'board_id', 'column_id'] as $field) if (isset($query[$field]) && (string) ($task[$field] ?? '') !== $query[$field]) return false;
-    $search = mb_strtolower(trim((string) ($query['q'] ?? '')));
-    if ($search === '') return true;
-    $haystack = [$task['title'] ?? '', $task['description'] ?? ''];
-    foreach ($task['custom_fields'] ?? [] as $field) $haystack[] = ($field['name'] ?? '') . ' ' . ($field['value'] ?? '');
-    return str_contains(mb_strtolower(implode(' ', $haystack)), $search);
+    $search = is_string($query['q'] ?? null) ? trim($query['q']) : '';
+    return $search === '' || str_contains(tasks_search_text($task), mb_strtolower($search));
+}
+
+function tasks_card_field(string $field): string
+{
+    return match ($field) {
+        'due_date' => 'dueDate',
+        'custom_fields' => 'customFields',
+        default => $field,
+    };
 }
 
 function tasks_custom_fields(mixed $value): array
 {
     $result = [];
-    foreach (api_list($value, 'custom_fields', 50) as $index => $item) {
+    $seen = [];
+    foreach (api_list($value, 'custom_fields', TASK_CUSTOM_FIELDS_MAX) as $index => $item) {
         if (!is_array($item)) throw new ApiException(422, 'validation_error', "custom_fields[$index] must be an object.");
         api_fields($item, ['id', 'name', 'value']);
+        $id = isset($item['id']) ? api_text($item['id'], "custom_fields[$index].id", 128, true) : api_uuid();
+        if (isset($seen[$id])) throw new ApiException(422, 'validation_error', "custom_fields[$index].id must be unique.");
+        $seen[$id] = true;
         $result[] = [
-            'id' => isset($item['id']) ? api_text($item['id'], "custom_fields[$index].id", 128, true) : api_uuid(),
-            'name' => api_text($item['name'] ?? '', "custom_fields[$index].name", 60, true),
-            'value' => api_text($item['value'] ?? '', "custom_fields[$index].value", 500),
+            'id' => $id,
+            'name' => api_text($item['name'] ?? '', "custom_fields[$index].name", TASK_CUSTOM_FIELD_NAME_MAX, true),
+            'value' => api_text($item['value'] ?? '', "custom_fields[$index].value", TASK_CUSTOM_FIELD_VALUE_MAX),
         ];
     }
     return $result;
@@ -139,7 +159,7 @@ function tasks_api(StateStore $store, string $method, ?string $id, bool $complet
                     } elseif (!$body['done'] && tasks_done_column($board['columns'][$to])) throw new ApiException(409, 'completion_conflict', 'Provide a non-complete column_id to reopen this card.');
                 }
                 $card = $board['columns'][$from]['cards'][$cardIndex];
-                foreach ($body as $field => $value) if (!in_array($field, ['column_id', 'done'], true)) $card[['due_date' => 'dueDate', 'custom_fields' => 'customFields'][$field] ?? $field] = $value ?? '';
+                foreach ($body as $field => $value) if (!in_array($field, ['column_id', 'done'], true)) $card[tasks_card_field($field)] = $value ?? '';
                 if ($to !== $from || isset($body['done'])) $card['completed'] = tasks_done_column($board['columns'][$to]);
                 $card['updatedAt'] = api_now();
                 if ($to !== $from) { array_splice($board['columns'][$from]['cards'], $cardIndex, 1); $board['columns'][$to]['cards'][] = $card; }

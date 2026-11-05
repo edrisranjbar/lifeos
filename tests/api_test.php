@@ -92,6 +92,8 @@ $job = request('PATCH', 'tasks/' . $job['id'], ['column_id' => 'done']);
 check($job['custom_fields'][0]['value'] === 'linkedin:999', 'custom fields survive a column move');
 fails(fn () => request('POST', 'tasks', ['source' => 'goal', 'goal_id' => $goalId, 'title' => 'No fields', 'custom_fields' => [['name' => 'Job ID', 'value' => 'x']]]), 422, 'goal tasks reject custom fields');
 fails(fn () => request('POST', 'tasks', ['source' => 'kanban', 'board_id' => 'board', 'column_id' => 'todo', 'title' => 'Bad', 'custom_fields' => [['value' => 'missing name']]]), 422, 'custom field name required');
+fails(fn () => request('POST', 'tasks', ['source' => 'kanban', 'board_id' => 'board', 'column_id' => 'todo', 'title' => 'Bad', 'custom_fields' => [['id' => 'dup', 'name' => 'A', 'value' => '1'], ['id' => 'dup', 'name' => 'B', 'value' => '2']]]), 422, 'custom field ids unique');
+check(request('GET', 'tasks', [], ['source' => 'goal'])[0]['custom_fields'] === [], 'goal tasks expose empty custom fields');
 check(count(request('GET', 'habits')) === 1, 'archived habits excluded');
 request('POST', 'habits/1/complete'); request('POST', 'habits/1/complete');
 check((int) $db->query('SELECT COUNT(*) FROM habit_logs')->fetchColumn() === 1, 'habit completion idempotent');
