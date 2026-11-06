@@ -1,7 +1,8 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <script src="/assets/storage.js?v=todo-1"></script>
+  <script src="/assets/storage.js?v=todo-sidebar-2"></script>
+  <script src="/assets/i18n.js?v=translation-2"></script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Plan everyday tasks with subtasks, due dates, priorities and lists.">
@@ -9,15 +10,15 @@
   <script>
     try { document.documentElement.dataset.theme = appStorage.getItem('edi_os_theme') || 'dark'; } catch { document.documentElement.dataset.theme = 'dark'; }
   </script>
-  <link rel="stylesheet" href="static/style.css?v=todo-1">
+  <link rel="stylesheet" href="static/style.css?v=todo-sidebar-2">
   <script src="/assets/html-escape.js?v=issue19-1"></script>
 </head>
 <body>
   <main class="app">
     <header class="page-header">
       <div class="page-title">
-        <span class="eyebrow">Everyday tasks</span>
         <div class="title-line">
+          <button type="button" class="icon-btn sidebar-open-button" id="sidebarOpen" aria-label="Show lists" title="Show lists" aria-controls="todoSidebar" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16M13 9h4M13 13h4"/></svg></button>
           <h1>Todo</h1>
           <span class="count-pill" id="openCount">0 open</span>
         </div>
@@ -33,7 +34,9 @@
     </header>
 
     <section class="todo-workspace">
-      <aside class="todo-sidebar" aria-label="Task views and lists">
+      <aside class="todo-sidebar" id="todoSidebar" aria-label="Task views and lists">
+        <div class="sidebar-top"><h2>Views</h2><button type="button" class="icon-btn" id="sidebarToggle" aria-label="Hide lists" title="Hide lists" aria-controls="sidebarContent" aria-expanded="true"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16M15 9l-3 3 3 3"/></svg></button></div>
+        <div class="sidebar-content" id="sidebarContent">
         <nav class="view-list" id="viewList" aria-label="Views"></nav>
         <div class="sidebar-heading">
           <h2>Lists</h2>
@@ -44,12 +47,13 @@
           <label class="sr-only" for="newListName">List name</label>
           <input id="newListName" maxlength="60" placeholder="List name" autocomplete="off" dir="auto">
         </form>
+        </div>
       </aside>
 
       <section class="task-column" aria-labelledby="viewTitle">
         <div class="task-column-head">
           <div>
-            <h2 id="viewTitle">Inbox</h2>
+            <h2 id="viewTitle" tabindex="-1">Inbox</h2>
             <p id="viewHint"></p>
           </div>
           <div class="column-actions">
@@ -153,7 +157,8 @@
       </aside>
     </section>
   </main>
+  <button type="button" class="sidebar-backdrop" id="sidebarBackdrop" aria-label="Close lists" tabindex="-1" hidden></button>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="static/app.js?v=translation-2" defer></script>
+  <script src="static/app.js?v=todo-sidebar-2" defer></script>
 </body>
 </html>

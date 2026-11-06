@@ -52,8 +52,7 @@ button:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-
 /* ── Page header ─────────────────────────────────────────────── */
 .app { width: min(1320px, calc(100% - 56px)); margin: auto; padding: 30px 0 28px; }
 .page-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; margin-bottom: 22px; }
-.eyebrow { display: block; color: var(--accent); font-size: 11px; font-weight: 600; letter-spacing: .18em; text-transform: uppercase; }
-.title-line { display: flex; align-items: center; gap: 12px; margin-top: 8px; }
+.title-line { display: flex; align-items: center; gap: 12px; }
 .page-title h1 { margin: 0; font: 400 clamp(30px, 4vw, 42px)/1 Georgia, serif; letter-spacing: -.02em; }
 .count-pill { padding: 4px 10px; border: 1px solid var(--border); border-radius: 999px; color: var(--muted); font-size: 12px; font-weight: 500; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .header-actions { display: flex; align-items: center; gap: 12px; }
@@ -84,11 +83,21 @@ button:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-
 input[type="date"] { height: 34px; padding: 0 10px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface-2); color: var(--text); font-size: 13px; }
 
 /* ── Workspace ───────────────────────────────────────────────── */
-.todo-workspace { display: grid; grid-template-columns: 232px minmax(0, 1fr); gap: 18px; align-items: start; }
-.todo-workspace.has-detail { grid-template-columns: 232px minmax(0, 1fr) 380px; }
+.todo-workspace { --sidebar-width: 232px; display: grid; grid-template-columns: var(--sidebar-width) minmax(0, 1fr); gap: 18px; align-items: start; direction: ltr; }
+.todo-workspace > * { direction: var(--todo-content-direction, ltr); }
+html[dir="rtl"] { --todo-content-direction: rtl; }
+.todo-workspace.has-detail { grid-template-columns: var(--sidebar-width) minmax(0, 1fr) 380px; }
+.todo-workspace.sidebar-collapsed { --sidebar-width: 56px; }
 
 .todo-sidebar, .task-column, .task-detail { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow); }
-.todo-sidebar { position: sticky; top: 16px; display: flex; flex-direction: column; gap: 4px; max-height: calc(100vh - 150px); padding: 12px 10px; overflow-y: auto; }
+.todo-sidebar { position: sticky; top: 16px; display: flex; flex-direction: column; gap: 8px; height: calc(100dvh - 32px); min-height: 0; padding: 12px 10px; overflow: hidden; }
+.sidebar-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex: none; padding-inline: 8px 0; }
+.sidebar-top h2 { margin: 0; color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+.sidebar-content { min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+.sidebar-collapsed .sidebar-top { padding: 0; justify-content: center; }
+.sidebar-collapsed .sidebar-top h2 { display: none; }
+.sidebar-collapsed #sidebarToggle svg { transform: rotate(180deg); }
+.sidebar-open-button, .sidebar-backdrop { display: none; }
 .sidebar-heading { display: flex; align-items: center; justify-content: space-between; margin: 14px 4px 4px 8px; }
 .sidebar-heading h2 { margin: 0; color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; }
 .view-list { display: flex; flex-direction: column; gap: 2px; }
@@ -216,10 +225,11 @@ input[type="date"] { height: 34px; padding: 0 10px; border: 1px solid var(--bord
 
 /* ── Responsive ──────────────────────────────────────────────── */
 @media (max-width: 1180px) {
-  .todo-workspace.has-detail { grid-template-columns: 200px minmax(0, 1fr) 340px; gap: 14px; }
+  .todo-workspace { --sidebar-width: 200px; }
+  .todo-workspace.has-detail { grid-template-columns: var(--sidebar-width) minmax(0, 1fr) 340px; gap: 14px; }
 }
 @media (max-width: 1000px) {
-  .todo-workspace, .todo-workspace.has-detail { grid-template-columns: 200px minmax(0, 1fr); }
+  .todo-workspace, .todo-workspace.has-detail { grid-template-columns: var(--sidebar-width) minmax(0, 1fr); }
   /* The detail panel becomes a sheet over the list. */
   .task-detail { position: fixed; inset: 12px 12px 12px auto; z-index: 40; width: min(420px, calc(100% - 24px)); max-height: none; box-shadow: 0 24px 60px rgba(0, 0, 0, .45); }
 }
@@ -230,15 +240,14 @@ input[type="date"] { height: 34px; padding: 0 10px; border: 1px solid var(--bord
   .search-field { flex: 1; width: auto; }
   .search-field kbd { display: none; }
   .todo-workspace, .todo-workspace.has-detail { grid-template-columns: 1fr; gap: 12px; }
-  /* Views and lists become a horizontal strip above the tasks. */
-  .todo-sidebar { position: static; flex-direction: row; align-items: center; max-height: none; padding: 8px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
-  .todo-sidebar::-webkit-scrollbar { display: none; }
-  .view-list { flex-direction: row; }
-  .view-item { width: auto; white-space: nowrap; }
-  .view-item[aria-current="true"]::before { display: none; }
-  .sidebar-heading { margin: 0 2px 0 8px; padding-inline-start: 10px; border-inline-start: 1px solid var(--border); }
-  .sidebar-heading h2 { display: none; }
-  .new-list-form input { width: 160px; }
+  .sidebar-open-button { display: grid; width: 40px; height: 40px; border: 1px solid var(--border); background: var(--surface); }
+  .todo-sidebar { position: fixed; inset: 0 auto 0 0; z-index: 51; width: min(300px, calc(100vw - 48px)); height: 100dvh; border-radius: 0 16px 16px 0; padding: 20px 12px; visibility: hidden; transform: translateX(-100%); pointer-events: none; }
+  .todo-sidebar-open { overflow: hidden; }
+  .todo-sidebar-open .todo-sidebar { visibility: visible; transform: none; pointer-events: auto; }
+  .sidebar-top .icon-btn { width: 40px; height: 40px; }
+  .sidebar-content { flex: 1; }
+  .view-item { min-height: 44px; }
+  .sidebar-backdrop { display: block; position: fixed; inset: 0; z-index: 50; background: rgba(0, 0, 0, .5); cursor: default; }
   .task-column { min-height: 0; padding: 14px 12px 12px; }
   .task-column-head { flex-direction: column; }
   .column-actions { justify-content: flex-start; }

@@ -70,6 +70,68 @@ document.addEventListener('DOMContentLoaded', async () => {
   let query = '';
   let lastSaved = JSON.stringify(data);
 
+  // Layout preferences stay on this device, separate from synced task records.
+  const workspace = document.querySelector('.todo-workspace');
+  const sidebar = $('todoSidebar');
+  const smallScreen = matchMedia('(max-width: 760px)');
+  const SIDEBAR_KEY = 'lifeos-todo-sidebar-collapsed';
+  let sidebarCollapsed = false;
+  let sidebarOpen = false;
+  try { sidebarCollapsed = localStorage.getItem(SIDEBAR_KEY) === 'true'; } catch { /* Device preferences are optional. */ }
+  function updateSidebar() {
+    const mobile = smallScreen.matches;
+    workspace.classList.toggle('sidebar-collapsed', !mobile && sidebarCollapsed);
+    document.documentElement.classList.toggle('todo-sidebar-open', mobile && sidebarOpen);
+    $('sidebarContent').hidden = !mobile && sidebarCollapsed;
+    $('sidebarBackdrop').hidden = !mobile || !sidebarOpen;
+    sidebar.inert = mobile && !sidebarOpen;
+    document.querySelector('.page-header').inert = mobile && sidebarOpen;
+    document.querySelector('.task-column').inert = mobile && sidebarOpen;
+    $('taskDetail').inert = mobile && sidebarOpen;
+    $('sidebarOpen').setAttribute('aria-expanded', String(mobile && sidebarOpen));
+    $('sidebarToggle').setAttribute('aria-expanded', String(mobile ? sidebarOpen : !sidebarCollapsed));
+    const label = tr(!mobile && sidebarCollapsed ? 'Show lists' : 'Hide lists');
+    $('sidebarToggle').setAttribute('aria-label', label);
+    $('sidebarToggle').title = label;
+    sidebar.setAttribute('role', mobile ? 'dialog' : 'complementary');
+    if (mobile && sidebarOpen) sidebar.setAttribute('aria-modal', 'true');
+    else sidebar.removeAttribute('aria-modal');
+  }
+  function closeSidebar(restoreFocus = false) {
+    sidebarOpen = false;
+    updateSidebar();
+    if (restoreFocus && smallScreen.matches) $('sidebarOpen').focus();
+  }
+  $('sidebarOpen').onclick = () => {
+    sidebarOpen = true; updateSidebar(); $('sidebarToggle').focus();
+  };
+  $('sidebarToggle').onclick = () => {
+    if (smallScreen.matches) { closeSidebar(true); return; }
+    sidebarCollapsed = !sidebarCollapsed;
+    try { localStorage.setItem(SIDEBAR_KEY, String(sidebarCollapsed)); } catch { /* Keep the current layout even without storage. */ }
+    updateSidebar();
+  };
+  $('sidebarBackdrop').onclick = () => closeSidebar(true);
+  smallScreen.addEventListener('change', () => {
+    const focusWasInSidebar = sidebar.contains(document.activeElement);
+    sidebarOpen = false; updateSidebar();
+    if (smallScreen.matches && focusWasInSidebar) $('sidebarOpen').focus();
+  });
+  document.addEventListener('keydown', event => {
+    if (!smallScreen.matches || !sidebarOpen) return;
+    if (event.key === 'Escape') {
+      event.preventDefault(); event.stopImmediatePropagation(); closeSidebar(true); return;
+    }
+    if (event.key === 'Tab') {
+      const stops = [...sidebar.querySelectorAll('button,input,select,[tabindex="0"]')]
+        .filter(item => !item.disabled && item.getClientRects().length);
+      const first = stops[0], last = stops.at(-1);
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+    }
+  }, true);
+  updateSidebar();
+
   const status = $('saveStatus');
   const save = () => {
     lastSaved = JSON.stringify(data);
@@ -256,6 +318,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!button) return;
     data.view = button.dataset.view;
     commit();
+    if (smallScreen.matches) { closeSidebar(); $('viewTitle').focus(); }
   });
   $('newListBtn').onclick = () => { $('newListForm').hidden = false; $('newListName').value = ''; $('newListName').focus(); };
   $('newListForm').onsubmit = event => {
@@ -267,6 +330,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     data.lists.push(list);
     data.view = list.id;
     commit();
+    if (smallScreen.matches) closeSidebar();
     $('quickTitle').focus();
   };
   $('newListName').addEventListener('blur', () => { if (!$('newListName').value.trim()) $('newListForm').hidden = true; else $('newListForm').requestSubmit(); });

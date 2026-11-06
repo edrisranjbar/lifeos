@@ -1662,5 +1662,9 @@
   "Zoom out": "کوچک‌نمایی",
   "Note connections": "اتصال‌های یادداشت‌ها",
   " (last one {amount})": " (آخرین مورد {amount})",
-  " · {minutes} min read": " · {minutes} دقیقه مطالعه"
+  " · {minutes} min read": " · {minutes} دقیقه مطالعه",
+  "Show lists": "نمایش فهرست‌ها",
+  "Hide lists": "پنهان کردن فهرست‌ها",
+  "Close lists": "بستن فهرست‌ها",
+  "All tasks": "همهٔ کارها"
 }
