@@ -52,6 +52,9 @@ function renderWeather(data) {
   const current = data?.current;
   const daily = data?.daily;
   if (!current || !finite(current.temperature_2m) || !Array.isArray(daily?.time) || daily.time.length < 8) throw new Error('Incomplete weather data');
+  $('weather-peek-temperature').textContent = degrees(current.temperature_2m);
+  $('weather-peek-condition').textContent = t(description(current.weather_code));
+  $('weather-peek-icon').innerHTML = symbol(current.weather_code, Boolean(current.is_day));
   $('kish-weather-temperature').innerHTML = `${number(Math.round(current.temperature_2m))}<small>°C</small>`;
   $('kish-weather-condition').textContent = t(description(current.weather_code));
   $('kish-weather-icon').innerHTML = symbol(current.weather_code, Boolean(current.is_day));
@@ -110,7 +113,7 @@ export function refreshWeatherCard() {
   card.setAttribute('aria-busy', 'true');
   inFlight = getJson().then(data => {
     const label = $('kish-weather-title');
-    if (label && typeof data.location === 'string') label.textContent = t(data.location);
+    if (label && typeof data.location === 'string') { label.textContent = t(data.location); $('weather-peek-location').textContent = t(data.location); }
     try { renderWeather(data.weather); }
     catch { showWeatherUnavailable(); }
     try { renderMarine(data.marine); }
@@ -123,6 +126,9 @@ export function refreshWeatherCard() {
 }
 
 function showWeatherUnavailable() {
+  $('weather-peek-temperature').textContent = '—°C';
+  $('weather-peek-condition').textContent = t('Weather unavailable');
+  $('weather-peek-icon').replaceChildren();
   $('kish-weather-status').textContent = t('Weather unavailable');
   $('kish-weather-temperature').innerHTML = '—<small>°C</small>';
   $('kish-weather-condition').textContent = t('Forecast temporarily unavailable');

@@ -1,7 +1,7 @@
 import { mountMailCard } from './mail-card.js?v=translation-2';
 import './html-escape.js?v=issue19-1';
 import './goal-progress.js?v=goal-measures-2';
-import { refreshWeatherCard } from './weather.js?v=translation-2';
+import { refreshWeatherCard } from './weather.js?v=overview-compact-1';
 import { remainingSeconds } from './timer.mjs';
 import { mountGrowthOverview, refreshGrowthOverview } from './growth-overview.js?v=persian-1';
 
@@ -65,7 +65,7 @@ function smoothPath(points) {
 export function mountDashboard() {
   const stylesheet = document.createElement('link');
   stylesheet.rel = 'stylesheet';
-  stylesheet.href = 'assets/dashboard.css?v=mail-1';
+  stylesheet.href = 'assets/dashboard.css?v=overview-compact-1';
   document.head.append(stylesheet);
   const nav = document.querySelector('.os-nav nav');
   const overview = document.createElement('a');
@@ -85,8 +85,8 @@ export function mountDashboard() {
   main.setAttribute('aria-labelledby', 'dashboard-heading');
   main.innerHTML = `
     <header class="dash-topbar" aria-labelledby="dashboard-heading">
-      <div><span class="dash-kicker">LIFE &amp; WORK OS · TEHRAN</span><h1 id="dashboard-heading" tabindex="-1"></h1><p></p></div>
-      <div class="dash-date-chip" aria-label="Today in Tehran"><time id="dashboard-date"></time><small id="dashboard-weekday"></small></div>
+      <div><h1 id="dashboard-heading" tabindex="-1"></h1></div>
+      <div class="dash-topbar-tools"><button type="button" class="weather-peek" id="weather-open" aria-haspopup="dialog" aria-controls="weather-dialog"><span id="weather-peek-icon" aria-hidden="true"></span><span class="weather-peek-copy"><strong><span id="weather-peek-location">Local forecast</span><span id="weather-peek-temperature">—°C</span></strong><span id="weather-peek-condition">Loading forecast</span></span><span class="weather-peek-arrow" aria-hidden="true">↗</span></button><div class="dash-date-chip" aria-label="Today in Tehran"><time id="dashboard-date"></time><small id="dashboard-weekday"></small></div></div>
     </header>
 
     <section class="dash-score" aria-label="Productivity score">
@@ -115,6 +115,7 @@ export function mountDashboard() {
       <a href="#kanban" class="dash-metric"><div class="metric-top"><span class="metric-symbol symbol-work" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="5" height="16" rx="1"/><rect x="9.5" y="4" width="5" height="11" rx="1"/><rect x="16" y="4" width="5" height="7" rx="1"/></svg></span><span class="metric-delta flat" id="task-delta">—</span></div><span class="metric-label">Cards in flight</span><span class="metric-value-row"><strong class="metric-value" id="m-tasks">0</strong><span class="metric-unit">moving</span></span><span class="metric-foot" id="m-tasks-foot"></span><span class="metric-track"><span id="m-tasks-track"></span></span></a>
     </section>
 
+    <dialog class="weather-dialog" id="weather-dialog" aria-labelledby="kish-weather-title"><div class="weather-dialog-toolbar"><span>Weather forecast</span><button type="button" id="weather-close" autofocus aria-label="Close weather forecast">×</button></div>
     <section class="kish-weather dash-card" id="kish-weather" aria-labelledby="kish-weather-title" aria-busy="true">
       <div class="kish-weather-glow" aria-hidden="true"></div>
       <div class="kish-weather-header"><div><span class="card-kicker">LOCAL WEATHER</span><h2 id="kish-weather-title">Local forecast</h2></div><span class="kish-weather-live" id="kish-weather-status"><i></i> Loading forecast</span></div>
@@ -126,6 +127,8 @@ export function mountDashboard() {
       <div class="kish-weather-footer"><span id="kish-weather-updated">Loading local forecast</span><span>Coastal tide estimate; not for navigation · <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo</a> / <a href="https://open-meteo.com/en/docs/marine-weather-api" target="_blank" rel="noopener noreferrer">DWD</a></span></div>
     </section>
 
+    </dialog>
+    <details class="dash-disclosure" id="dashboard-trends"><summary>Trends &amp; insights</summary><div class="dash-disclosure-body">
     <section class="dash-row" aria-label="Focus and habit charts">
       <article class="dash-card"><div class="card-head"><div><span class="card-kicker">FOCUS · LAST 14 DAYS</span><h3 class="card-title">Deep-work minutes</h3></div><div class="card-extra"><strong id="focus-14-total">0</strong>min total</div></div><div id="focus-chart" class="rise"></div></article>
       <article class="dash-card"><div class="card-head"><div><span class="card-kicker">HABITS · LAST 14 DAYS</span><h3 class="card-title">Completion rate</h3></div><div class="card-extra"><strong id="habit-14-avg">0%</strong>avg daily</div></div><div id="habit-chart" class="rise"></div></article>
@@ -136,28 +139,38 @@ export function mountDashboard() {
       <article class="dash-card"><div class="card-head"><div><span class="card-kicker">INSIGHTS</span><h3 class="card-title">Signals worth knowing</h3></div></div><div class="insight-list" id="insight-list"></div></article>
     </section>
 
+    </div></details>
     <section class="dash-row tri" aria-label="Goals, workflow and finance">
       <article class="dash-card"><div class="card-head"><div><span class="card-kicker">TARGETS</span><h3 class="card-title">Goal progress</h3></div></div><div id="goal-list"></div></article>
       <article class="dash-card"><div class="card-head"><div><span class="card-kicker">WORKFLOW</span><h3 class="card-title">Kanban load</h3></div></div><div id="flow-body"></div></article>
       <article class="dash-card"><div class="card-head"><div><span class="card-kicker">FINANCE · CURRENT PERIOD</span><h3 class="card-title">Spend watch</h3></div></div><div id="fin-body"></div></article>
     </section>
 
-    <nav class="dash-launch" aria-label="Applications">
-      <a href="#focus"><i style="background:#c49bff"></i>Focus</a>
-      <a href="#finance"><i style="background:#3bb273"></i>Finance</a>
-      <a href="#habittify"><i style="background:#39e6ad"></i>Habittify</a>
-      <a href="#todo"><i style="background:#ff8060"></i>Todo</a>
-      <a href="#kanban"><i style="background:#7dbafa"></i>Kanban</a>
-      <a href="#goals"><i style="background:#f3c969"></i>Goals</a>
-      <a href="#notes"><i style="background:#ff9ec4"></i>Notes</a>
-      <a href="#notepad"><i style="background:#b79cff"></i>Notepad</a>
-    </nav>
-    <p class="dash-privacy">Your data is saved in MySQL on this server.</p>`;
+`;
 
   document.getElementById('focus').before(main);
   window.lifeOsI18n.apply(main);
   mountGrowthOverview(main);
   mountMailCard(main);
+  const mailDetails = document.createElement('details');
+  mailDetails.className = 'dash-disclosure';
+  const mailSummary = document.createElement('summary');
+  mailSummary.textContent = t('Email & daily summary');
+  mailDetails.append(mailSummary, main.querySelector('.mail-row'));
+  main.append(mailDetails);
+  const weatherDialog = $('weather-dialog');
+  $('weather-open').addEventListener('click', () => {
+    weatherDialog.showModal();
+    document.documentElement.classList.add('weather-modal-open');
+    refreshWeatherCard();
+  });
+  const closeWeather = () => weatherDialog.close();
+  $('weather-close').addEventListener('click', closeWeather);
+  weatherDialog.addEventListener('close', () => {
+    document.documentElement.classList.remove('weather-modal-open');
+    if (!main.hidden) $('weather-open').focus();
+  });
+  addEventListener('hashchange', () => { if (weatherDialog.open) closeWeather(); });
   addEventListener('storage', () => { if (!main.hidden) refreshDashboard(); });
   addEventListener('app-storage-change', () => { if (!main.hidden) refreshDashboard(); });
   addEventListener('focus', () => { if (!main.hidden) { appStorage.sync(); refreshDashboard(); } });
