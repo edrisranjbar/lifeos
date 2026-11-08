@@ -3,7 +3,7 @@ const ARROW='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l
 export function mountGrowthOverview(main) {
   const section=document.createElement('section');section.className='dash-card growth-summary';section.setAttribute('aria-label','Personal growth dimensions');
   section.innerHTML=`<div class="card-head"><div><span class="card-kicker">PERSONAL GROWTH</span><h3 class="card-title">Six dimensions. One direction.</h3></div><a class="growth-open" href="#growth">${window.lifeOsI18n.t("Open Growth")} ${ARROW}</a></div><div class="growth-summary-grid" id="growthSummary"></div><div class="growth-review" id="growthReviewHint" role="status"></div>`;
-  main.querySelector('.dash-score').after(section);
+  main.querySelector('.dash-row.tri').after(section);
   window.lifeOsI18n.apply(section);
   section.addEventListener('click',event=>{const link=event.target.closest('[data-growth-dimension]');if(!link)return;const frame=document.getElementById('growth');const url=new URL(frame.dataset.src,location.href);url.hash=link.dataset.growthDimension;frame.src=url.href;});
 }

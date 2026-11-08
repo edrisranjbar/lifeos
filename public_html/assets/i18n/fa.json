@@ -572,6 +572,7 @@
   "Signals worth knowing": "نشانه‌های قابل توجه",
   "TARGETS": "هدف‌ها",
   "Goal progress": "پیشرفت هدف",
+  "Top {shown} of {total}": "{shown} از {total} هدف",
   "WORKFLOW": "جریان کار",
   "Kanban load": "حجم کار کانبان",
   "FINANCE · CURRENT PERIOD": "امور مالی · دوره جاری",

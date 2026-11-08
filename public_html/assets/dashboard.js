@@ -3,7 +3,7 @@ import './html-escape.js?v=issue19-1';
 import './goal-progress.js?v=goal-measures-2';
 import { refreshWeatherCard } from './weather.js?v=overview-compact-1';
 import { remainingSeconds } from './timer.mjs';
-import { mountGrowthOverview, refreshGrowthOverview } from './growth-overview.js?v=persian-1';
+import { mountGrowthOverview, refreshGrowthOverview } from './growth-overview.js?v=overview-2';
 
 const readJson = (key) => {
   try { return JSON.parse(appStorage.getItem(key) || 'null'); } catch { return null; }
@@ -65,7 +65,7 @@ function smoothPath(points) {
 export function mountDashboard() {
   const stylesheet = document.createElement('link');
   stylesheet.rel = 'stylesheet';
-  stylesheet.href = 'assets/dashboard.css?v=overview-compact-1';
+  stylesheet.href = 'assets/dashboard.css?v=overview-2';
   document.head.append(stylesheet);
   const nav = document.querySelector('.os-nav nav');
   const overview = document.createElement('a');
@@ -85,8 +85,11 @@ export function mountDashboard() {
   main.setAttribute('aria-labelledby', 'dashboard-heading');
   main.innerHTML = `
     <header class="dash-topbar" aria-labelledby="dashboard-heading">
-      <div><h1 id="dashboard-heading" tabindex="-1"></h1></div>
-      <div class="dash-topbar-tools"><button type="button" class="weather-peek" id="weather-open" aria-haspopup="dialog" aria-controls="weather-dialog"><span id="weather-peek-icon" aria-hidden="true"></span><span class="weather-peek-copy"><strong><span id="weather-peek-location">Local forecast</span><span id="weather-peek-temperature">—°C</span></strong><span id="weather-peek-condition">Loading forecast</span></span><span class="weather-peek-arrow" aria-hidden="true">↗</span></button><div class="dash-date-chip" aria-label="Today in Tehran"><time id="dashboard-date"></time><small id="dashboard-weekday"></small></div></div>
+      <div class="dash-greeting">
+        <p class="dash-dateline"><span id="dashboard-weekday"></span><span class="dash-dot" aria-hidden="true">·</span><time id="dashboard-date"></time></p>
+        <h1 id="dashboard-heading" tabindex="-1"></h1>
+      </div>
+      <button type="button" class="weather-peek" id="weather-open" aria-haspopup="dialog" aria-controls="weather-dialog"><span id="weather-peek-icon" aria-hidden="true"></span><span class="weather-peek-copy"><strong><span id="weather-peek-location">Local forecast</span><span id="weather-peek-temperature">—°C</span></strong><span id="weather-peek-condition">Loading forecast</span></span><span class="weather-peek-arrow" aria-hidden="true">↗</span></button>
     </header>
 
     <section class="dash-score" aria-label="Productivity score">
@@ -94,24 +97,26 @@ export function mountDashboard() {
         <svg viewBox="0 0 120 120"><defs><linearGradient id="scoreGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--accent)"/><stop offset="1" stop-color="#2bd39c"/></linearGradient></defs><circle class="ring-bg" cx="60" cy="60" r="52"/><circle class="ring-fg" id="ring-fg" cx="60" cy="60" r="52" fill="none" stroke-dasharray="326.73" stroke-dashoffset="326.73"/></svg>
         <div class="score-center"><strong id="score-value">0</strong><span>Score</span></div>
       </div>
-      <div class="score-head">
-        <span class="dash-kicker">TODAY · PERFORMANCE INDEX</span>
+      <div class="score-summary">
         <h2>Your productivity pulse</h2>
         <p id="score-copy">A live composite of how your day is shaping up across focus, habits, goals and work.</p>
-        <span class="score-grade">Grade: <em id="score-grade">—</em></span><span class="score-delta" id="score-delta"></span>
-        <div class="score-parts" aria-label="Score breakdown">
-          <div class="score-part" title="Today's focus time toward a 90-minute daily target"><small>Focus today</small><strong id="part-focus">0</strong><span class="part-track"><span class="part-fill" id="fill-focus"></span></span></div>
-          <div class="score-part"><small>Habits</small><strong id="part-habits">0</strong><span class="part-track"><span class="part-fill" id="fill-habits"></span></span></div>
-          <div class="score-part"><small>Goals</small><strong id="part-goals">0</strong><span class="part-track"><span class="part-fill" id="fill-goals"></span></span></div>
-          <div class="score-part"><small>Work</small><strong id="part-work">0</strong><span class="part-track"><span class="part-fill" id="fill-work"></span></span></div>
+        <div class="score-meta">
+          <span class="score-grade">Grade: <em id="score-grade">—</em></span>
+          <span class="score-delta" id="score-delta"></span>
         </div>
+      </div>
+      <div class="score-parts" aria-label="Score breakdown">
+        <div class="score-part" title="Today's focus time toward a 90-minute daily target"><small>Focus today</small><strong id="part-focus">0</strong><span class="part-track"><span class="part-fill" id="fill-focus"></span></span></div>
+        <div class="score-part"><small>Habits</small><strong id="part-habits">0</strong><span class="part-track"><span class="part-fill" id="fill-habits"></span></span></div>
+        <div class="score-part"><small>Goals</small><strong id="part-goals">0</strong><span class="part-track"><span class="part-fill" id="fill-goals"></span></span></div>
+        <div class="score-part"><small>Work</small><strong id="part-work">0</strong><span class="part-track"><span class="part-fill" id="fill-work"></span></span></div>
       </div>
     </section>
 
     <section class="dash-metrics" aria-label="Key metrics today">
-      <a href="#focus" class="dash-metric"><div class="metric-top"><span class="metric-symbol symbol-focus" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg></span><span class="metric-delta flat" id="focus-delta">—</span></div><span class="metric-label">Focus time today</span><span class="metric-value-row"><strong class="metric-value" id="m-focus">0</strong><span class="metric-unit">min</span></span><span class="metric-foot" id="m-focus-foot"></span></a>
+      <a href="#focus" class="dash-metric"><div class="metric-top"><span class="metric-symbol symbol-focus" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg></span><span class="metric-delta flat" id="focus-delta">—</span></div><span class="metric-label">Focus time today</span><span class="metric-value-row"><strong class="metric-value" id="m-focus">0</strong><span class="metric-unit">min</span></span><span class="metric-foot" id="m-focus-foot"></span><span class="metric-track"><span id="m-focus-track"></span></span></a>
       <a href="#habittify" class="dash-metric"><div class="metric-top"><span class="metric-symbol symbol-habit" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span class="metric-delta flat" id="habit-delta">—</span></div><span class="metric-label">Habits completed</span><span class="metric-value-row"><strong class="metric-value" id="m-habits">0</strong><span class="metric-unit" id="m-habits-unit">/ 0</span></span><span class="metric-foot" id="m-habits-foot">Loading…</span><span class="metric-track"><span id="m-habits-track"></span></span></a>
-      <a href="#goals" class="dash-metric"><div class="metric-top"><span class="metric-symbol symbol-goal" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg></span><span class="metric-delta flat" id="goal-delta">—</span></div><span class="metric-label">Active goals</span><span class="metric-value-row"><strong class="metric-value" id="m-goals">0</strong><span class="metric-unit">open</span></span><span class="metric-foot" id="m-goals-foot"></span></a>
+      <a href="#goals" class="dash-metric"><div class="metric-top"><span class="metric-symbol symbol-goal" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg></span><span class="metric-delta flat" id="goal-delta">—</span></div><span class="metric-label">Active goals</span><span class="metric-value-row"><strong class="metric-value" id="m-goals">0</strong><span class="metric-unit">open</span></span><span class="metric-foot" id="m-goals-foot"></span><span class="metric-track"><span id="m-goals-track"></span></span></a>
       <a href="#kanban" class="dash-metric"><div class="metric-top"><span class="metric-symbol symbol-work" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="5" height="16" rx="1"/><rect x="9.5" y="4" width="5" height="11" rx="1"/><rect x="16" y="4" width="5" height="7" rx="1"/></svg></span><span class="metric-delta flat" id="task-delta">—</span></div><span class="metric-label">Cards in flight</span><span class="metric-value-row"><strong class="metric-value" id="m-tasks">0</strong><span class="metric-unit">moving</span></span><span class="metric-foot" id="m-tasks-foot"></span><span class="metric-track"><span id="m-tasks-track"></span></span></a>
     </section>
 
@@ -128,6 +133,12 @@ export function mountDashboard() {
     </section>
 
     </dialog>
+    <section class="dash-row tri" aria-label="Goals, workflow and finance">
+      <article class="dash-card"><div class="card-head"><div><span class="card-kicker">TARGETS</span><h3 class="card-title">Goal progress</h3></div><div class="card-extra" id="goal-extra"></div></div><div id="goal-list"></div></article>
+      <article class="dash-card"><div class="card-head"><div><span class="card-kicker">WORKFLOW</span><h3 class="card-title">Kanban load</h3></div></div><div id="flow-body"></div></article>
+      <article class="dash-card"><div class="card-head"><div><span class="card-kicker">FINANCE · CURRENT PERIOD</span><h3 class="card-title">Spend watch</h3></div></div><div id="fin-body"></div></article>
+    </section>
+
     <details class="dash-disclosure" id="dashboard-trends"><summary>Trends &amp; insights</summary><div class="dash-disclosure-body">
     <section class="dash-row" aria-label="Focus and habit charts">
       <article class="dash-card"><div class="card-head"><div><span class="card-kicker">FOCUS · LAST 14 DAYS</span><h3 class="card-title">Deep-work minutes</h3></div><div class="card-extra"><strong id="focus-14-total">0</strong>min total</div></div><div id="focus-chart" class="rise"></div></article>
@@ -140,11 +151,6 @@ export function mountDashboard() {
     </section>
 
     </div></details>
-    <section class="dash-row tri" aria-label="Goals, workflow and finance">
-      <article class="dash-card"><div class="card-head"><div><span class="card-kicker">TARGETS</span><h3 class="card-title">Goal progress</h3></div></div><div id="goal-list"></div></article>
-      <article class="dash-card"><div class="card-head"><div><span class="card-kicker">WORKFLOW</span><h3 class="card-title">Kanban load</h3></div></div><div id="flow-body"></div></article>
-      <article class="dash-card"><div class="card-head"><div><span class="card-kicker">FINANCE · CURRENT PERIOD</span><h3 class="card-title">Spend watch</h3></div></div><div id="fin-body"></div></article>
-    </section>
 
 `;
 
@@ -189,7 +195,6 @@ export async function refreshDashboard() {
   const hour = tehranHour();
   const greeting = hour < 6 ? 'Working late' : hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : hour < 21 ? 'Good evening' : 'Winding down';
   $('dashboard-heading').textContent = t(greeting) + '.';
-  $('dashboard-heading').parentElement.querySelector('p')?.remove();
   $('dashboard-date').textContent = tehranLongDate();
   $('dashboard-weekday').textContent = tehranDayOfWeek();
 
@@ -332,6 +337,8 @@ export async function refreshDashboard() {
   animateFill('fill-goals', goalAvg);
   animateFill('fill-habits', habitAvg);
   animateFill('fill-work', doneShare);
+  animateFill('m-focus-track', focusPct);
+  animateFill('m-goals-track', goalAvg);
   renderScoreDelta(score, prevScore);
 
   // ── focus chart (14 days) ──────────────────────────────────────────
@@ -561,11 +568,14 @@ function renderGoalList(goalProgress, today) {
     if (!a.goal.deadline) return 1;
     if (!b.goal.deadline) return -1;
     return new Date(a.goal.deadline) - new Date(b.goal.deadline);
-  }).slice(0, 4);
+  }).slice(0, 3);
   if (!sorted.length) {
+    set('goal-extra', '');
     wrap.innerHTML = `<div class="empty-sm">${esc(t('No active goals yet.'))}<br>${esc(t('Set a SMART goal to start tracking real outcomes.'))}</div>`;
     return;
   }
+  // The overview keeps the priority order and shows only what fits on one screen.
+  set('goal-extra', goalProgress.length > sorted.length ? t('Top {shown} of {total}', { shown: number(sorted.length), total: number(goalProgress.length) }) : '');
   wrap.innerHTML = sorted.map(({ goal, total, done, pct }) => {
     let chip = `<span class="chip flat">${esc(t('no deadline'))}</span>`;
     if (goal.deadline) {
@@ -576,9 +586,9 @@ function renderGoalList(goalProgress, today) {
       else chip = `<span class="chip ok">${esc(t('{days}d left', { days: number(days) }))}</span>`;
     }
     return `<div class="goal-row">
-      <div class="goal-head"><span class="goal-name">${esc(goal.title)}<span class="goal-cat">${esc(goal.category || t('General'))}${total ? ` · ${esc(t(goal.progressSource === "habit" ? '{done}/{total} days' : '{done}/{total} tasks', { done: done === null || done === undefined ? '—' : number(done), total: number(total) }))}` : ''}</span></span><span class="goal-pct">${pct===null?"—":esc(pctText(Math.round(pct)))}</span></div>
+      <div class="goal-head"><span class="goal-name"><bdi>${esc(goal.title)}</bdi><span class="goal-cat" dir="auto">${esc(goal.category || t('General'))}${total ? ` · ${esc(t(goal.progressSource === "habit" ? '{done}/{total} days' : '{done}/{total} tasks', { done: done === null || done === undefined ? '—' : number(done), total: number(total) }))}` : ''}</span></span><span class="goal-pct">${pct===null?"—":esc(pctText(Math.round(pct)))}</span></div>
       <span class="goal-track"><span class="goal-fill" data-w="${clamp(pct)}"></span></span>
-      <span class="goal-meta"><span>${esc(goal.metric)}</span>${chip}</span>
+      <span class="goal-meta"><span dir="auto">${esc(goal.metric)}</span>${chip}</span>
     </div>`;
   }).join('');
   requestAnimationFrame(() => wrap.querySelectorAll('.goal-fill').forEach(el => { el.style.width = `${el.dataset.w}%`; }));
@@ -631,7 +641,7 @@ function renderFinance() {
     .map(([id, amount]) => ({ category: categories.find(c => c.id === id), amount }))
     .filter(item => item.category)
     .sort((a, b) => b.amount - a.amount)
-    .slice(0, 3);
+    .slice(0, 4);
   if (!expenses.length && !income) {
     wrap.innerHTML = `<div class="empty-sm">${esc(t('No entries in this period.'))}<br>${esc(t('Track a transaction in Finance to light up the spend watch.'))}</div>`;
     return;
@@ -644,7 +654,7 @@ function renderFinance() {
       const pct = unlimited ? null : category.target > 0 ? clamp(amount / category.target * 100) : 100;
       const over = !unlimited && category.target > 0 && amount > category.target;
       return `<div class="fin-cat">
-        <div class="fin-cat-head"><span>${esc(category.label)}${over ? ' · ' + esc(t('over')) : ''}</span><b>${unlimited ? esc(t('Unlimited')) : esc(t('{percent} of budget', { percent: pctText(Math.round(pct)) }))}</b></div>
+        <div class="fin-cat-head"><span><bdi>${esc(category.label)}</bdi>${over ? ' · ' + esc(t('over')) : ''}</span><b>${unlimited ? esc(t('Unlimited')) : esc(t('{percent} of budget', { percent: pctText(Math.round(pct)) }))}</b></div>
         ${unlimited ? '' : `<span class="fin-cat-track"><span class="fin-cat-fill" data-w="${pct}" style="${over ? 'background:var(--danger)' : ''}"></span></span>`}
       </div>`;
     }).join('')}</div>`;
