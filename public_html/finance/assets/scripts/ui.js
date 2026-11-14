@@ -93,16 +93,17 @@ function toggleTheme() {
 function openSettingsModal() {
   openModal(`
     <div class="modal-kicker">${esc(window.lifeOsI18n.t("Preferences"))}</div>
-    <div class="section-label" style="margin-bottom:22px;">${esc(window.lifeOsI18n.t("Settings"))}</div>
-
-    <label class="field-label">${esc(window.lifeOsI18n.t("Appearance"))}</label>
-    <div class="seg mb-4" role="group" aria-label="${esc(window.lifeOsI18n.t("Appearance"))}">
-      <button type="button" class="seg-btn${currentTheme() === "dark" ? " active" : ""}" onclick="setAppTheme('dark')">
-        ${THEME_ICONS.moon}<span>${esc(window.lifeOsI18n.t("Dark"))}</span>
-      </button>
-      <button type="button" class="seg-btn${currentTheme() === "light" ? " active" : ""}" onclick="setAppTheme('light')">
-        ${THEME_ICONS.sun}<span>${esc(window.lifeOsI18n.t("Light"))}</span>
-      </button>
+    <div class="modal-title">${esc(window.lifeOsI18n.t("Settings"))}</div>
+    <div class="settings-section" style="margin-top:20px;">
+      <span class="field-label">${esc(window.lifeOsI18n.t("Appearance"))}</span>
+      <div class="seg" role="group" aria-label="${esc(window.lifeOsI18n.t("Appearance"))}">
+        <button type="button" class="seg-btn${currentTheme() === "dark" ? " active" : ""}" onclick="setAppTheme('dark')">
+          ${THEME_ICONS.moon}<span>${esc(window.lifeOsI18n.t("Dark"))}</span>
+        </button>
+        <button type="button" class="seg-btn${currentTheme() === "light" ? " active" : ""}" onclick="setAppTheme('light')">
+          ${THEME_ICONS.sun}<span>${esc(window.lifeOsI18n.t("Light"))}</span>
+        </button>
+      </div>
     </div>
 
     <div class="danger-zone">

@@ -64,7 +64,7 @@ function finance_api(StateStore $store, string $method, string $resource, array 
         $period = finance_select($store, $periods, $query['period'] ?? null);
         return $periods[$period][$resource] ?? [];
     }
-    api_fields($body, $resource === 'expenses' ? ['period', 'category_id', 'description', 'amount', 'date'] : ['period', 'name', 'amount']);
+    api_fields($body, $resource === 'expenses' ? ['period', 'category_id', 'description', 'amount', 'date'] : ['period', 'name', 'amount', 'date']);
     $amount = api_number($body['amount'] ?? null, 'amount');
     if ($amount <= 0) throw new ApiException(422, 'validation_error', 'amount must be positive.');
     $category = $description = $date = $name = null;
@@ -73,21 +73,25 @@ function finance_api(StateStore $store, string $method, string $resource, array 
         $description = api_text($body['description'] ?? '', 'description', 2000);
         $date = api_date($body['date'] ?? api_today(), 'date');
         if ($date === null) throw new ApiException(422, 'validation_error', 'Expense date is required.');
-    } else $name = api_text($body['name'] ?? '', 'name', 200, true);
+    } else {
+        $name = api_text($body['name'] ?? '', 'name', 200, true);
+        $date = api_date($body['date'] ?? api_today(), 'date');
+        if ($date === null) throw new ApiException(422, 'validation_error', 'Income date is required.');
+    }
     return $store->mutate([FINANCE_KEY => [], FINANCE_LEGACY_KEY => finance_default()], function (array &$docs) use ($store, $resource, $body, $amount, $category, $description, $date, $name) {
         if (!$docs[FINANCE_KEY]) $docs[FINANCE_KEY] = ['Current' => $docs[FINANCE_LEGACY_KEY]];
         $period = finance_select($store, $docs[FINANCE_KEY], $body['period'] ?? null);
         $state =& $docs[FINANCE_KEY][$period];
         if ($resource === 'expenses') {
             if (!in_array($category, array_map('strval', array_column($state['categories'] ?? [], 'id')), true)) throw new ApiException(422, 'validation_error', 'category_id does not exist in this period.');
-            // Browser stores an English month/day label, not an ISO date.
-            $entry = ['id' => api_uuid(), 'categoryId' => $category, 'desc' => $description, 'amount' => $amount, 'date' => (new DateTimeImmutable($date))->format('M j')];
+            // The browser reads dateISO; the month/day label keeps older screens readable.
+            $entry = ['id' => api_uuid(), 'categoryId' => $category, 'desc' => $description, 'amount' => $amount, 'date' => (new DateTimeImmutable($date))->format('M j'), 'dateISO' => $date];
             $state['expenses'][] = $entry;
         } else {
             $incomeId = preg_replace('/\s+/u', '_', mb_strtolower($name, 'UTF-8'));
-            $entry = ['id' => $incomeId, 'name' => $name, 'amount' => $amount];
+            $entry = ['id' => $incomeId, 'name' => $name, 'amount' => $amount, 'date' => (new DateTimeImmutable($date))->format('M j'), 'dateISO' => $date];
             $updated = false;
-            foreach ($state['incomes'] as &$income) if ((string) $income['id'] === $incomeId) { $income['amount'] = $amount; $entry = $income; $updated = true; break; }
+            foreach ($state['incomes'] as &$income) if ((string) $income['id'] === $incomeId) { $income['amount'] = $amount; $income['name'] = $name; $income['date'] = $entry['date']; $income['dateISO'] = $date; $entry = $income; $updated = true; break; }
             if (!$updated) $state['incomes'][] = $entry;
         }
         if ($period === finance_active($store, $docs[FINANCE_KEY])) $docs[FINANCE_LEGACY_KEY] = $state;

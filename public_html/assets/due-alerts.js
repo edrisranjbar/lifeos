@@ -156,7 +156,8 @@ export function mountDueAlerts({ esc, openItem }) {
   const panel = document.createElement('section');
   panel.className = 'due-panel'; panel.id = 'duePanel'; panel.hidden = true;
   panel.setAttribute('role', 'dialog'); panel.setAttribute('aria-label', 'Due and overdue items');
-  $('theme').before(bell);
+  const bellSlot = $('navBrandActions');
+  if (bellSlot) bellSlot.append(bell); else $('theme').after(bell);
   document.body.append(panel);
 
   const banner = document.createElement('button');

@@ -8,7 +8,7 @@ export function mountMobileNavigation() {
 
   const pageName = document.createElement('span');
   pageName.className = 'mobile-page-name';
-  header.insertBefore(pageName, theme);
+  header.insertBefore(pageName, header.querySelector('.nav-footer') || theme);
   const toggle = document.createElement('button');
   toggle.type = 'button';
   toggle.className = 'mobile-menu-toggle';

@@ -27,303 +27,178 @@
     </script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <link href="assets/styles/style.css?v=finance-budgets-2" rel="stylesheet" />
-    <link href="assets/styles/obligations.css?v=main-merge-1" rel="stylesheet" />
-  <script src="/assets/html-escape.js?v=persian-1"></script>
-</head>
+    <link href="assets/styles/style.css?v=finance-ui-6" rel="stylesheet" />
+    <link href="assets/styles/obligations.css?v=finance-ui-6" rel="stylesheet" />
+    <script src="/assets/html-escape.js?v=persian-1"></script>
+  </head>
   <body>
     <div class="aurora" aria-hidden="true"><span></span><span></span><span></span></div>
-    <div id="toast"></div>
+    <div id="toast" role="status" aria-live="polite"></div>
 
-    <!-- ═══ HERO HEADER ═══ -->
-    <div
-      id="pageRoot"
-      style="position: relative; z-index: 2"
-      class="px-6 md:px-10 pt-12 pb-6 max-w-7xl mx-auto"
-    >
-      <div class="flex items-start justify-between mb-3 flex-wrap gap-4">
-        <div>
+    <div id="pageRoot" class="page">
+      <!-- ═══ HEADER ═══ -->
+      <header class="page-heading">
+        <div class="page-heading-copy">
+          <p class="eyebrow" data-i18n="Private ledger">Private ledger</p>
+          <h1>Finance</h1>
+          <p class="page-sub">
+            <span data-i18n="Income, spending and budgets in one place. Values in">Income, spending and budgets in one place. Values in</span>
+            <span data-currency-unit>Toman</span>.
+          </p>
           <div id="printMeta" class="print-only print-meta"></div>
         </div>
-        <div class="flex items-center gap-3 flex-wrap header-actions">
+
+        <div class="page-tools">
           <div class="period-nav">
-            <button
-              class="nav-chev"
-              onclick="gotoPeriod(-1)"
-              title="Previous month"
-            >
-              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            <button class="nav-chev" onclick="gotoPeriod(-1)" aria-label="Previous period" title="Previous period">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
             </button>
             <label class="period-picker" for="periodSelect">
-              <span data-i18n="period">Period</span>
+              <span class="sr-only" data-i18n="Period">Period</span>
               <select id="periodSelect" onchange="selectFinancePeriod(this.value)"></select>
             </label>
-            <button
-              class="nav-chev"
-              onclick="gotoPeriod(1)"
-              title="Next month"
-            >
-              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            <button class="nav-chev" onclick="gotoPeriod(1)" aria-label="Next period" title="Next period">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
             </button>
           </div>
-          <button
-            class="btn-ghost btn-import-ghost"
-            onclick="openImportModal()"
-          >
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            <span data-i18n="importExcel">Import Excel</span>
-          </button>
-          <button class="btn-ghost btn-export-ghost" onclick="exportToExcel()">
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-            <span data-i18n="exportExcel">Export Excel</span>
-          </button>
-          <button class="btn-ghost btn-print-ghost" onclick="printLedger()">
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-            <span data-i18n="print">Print</span>
-          </button>
-          <button
-            class="theme-toggle"
-            id="settingsBtn"
-            onclick="openSettingsModal()"
-            title="Settings"
-          >
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-          </button>
-        </div>
-      </div>
 
-      <!-- ═══ ZONE 1: MACRO METRICS ═══ -->
-      <div
-        class="grid gap-px metric-grid mb-10"
-        style="
-          grid-template-columns: repeat(4, 1fr);
-          background: var(--ink-line);
-          border: 1px solid var(--ink-line);
-          border-radius: 6px;
-          overflow: hidden;
-        "
-      >
-        <div class="metric-card p-7" style="background: var(--ink-card)">
-          <div class="stub-label mb-2" data-i18n="mIncomeLabel">01 · Income</div>
-          <div
-            class="num metric-num-anim"
-            id="metricIncome"
-            style="font-size: 26px; font-weight: 600; color: #39e6ad"
-          >
-            0
-          </div>
-          <div class="metric-rule"></div>
-          <div style="font-size: 11px; color: var(--muted-2)" data-i18n="mIncomeSub">
-            <span data-currency-unit>Toman</span> logged this period
+          <div class="tool-group" role="group" aria-label="Ledger tools">
+            <button class="tool-btn" onclick="openImportModal()" title="Import Excel" aria-label="Import Excel">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            </button>
+            <button class="tool-btn" onclick="exportToExcel()" title="Export Excel" aria-label="Export Excel">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            </button>
+            <button class="tool-btn" onclick="printLedger()" title="Print" aria-label="Print">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            </button>
+            <button class="tool-btn" onclick="openSettingsModal()" title="Settings" aria-label="Settings">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            </button>
           </div>
         </div>
-        <div class="metric-card p-7" style="background: var(--ink-card)">
-          <div class="stub-label mb-2" data-i18n="mAllocatedLabel">02 · Allocated</div>
-          <div
-            class="num metric-num-anim"
-            id="metricBudget"
-            style="font-size: 26px; font-weight: 600; color: var(--brass)"
-          >
-            0
-          </div>
-          <div class="metric-rule"></div>
-          <div style="font-size: 11px; color: var(--muted-2)" data-i18n="mAllocatedSub">
-            <span data-currency-unit>Toman</span> across all categories
-          </div>
-        </div>
-        <div class="metric-card p-7" style="background: var(--ink-card)">
-          <div class="stub-label mb-2" data-i18n="mSpentLabel">03 · Spent</div>
-          <div
-            class="num metric-num-anim"
-            id="metricSpent"
-            style="font-size: 26px; font-weight: 600; color: #ff8060"
-          >
-            0
-          </div>
-          <div class="metric-rule"></div>
-          <div style="font-size: 11px; color: var(--muted-2)" data-i18n="mSpentSub">
-            <span data-currency-unit>Toman</span> actually paid out
-          </div>
-        </div>
-        <div class="metric-card p-7" style="background: var(--ink-card)">
-          <div class="stub-label mb-2" data-i18n="mBalanceLabel">04 · Balance</div>
-          <div
-            class="num metric-num-anim"
-            id="metricBalance"
-            style="font-size: 26px; font-weight: 600"
-          >
-            0
-          </div>
-          <div class="metric-rule"></div>
-          <div style="font-size: 11px; color: var(--muted-2)" data-i18n="mBalanceSub">
-            <span data-currency-unit>Toman</span> remaining net
-          </div>
-        </div>
-      </div>
+      </header>
 
-      <!-- ═══ ZONE 2: INPUTS & LEDGER ═══ -->
-      <div
-        class="grid gap-6 main-grid mb-10"
-        style="grid-template-columns: 1fr 1fr"
-      >
-        <!-- Income Manager -->
-        <div class="ledger-card p-7 reveal">
-          <div class="section-label" data-i18n="incomeStreams">Income Streams</div>
-          <div
-            id="incomeList"
-            class="space-y-2 mb-6 scrollable"
-            style="max-height: 230px"
-          ></div>
-          <button
-            class="btn-primary"
-            style="width: 100%"
-            onclick="openAddIncomeModal()"
-          >
-            ＋ <span data-i18n="addIncomeStream">Add Income Stream</span>
-          </button>
+      <!-- ═══ TOTALS ═══ -->
+      <section class="metric-grid" aria-label="Period totals">
+        <div class="metric">
+          <span class="metric-label" data-i18n="Income">Income</span>
+          <strong class="metric-value num" id="metricIncome" style="color: var(--jade)">0</strong>
+          <span class="metric-note"><span data-currency-unit>Toman</span> <span data-i18n="received">received</span></span>
         </div>
+        <div class="metric">
+          <span class="metric-label" data-i18n="Allocated">Allocated</span>
+          <strong class="metric-value num" id="metricBudget" style="color: var(--brass)">0</strong>
+          <span class="metric-note" id="metricBudgetNote"><span data-currency-unit>Toman</span> across all categories</span>
+        </div>
+        <div class="metric">
+          <span class="metric-label" data-i18n="Spent">Spent</span>
+          <strong class="metric-value num" id="metricSpent" style="color: var(--rust)">0</strong>
+          <span class="metric-note"><span data-currency-unit>Toman</span> <span data-i18n="paid out">paid out</span></span>
+        </div>
+        <div class="metric">
+          <span class="metric-label" data-i18n="Balance">Balance</span>
+          <strong class="metric-value num" id="metricBalance">0</strong>
+          <span class="metric-note"><span data-currency-unit>Toman</span> <span data-i18n="remaining">remaining</span></span>
+        </div>
+      </section>
 
-        <!-- Expense Logger -->
-        <div class="ledger-card p-7 reveal">
-          <div class="section-label screen-only" data-i18n="logExpenseHeading">Log Expense</div>
-          <div class="section-label print-only" data-i18n="expensesHeading">Expenses</div>
-          <button
-            class="btn-primary"
-            style="width: 100%; margin-bottom: 24px"
-            onclick="openAddExpenseModal()"
-          >
-            ＋ <span data-i18n="logExpenseButton">Log Expense</span>
-          </button>
+      <!-- ═══ INCOME & EXPENSES ═══ -->
+      <div class="main-grid">
+        <section class="panel" aria-labelledby="incomeHeading">
+          <div class="panel-head">
+            <div>
+              <h2 id="incomeHeading" data-i18n="Income streams">Income streams</h2>
+            </div>
+            <button class="btn-ghost btn-small" onclick="openAddIncomeModal()">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+              <span data-i18n="Add">Add</span>
+            </button>
+          </div>
+          <div id="incomeList" class="stream-list"></div>
+        </section>
 
-          <div class="stub-label mb-3" data-i18n="recentEntries">Recent Entries</div>
-          <div class="scrollable" style="max-height: 230px">
-            <table style="width: 100%; border-collapse: collapse" id="txTable">
+        <section class="panel" aria-labelledby="expenseHeading">
+          <div class="panel-head">
+            <div>
+              <h2 id="expenseHeading" class="screen-only" data-i18n="Recent expenses">Recent expenses</h2>
+              <h2 class="print-only" data-i18n="Expenses">Expenses</h2>
+            </div>
+            <div class="panel-head-actions">
+              <button class="btn-ghost btn-small" onclick="openAddExpenseModal()">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                <span data-i18n="Log expense">Log expense</span>
+              </button>
+            </div>
+          </div>
+          <div class="table-wrap scrollable">
+            <table class="ledger-table" id="txTable">
               <thead>
-                <tr
-                  style="
-                    font-size: 10.5px;
-                    color: var(--muted-2);
-                    letter-spacing: 0.06em;
-                    text-transform: uppercase;
-                  "
-                >
-                  <th
-                    style="
-                      text-align: start;
-                      padding: 0 0 10px;
-                      font-weight: 700;
-                    "
-                  >
-                    <span data-i18n="thCategory">Category</span>
-                  </th>
-                  <th
-                    style="
-                      text-align: start;
-                      padding: 0 0 10px;
-                      font-weight: 700;
-                    "
-                  >
-                    <span data-i18n="thDesc">Desc</span>
-                  </th>
-                  <th
-                    style="
-                      text-align: end;
-                      padding: 0 0 10px;
-                      font-weight: 700;
-                    "
-                  >
-                    <span data-i18n="thToman" data-currency-unit>Toman</span>
-                  </th>
-                  <th></th>
+                <tr>
+                  <th data-i18n="Category">Category</th>
+                  <th data-i18n="Description">Description</th>
+                  <th data-i18n="Date">Date</th>
+                  <th class="num-col" data-i18n="Amount">Amount</th>
+                  <th class="row-actions-col"><span class="sr-only" data-i18n="Actions">Actions</span></th>
                 </tr>
               </thead>
-              <tbody id="txBody" style="font-size: 12px"></tbody>
+              <tbody id="txBody"></tbody>
             </table>
           </div>
-        </div>
+        </section>
       </div>
 
-      <div class="grid gap-6 mb-12">
-        <!-- Budget Tracker -->
-        <div class="ledger-card budget-panel p-7 reveal">
-          <div class="budget-panel-head">
-            <div>
-              <div class="section-label budget-heading" data-i18n="budgetTracker">Budget Tracker</div>
-              <p class="section-copy" data-i18n="budgetCopy">Set limits, track progress, and adjust a category at any time.</p>
-            </div>
-            <button class="btn-primary budget-add-btn" onclick="openAddBudgetModal()">
-              <span aria-hidden="true">+</span> <span data-i18n="addCategoryShort">Add category</span>
-            </button>
+      <!-- ═══ BUDGET ═══ -->
+      <section class="panel budget-panel" aria-labelledby="budgetHeading">
+        <div class="panel-head">
+          <div>
+            <h2 id="budgetHeading" data-i18n="Budget">Budget</h2>
+            <p class="panel-note" data-i18n="Monthly limits per category. Adjust them at any time.">Monthly limits per category. Adjust them at any time.</p>
           </div>
-          <div
-            style="
-              display: flex;
-              align-items: center;
-              justify-content: space-between;
-              margin-bottom: 16px;
-            "
-          >
-            <div class="section-label" style="margin-bottom: 0; flex: 1" data-i18n="budgetTracker">
-              Budget Tracker
-            </div>
-          </div>
-          <button
-            class="btn-ghost mb-5"
-            style="width: 100%"
-            onclick="openAddBudgetModal()"
-          >
-            <span data-i18n="addBudgetCategory">＋ Add Budget Category</span>
+          <button class="btn-ghost btn-small" onclick="openAddBudgetModal()">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+            <span data-i18n="Add category">Add category</span>
           </button>
-          <div id="budgetSummary" class="budget-summary" aria-label="Budget overview"></div>
-          <div id="budgetTracker" class="budget-grid"></div>
-          <table class="print-only print-budget-table" aria-label="Budget report">
-            <thead>
-              <tr>
-                <th>Category</th>
-                <th>Budget</th>
-                <th>Spent</th>
-                <th>Remaining</th>
-                <th>Used</th>
-              </tr>
-            </thead>
-            <tbody id="printBudgetBody"></tbody>
-          </table>
         </div>
-      </div>
+        <div id="budgetSummary" class="summary-strip" aria-label="Budget overview"></div>
+        <div id="budgetTracker" class="budget-grid"></div>
+        <table class="print-only print-budget-table" aria-label="Budget report">
+          <thead>
+            <tr>
+              <th>Category</th>
+              <th>Budget</th>
+              <th>Spent</th>
+              <th>Remaining</th>
+              <th>Used</th>
+            </tr>
+          </thead>
+          <tbody id="printBudgetBody"></tbody>
+        </table>
+      </section>
 
-      <!-- ═══ ZONE 3: ANALYTICS ═══ -->
-      <div
-        class="grid gap-6 chart-grid mb-12 analytics-section"
-        style="grid-template-columns: 1fr 1.4fr"
-      >
-        <div class="ledger-card p-7 reveal">
-          <div class="section-label" data-i18n="incomeBreakdown">Income Breakdown</div>
-          <div
-            class="chart-wrap"
-            style="
-              height: 270px;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-            "
-          >
+      <!-- ═══ ANALYTICS ═══ -->
+      <div class="analytics-section">
+        <section class="panel chart-panel" aria-labelledby="incomeChartHeading">
+          <div class="panel-head">
+            <h2 id="incomeChartHeading" data-i18n="Income breakdown">Income breakdown</h2>
+          </div>
+          <div class="chart-wrap">
             <canvas id="incomeChart"></canvas>
           </div>
-        </div>
-        <div class="ledger-card p-7 reveal">
-          <div class="section-label" data-i18n="spendingByCategory">Spending by Category</div>
-          <div class="chart-wrap" style="height: 270px">
+        </section>
+        <section class="panel chart-panel" aria-labelledby="spendChartHeading">
+          <div class="panel-head">
+            <h2 id="spendChartHeading" data-i18n="Spending by category">Spending by category</h2>
+          </div>
+          <div class="chart-wrap chart-wrap-tall">
             <canvas id="spendChart"></canvas>
           </div>
-        </div>
+        </section>
       </div>
 
-      <div class="hero-rule mb-6 screen-footer"></div>
-      <div class="screen-footer" style="text-align: center; padding-bottom: 28px">
-        <span class="eyebrow" style="color: var(--muted-2)" data-i18n="footerNote"
-          >Your ledger is saved in MySQL on this server.</span
-        >
-      </div>
+      <footer class="page-footer screen-only">
+        <span class="page-note" data-i18n="Your ledger is saved in MySQL on this server.">Your ledger is saved in MySQL on this server.</span>
+      </footer>
     </div>
 
     <script>
@@ -331,17 +206,18 @@
         for (const name of ["state.js", "ui.js", "import.js", "actions.js", "modals.js", "render.js", "script.js"]) {
           await new Promise((resolve, reject) => {
             const script = document.createElement('script');
-            script.src = `assets/scripts/${name}?v=finance-budgets-2`;
+            script.src = `assets/scripts/${name}?v=finance-ui-6`;
             script.onload = resolve; script.onerror = reject; document.body.append(script);
           });
         }
       }).catch(() => {
         const error = document.createElement('p');
         error.setAttribute('role', 'alert');
+        error.className = 'load-error';
         error.textContent = 'Unable to load the ledger. Reload this page to try again.';
         document.body.prepend(error);
       });
     </script>
-    <script type="module" src="assets/scripts/obligations.js?v=main-merge-1"></script>
+    <script type="module" src="assets/scripts/obligations.js?v=finance-ui-6"></script>
   </body>
 </html>

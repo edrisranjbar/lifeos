@@ -30,7 +30,7 @@ let month=/^\d{4}-(0[1-9]|1[0-2])/.test(params.get('due')||'')?params.get('due')
 
 const root=document.createElement('section');root.id='obligations';root.className='obligations ledger-card';root.setAttribute('aria-labelledby','obHeading');
 root.innerHTML=`<header class="ob-head">
-  <div><span class="eyebrow">DEBTS &amp; CREDITS</span><h2 id="obHeading">Who owes what</h2><p>Money you owe and money owed to you. Totals include every open due, not just this month; paying or receiving adds it to your ledger.</p></div>
+  <h2 id="obHeading">Who owes what</h2>
   <div class="ob-head-actions"><label class="ob-month"><span class="sr-only">Month</span><input id="obMonth" type="month" value="${month}" required aria-label="Month"></label><button id="obRefresh" class="ob-icon-btn" aria-label="Refresh" title="Refresh"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg></button><button id="obNew" class="btn-primary" disabled>＋ New</button></div>
 </header>
 <p id="obStatus" role="status" aria-live="polite">${window.lifeOsI18n.t("Loading…")}</p>
@@ -42,7 +42,7 @@ root.innerHTML=`<header class="ob-head">
   <div class="ob-stats" id="obStats"></div>
   <div class="ob-filters"><div class="ob-segment" role="group" aria-label="${window.lifeOsI18n.t("Show")}"><button data-filter="open">${window.lifeOsI18n.t("To do")}</button><button data-filter="paid" id="obFilterPaid">${window.lifeOsI18n.t("Done")}</button><button data-filter="rejected" id="obFilterRejected">${window.lifeOsI18n.t("Deferred")}</button><button data-filter="all">${window.lifeOsI18n.t("All")}</button></div><input id="obSearch" type="search" aria-label="${window.lifeOsI18n.t("Search")}" placeholder="${window.lifeOsI18n.t("Search name or person")}"></div>
   <div id="obList" class="ob-list"></div>
-  <section class="ob-plans" aria-labelledby="obPlansHeading"><header><h3 id="obPlansHeading">${window.lifeOsI18n.t("Plans")}</h3><span class="ob-muted" id="obPlansCount"></span></header><div id="obPlans"></div></section>
+  <details class="ob-plans" id="obPlansBlock"><summary><span id="obPlansHeading">${window.lifeOsI18n.t("Plans")}</span><span class="ob-muted" id="obPlansCount"></span></summary><div id="obPlans"></div></details>
 </div>
 <details class="ob-history"><summary>${window.lifeOsI18n.t("Recent activity")}</summary><div id="obHistory"></div></details>`;
 document.querySelector('#pageRoot .main-grid').after(root);
@@ -97,13 +97,14 @@ function render(){
     tab.setAttribute('aria-selected',String(dir===direction));tab.tabIndex=dir===direction?0:-1;
     // Everything still open: earlier months, this month, and later dues of plans that end.
     const outstanding=t.carryOver+t.remaining+t.later,late=t.overdue+t.carryOver;
-    const next=[...view.occurrences,...view.upcoming].filter(o=>o.direction===dir&&openDue(o)&&o.date>=today()).sort((a,b)=>a.date.localeCompare(b.date))[0];
-    const meta=[late?`<em>${money(late)} overdue</em>`:'',next?`Next: <span dir="auto">${esc(next.title)}</span> · ${shortDate(next.date)}`:'',t.openEnded?`<span title="Plans with no end date count only up to this month">${t.openEnded} ongoing</span>`:''].filter(Boolean).map(part=>`<span>${part}</span>`).join('<i aria-hidden="true">·</i>');
-    tab.innerHTML=`<span class="ob-side-label">${w.tab}</span><strong>${money(outstanding)} <small>${esc(unit())}</small></strong><span class="ob-side-caption">${w.total}</span><span class="ob-side-meta">${meta||'Nothing open'}</span>`;
+    tab.innerHTML=`<span class="ob-side-row"><span class="ob-side-label">${w.tab}</span><strong>${money(outstanding)} <small>${esc(unit())}</small></strong></span>${late?`<span class="ob-side-meta"><em>${esc(tr('{amount} overdue',{amount:money(late)}))}</em></span>`:''}`;
   }
   const t=totalsFor(direction),w=WORDS[direction],pct=t.committed?Math.round(t.paid/t.committed*100):0;
-  const stats=[[`Due in ${monthName}`,t.committed,''],[w.paid,t.paid,'good'],[w.left,t.remaining,t.remaining?'warn':''],...(t.carryOver?[['From earlier months',t.carryOver,'bad']]:[]),...(t.later?[[`After ${monthName}`,t.later,'']]:[])];
-  $('obStats').innerHTML=`<div class="ob-period"><span>${esc(monthName)}</span><div class="ob-period-bar" role="progressbar" aria-label="${esc(monthName)}: ${pct}% ${w.done}" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><span style="width:${pct}%"></span></div><small>${t.committed?`${pct}% ${w.done}`:'Nothing due'}</small></div><div class="ob-stat-grid">${stats.map(([label,value,tone])=>`<div class="ob-stat ${tone}"><span>${label}</span><strong>${money(value)}</strong></div>`).join('')}</div>`;
+  const hasData=view.plans.some(p=>p.direction===direction)||[...view.occurrences,...view.upcoming].some(o=>o.direction===direction);
+  $('obStats').hidden=!hasData;
+  root.querySelector('.ob-filters').hidden=!hasData;
+  const stats=[[tr('Due'),t.committed,''],[w.paid,t.paid,'good'],[w.left,t.remaining,t.remaining?'warn':''],...(t.carryOver?[[tr('Earlier'),t.carryOver,'bad']]:[]),...(t.later?[[tr('Later'),t.later,'']]:[])];
+  $('obStats').innerHTML=`<div class="ob-period"><div class="ob-period-bar" role="progressbar" aria-label="${esc(monthName)}: ${pct}% ${w.done}" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><span style="width:${pct}%"></span></div><small>${t.committed?`${pct}% ${w.done}`:tr('Nothing due')}</small></div><div class="ob-stat-grid">${stats.map(([label,value,tone])=>`<div class="ob-stat ${tone}"><span>${label}</span><strong>${money(value)}</strong></div>`).join('')}</div>`;
   $('obFilterPaid').textContent=direction==='credit'?'Received':'Paid';
   $('obFilterRejected').textContent=direction==='credit'?'Late':'Deferred';
   root.querySelectorAll('[data-filter]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.filter===filter)));
@@ -124,7 +125,7 @@ function render(){
       <div class="ob-row-actions">${paid?'':`<button class="${o.date>today()?'btn-ghost':'btn-primary'} ob-pay" data-pay="${esc(o.id)}">${w.pay}</button>`}<details class="ob-more"><summary aria-label="More actions for ${esc(o.title)}">⋯</summary><div class="ob-menu">${editAction}${more}${deleteAction}</div></details></div>
     </article>`;
   };
-  const empty=`<div class="ob-empty"><strong>${filter==='open'?'All clear.':'Nothing here.'}</strong><span>${w.empty} Use <b>＋ New</b> to add one, or pick another month.</span></div>`;
+  const empty=`<div class="ob-empty"><strong>${filter==='open'?'All clear.':'Nothing here.'}</strong><span>${w.empty}</span></div>`;
   if(filter==='open'){
     // To do reads as a timeline: what is late, what is left this month, and what comes next.
     const later=view.upcoming.filter(o=>matches(o)&&openDue(o));
@@ -132,7 +133,7 @@ function render(){
     $('obList').innerHTML=groups.length?groups.map(([label,items,tone])=>`<section class="ob-group" aria-label="${esc(label)}"><h4 class="ob-group-head ${tone}"><span>${esc(label)}</span><span>${money(sum(items))} <small>${esc(unit())}</small></span></h4>${items.map(row).join('')}</section>`).join(''):empty;
   }else $('obList').innerHTML=list.length?list.map(row).join(''):empty;
   const plans=view.plans.filter(p=>p.direction===direction);
-  $('obPlansHeading').textContent=`Plans · ${w.plans.toLowerCase()}`;
+  $('obPlansBlock').hidden=!plans.length;
   $('obPlansCount').textContent=plans.length?`${plans.length}`:'';
   $('obPlans').innerHTML=plans.length?plans.map(p=>{
     const finite=p.type!=='recurring'&&p.count>1,pct=finite&&p.totalAmount?Math.round(p.progress.paid/p.totalAmount*100):0;

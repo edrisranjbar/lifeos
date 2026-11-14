@@ -2,8 +2,6 @@
 applyTheme(currentTheme());
 load();
 render();
-renderPerfStrip();
-window.addEventListener("resize", renderPerfStrip);
 initReveal();
 // Adopt atomic payment results and changes from other workspaces without writing
 // an old in-memory ledger back over the newly committed expense.

@@ -18,10 +18,37 @@ const DEFAULT_CATEGORIES = [
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
 let state = {
-  incomes: [],
-  expenses: [], // { id, categoryId, desc, amount, date }
-  categories: [], // { id, label, target }
+  incomes: [], // { id, name, amount, dateISO }
+  expenses: [], // { id, categoryId, desc, amount, dateISO }
+  categories: [], // { id, label, target, unlimited? }
 };
+
+// ── DATES ─────────────────────────────────────────────────────────────────────
+// Ledger dates are stored as ISO (YYYY-MM-DD) and shown in the chosen language.
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+function financeTodayISO() {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Tehran",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
+
+function financeDate(entry) {
+  const value = entry?.dateISO;
+  if (!ISO_DATE.test(String(value || ""))) return null;
+  const date = new Date(`${value}T12:00:00`);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+// "8 Nov" when we know the date, otherwise the legacy saved label ("Oct 7").
+function financeDateLabel(entry) {
+  const date = financeDate(entry);
+  if (date) return window.lifeOsI18n.date(date, { day: "numeric", month: "short" });
+  return entry?.date || "—";
+}
 
 // ── Tiny template helper (replaces former t() with {var} interpolation) ──
 function __t(str, vars) {
@@ -65,6 +92,9 @@ function normalizeState(value) {
   if (!Array.isArray(normalized.expenses)) normalized.expenses = [];
   if (!Array.isArray(normalized.categories) || normalized.categories.length === 0) {
     normalized.categories = DEFAULT_CATEGORIES.map((category) => ({ ...category }));
+  }
+  for (const entry of [...normalized.incomes, ...normalized.expenses]) {
+    if (entry && entry.dateISO != null && !ISO_DATE.test(String(entry.dateISO))) delete entry.dateISO;
   }
   return normalized;
 }

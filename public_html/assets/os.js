@@ -1,8 +1,8 @@
 import { mountFocusAudio } from './focus-audio.js?v=issue19-1';
 import { remainingSeconds, nextMode } from './timer.mjs';
 import { mountDashboard, refreshDashboard } from './dashboard.js?v=overview-2';
-import { mountMobileNavigation } from './mobile-nav.js?v=todo-i18n-2';
-import { mountDueAlerts } from './due-alerts.js?v=translation-2';
+import { mountMobileNavigation } from './mobile-nav.js?v=sidebar-1';
+import { mountDueAlerts } from './due-alerts.js?v=translation-3';
 await window.appStorageReady;
 const {t,number,digits}=window.lifeOsI18n;
 mountDashboard();

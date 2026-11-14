@@ -9,17 +9,18 @@ let pendingFileName = "";
 function openImportModal() {
   openModal(
     `
-    <div class="section-label" style="margin-bottom:18px;">${esc(window.lifeOsI18n.t("Import from Excel"))}</div>
-    <p style="font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:18px;">
+    <div class="modal-kicker">${esc(window.lifeOsI18n.t("Excel"))}</div>
+    <div class="modal-title">${esc(window.lifeOsI18n.t("Import from Excel"))}</div>
+    <p class="modal-copy">
       ${esc(window.lifeOsI18n.t("Upload your finance workbook. Sheets matching the Budget structure (category totals, income sources, and a transaction list) will be parsed automatically."))}
     </p>
     <div class="upload-zone" id="uploadZone">
       <input type="file" id="excelFileInput" accept=".xlsx,.xls" onchange="handleFileSelect(event)">
-      <div style="font-size:14px;font-weight:600;color:var(--jade);">${esc(window.lifeOsI18n.t("📂 Choose .xlsx file"))}</div>
-      <div style="font-size:11px;color:var(--muted);margin-top:5px;">${esc(window.lifeOsI18n.t("or drag & drop here"))}</div>
+      <div style="font-size:13.5px;font-weight:600;color:var(--jade);">${esc(window.lifeOsI18n.t("📂 Choose .xlsx file"))}</div>
+      <div style="font-size:11.5px;color:var(--muted-2);margin-top:4px;">${esc(window.lifeOsI18n.t("or drag & drop here"))}</div>
     </div>
-    <div style="display:flex;gap:10px;margin-top:22px;">
-      <button class="btn-ghost" style="flex:1;padding:13px;" onclick="closeModal()">${esc(window.lifeOsI18n.t("Cancel"))}</button>
+    <div class="modal-actions" style="grid-template-columns:1fr;">
+      <button class="btn-ghost" onclick="closeModal()">${esc(window.lifeOsI18n.t("Cancel"))}</button>
     </div>
   `,
     true,
@@ -97,12 +98,12 @@ function showSheetPicker(sheetNames) {
 
   openModal(
     `
-    <div class="section-label" style="margin-bottom:8px;">${esc(window.lifeOsI18n.t("Multiple sheets found"))}</div>
-    <p style="font-size:13px;color:var(--muted);margin-bottom:18px;">${esc(__t("Choose which sheet to import from {file}.", { file: pendingFileName }))}</p>
+    <div class="modal-title">${esc(window.lifeOsI18n.t("Multiple sheets found"))}</div>
+    <p class="modal-copy">${esc(__t("Choose which sheet to import from {file}.", { file: pendingFileName }))}</p>
     <div style="max-height:340px;overflow-y:auto;" class="scrollable">${options}</div>
-    <div style="display:flex;gap:10px;margin-top:18px;">
-      <button class="btn-ghost" style="flex:1;padding:13px;" onclick="closeModal()">${esc(window.lifeOsI18n.t("Cancel"))}</button>
-      ${budgetSheetNames.length > 1 ? `<button class="btn-primary" style="flex:1;" onclick="importBudgetSheets('${encodedBudgetSheets}')">${esc(window.lifeOsI18n.t("Import all Budget sheets"))}</button>` : ""}
+    <div class="modal-actions" style="grid-template-columns:1fr 1fr;">
+      <button class="btn-ghost" onclick="closeModal()">${esc(window.lifeOsI18n.t("Cancel"))}</button>
+      ${budgetSheetNames.length > 1 ? `<button class="btn-primary" onclick="importBudgetSheets('${encodedBudgetSheets}')">${esc(window.lifeOsI18n.t("Import all Budget sheets"))}</button>` : ""}
     </div>
   `,
     true,

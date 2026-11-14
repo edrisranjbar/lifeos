@@ -90,10 +90,12 @@ check(!request('GET', 'habits/today')['habits'][0]['done'], 'habit uncomplete id
 fails(fn () => request('POST', 'habits/2/complete'), 404, 'archived completion rejected');
 seed(FINANCE_KEY, ['Oct 2026' => ['incomes' => [], 'expenses' => [], 'categories' => [['id' => 'food', 'label' => 'Food', 'target' => 1000]], 'unknown' => 'keep']]);
 $expense = request('POST', 'finance/expenses', ['category_id' => 'food', 'amount' => 450, 'description' => 'Dinner', 'date' => '2026-10-07']);
-check($expense['date'] === 'Oct 7' && $expense['desc'] === 'Dinner' && $expense['categoryId'] === 'food', 'expense UI shape');
-request('POST', 'finance/incomes', ['name' => 'Air Shoes', 'amount' => 1000]);
-request('POST', 'finance/incomes', ['name' => 'Air Shoes', 'amount' => 2000]);
+check($expense['date'] === 'Oct 7' && $expense['dateISO'] === '2026-10-07' && $expense['desc'] === 'Dinner' && $expense['categoryId'] === 'food', 'expense UI shape');
+request('POST', 'finance/incomes', ['name' => 'Air Shoes', 'amount' => 1000, 'date' => '2026-10-05']);
+$income = request('POST', 'finance/incomes', ['name' => 'Air Shoes', 'amount' => 2000, 'date' => '2026-10-06']);
+check($income['dateISO'] === '2026-10-06' && $income['date'] === 'Oct 6', 'income date saved');
 check(count(request('GET', 'finance/incomes')) === 1, 'income same generated id updates');
+fails(fn () => request('POST', 'finance/incomes', ['name' => 'Air Shoes', 'amount' => 2000, 'date' => 'tomorrow']), 422, 'invalid income date');
 $summary = request('GET', 'finance');
 check($summary['balance'] === 1550 && $summary['budget_remaining'] === 550, 'finance totals');
 check($store->get(FINANCE_KEY, [])['Oct 2026']['unknown'] === 'keep', 'finance metadata preserved');

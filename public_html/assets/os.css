@@ -146,3 +146,59 @@ iframe{height:calc(100dvh - 64px)}
 .due-banner-action{margin-inline-start:auto;color:var(--accent);font-weight:600;white-space:nowrap}
 .due-banner:hover{border-color:var(--accent)}
 @media(max-width:900px){.due-bell{flex-basis:44px;width:44px;height:44px}.due-panel{top:70px;right:12px;left:12px;width:auto}}
+
+/* Brand row: logo + wordmark, with the due bell pinned to the inline end. */
+.nav-brand-row{display:flex;align-items:center;flex:none;gap:8px}
+.nav-brand-actions{display:flex;align-items:center;gap:2px;margin-inline-start:auto}
+
+/* ── Clean minimal sidebar ───────────────────────────────────────────────────
+   Desktop keeps a fixed rail on the inline-start edge; ≤900px falls back to the
+   compact top bar and modal drawer built by mobile-nav.js. */
+@media(min-width:901px){
+  body{padding-inline-start:248px}
+  .os-nav{
+    position:fixed;inset-block:0;inset-inline-start:0;z-index:30;
+    display:flex;flex-direction:column;flex-wrap:nowrap;align-items:stretch;justify-content:flex-start;
+    gap:0;width:248px;height:100dvh;padding:22px 14px 16px;
+    background:var(--bg);border-bottom:0;border-inline-end:1px solid var(--border);
+    backdrop-filter:none;-webkit-backdrop-filter:none;
+  }
+  .os-nav .nav-brand-row{flex:none;padding:2px 8px 24px}
+  .os-nav .brand{flex:none;gap:10px;padding:0;font-size:15px}
+  .brand-word{display:inline-block;color:var(--text);font-size:15px;font-weight:600;letter-spacing:-.01em}
+  .os-nav nav{
+    display:flex;flex:1;flex-direction:column;align-items:stretch;justify-content:flex-start;
+    gap:2px;width:100%;max-width:none;min-height:0;padding:0;
+    overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;
+  }
+  .os-nav nav a{
+    flex:0 0 auto;justify-content:flex-start;gap:11px;width:100%;padding:9px 11px;
+    border-radius:8px;font-size:13.5px;line-height:1.4;white-space:nowrap;
+    color:var(--text-secondary);
+  }
+  .os-nav nav a svg{width:17px;height:17px;opacity:.68}
+  .os-nav nav a:hover{background:var(--surface-2);color:var(--text)}
+  .os-nav nav a[aria-current=page]{background:var(--accent-soft);color:var(--accent)}
+  .os-nav nav a[aria-current=page] svg{opacity:1}
+  #navTimer{margin-inline-start:auto;color:var(--accent);font-family:var(--font-mono);font-size:10.5px;letter-spacing:-.02em}
+  .nav-footer{
+    display:flex;flex:none;align-items:center;gap:4px;width:100%;
+    margin-top:14px;padding-top:14px;border-top:1px solid var(--border);
+  }
+  .nav-footer .account-chip{flex:0 0 34px;width:34px;height:34px}
+  .nav-footer #theme{flex:0 0 34px;width:34px;height:34px;margin-inline-start:auto}
+  .due-panel{top:16px;left:262px;right:auto;bottom:auto;width:min(340px,calc(100vw - 286px));max-height:min(560px,calc(100dvh - 32px))}
+  html[dir=rtl] .due-panel{right:262px;left:auto}
+  iframe{height:100dvh}
+  .focus-page{max-width:1180px;padding:40px 32px 56px}
+}
+
+@media(max-width:900px){
+  .brand-word{display:none}
+  .nav-brand-row{gap:2px}
+  .nav-brand-row .due-bell{flex-basis:38px;width:38px;height:38px}
+  .nav-footer{display:flex;flex:none;align-items:center;gap:4px;width:auto;margin:0;padding:0;border:0}
+  .nav-footer #theme{margin-inline-start:0}
+  iframe{height:calc(100dvh - 64px)}
+}
+

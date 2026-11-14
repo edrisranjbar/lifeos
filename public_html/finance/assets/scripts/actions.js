@@ -1,16 +1,31 @@
 // ── ACTIONS ───────────────────────────────────────────────────────────────────
 function openAddIncomeModal() {
   openModal(`
-    <div class="modal-kicker">${esc(window.lifeOsI18n.t("Income stream"))}</div>
-    <div class="section-label" style="margin-bottom:8px;">${esc(window.lifeOsI18n.t("Add Income"))}</div>
-    <p class="modal-copy">${esc(window.lifeOsI18n.t("Log a new source of income, or update an existing one by reusing its name."))}</p>
-    <label class="field-label" for="incomeName">${esc(window.lifeOsI18n.t("Stream name"))}</label>
-    <input type="text" id="incomeName" placeholder="${esc(window.lifeOsI18n.t("e.g. Salary"))}" class="mb-3">
-    <label class="field-label" for="incomeAmount">${esc(__t('Amount in {unit}', {unit:currencyUnit()}))}</label>
-    <input type="number" id="incomeAmount" placeholder="${esc(__t('Amount in {unit}', {unit:currencyUnit()}))}" min="1" step="1" class="mb-5">
+    <div class="modal-kicker">${esc(window.lifeOsI18n.t("Income"))}</div>
+    <div class="modal-title">${esc(window.lifeOsI18n.t("Add income"))}</div>
+    <p class="modal-copy">${esc(window.lifeOsI18n.t("Record money received. Reusing a name updates that stream."))}</p>
+    <div class="modal-fields">
+      <div>
+        <label class="field-label" for="incomeName">${esc(window.lifeOsI18n.t("Stream name"))}</label>
+        <input type="text" id="incomeName" placeholder="${esc(window.lifeOsI18n.t("e.g. Salary"))}" autocomplete="off">
+      </div>
+      <div class="field-row">
+        <div>
+          <label class="field-label" for="incomeAmount">${esc(window.lifeOsI18n.t("Amount"))}</label>
+          <div class="amount-field">
+            <input type="number" id="incomeAmount" placeholder="0" min="1" step="1" inputmode="numeric">
+            <span class="amount-unit" data-currency-unit>${esc(currencyUnit())}</span>
+          </div>
+        </div>
+        <div>
+          <label class="field-label" for="incomeDate">${esc(window.lifeOsI18n.t("Date received"))}</label>
+          <input type="date" id="incomeDate" value="${financeTodayISO()}" max="${financeTodayISO()}">
+        </div>
+      </div>
+    </div>
     <div class="modal-actions">
       <button class="btn-ghost" onclick="closeModal()">${esc(window.lifeOsI18n.t("Cancel"))}</button>
-      <button class="btn-primary" onclick="saveNewIncome()">${esc(window.lifeOsI18n.t("Save Income"))}</button>
+      <button class="btn-primary" onclick="saveNewIncome()">${esc(window.lifeOsI18n.t("Save income"))}</button>
     </div>
   `);
   setTimeout(() => document.getElementById("incomeName")?.focus(), 0);
@@ -19,18 +34,24 @@ function openAddIncomeModal() {
 function saveNewIncome() {
   const name = document.getElementById("incomeName").value.trim();
   const amount = parseFloat(document.getElementById("incomeAmount").value);
+  const dateISO = document.getElementById("incomeDate").value;
   if (!name || isNaN(amount) || amount <= 0)
     return alert(window.lifeOsI18n.t("Enter a name and valid amount."));
+  if (!ISO_DATE.test(dateISO))
+    return alert(window.lifeOsI18n.t("Choose a date."));
   const id = name.toLowerCase().replace(/\s+/g, "_");
   const existing = state.incomes.find((i) => i.id === id);
   if (existing) {
+    existing.name = name;
     existing.amount = amount;
+    existing.dateISO = dateISO;
   } else {
-    state.incomes.push({ id, name, amount });
+    state.incomes.push({ id, name, amount, dateISO });
   }
   closeModal();
   save();
   render();
+  showToast(window.lifeOsI18n.t("✓ Income saved."), "success");
 }
 
 function deleteIncome(id) {
@@ -45,41 +66,66 @@ function openAddExpenseModal() {
     .map((c) => `<option value="${c.id}">${esc(c.label)}</option>`)
     .join("");
   openModal(`
-    <div class="modal-kicker">${esc(window.lifeOsI18n.t("Ledger entry"))}</div>
-    <div class="section-label" style="margin-bottom:8px;">${esc(window.lifeOsI18n.t("Log Expense"))}</div>
-    <p class="modal-copy">${esc(window.lifeOsI18n.t("Record what you paid and where it belongs in the budget."))}</p>
-    <label class="field-label" for="expenseCategory">${esc(window.lifeOsI18n.t("Category"))}</label>
-    <select id="expenseCategory" class="mb-3">
-      <option value="">${esc(window.lifeOsI18n.t("— Select Category —"))}</option>
-      ${catOptions}
-    </select>
-    <label class="field-label" for="expenseDesc">${esc(window.lifeOsI18n.t("Description"))}</label>
-    <input type="text" id="expenseDesc" placeholder="${esc(window.lifeOsI18n.t("Description (optional)"))}" class="mb-3">
-    <label class="field-label" for="expenseAmount">${esc(__t('Amount in {unit}', {unit:currencyUnit()}))}</label>
-    <input type="number" id="expenseAmount" placeholder="${esc(__t('Amount in {unit}', {unit:currencyUnit()}))}" min="1" step="1" class="mb-5">
+    <div class="modal-kicker">${esc(window.lifeOsI18n.t("Expense"))}</div>
+    <div class="modal-title">${esc(window.lifeOsI18n.t("Log expense"))}</div>
+    <p class="modal-copy">${esc(window.lifeOsI18n.t("Record what you paid, when, and where it belongs in the budget."))}</p>
+    <div class="modal-fields">
+      <div>
+        <label class="field-label" for="expenseAmount">${esc(window.lifeOsI18n.t("Amount"))}</label>
+        <div class="amount-field">
+          <input type="number" id="expenseAmount" placeholder="0" min="1" step="1" inputmode="numeric">
+          <span class="amount-unit" data-currency-unit>${esc(currencyUnit())}</span>
+        </div>
+      </div>
+      <div class="field-row">
+        <div>
+          <label class="field-label" for="expenseCategory">${esc(window.lifeOsI18n.t("Category"))}</label>
+          <select id="expenseCategory">
+            <option value="">${esc(window.lifeOsI18n.t("— Select Category —"))}</option>
+            ${catOptions}
+          </select>
+        </div>
+        <div>
+          <label class="field-label" for="expenseDate">${esc(window.lifeOsI18n.t("Date"))}</label>
+          <input type="date" id="expenseDate" value="${financeTodayISO()}" max="${financeTodayISO()}">
+        </div>
+      </div>
+      <div>
+        <label class="field-label" for="expenseDesc">${esc(window.lifeOsI18n.t("Description"))}</label>
+        <input type="text" id="expenseDesc" placeholder="${esc(window.lifeOsI18n.t("Description (optional)"))}" autocomplete="off">
+      </div>
+    </div>
     <div class="modal-actions">
       <button class="btn-ghost" onclick="closeModal()">${esc(window.lifeOsI18n.t("Cancel"))}</button>
-      <button class="btn-primary" onclick="saveNewExpense()">${esc(window.lifeOsI18n.t("Log Expense"))}</button>
+      <button class="btn-primary" onclick="saveNewExpense()">${esc(window.lifeOsI18n.t("Log expense"))}</button>
     </div>
   `);
-  setTimeout(() => document.getElementById("expenseCategory-trigger")?.focus(), 0);
+  setTimeout(() => document.getElementById("expenseAmount")?.focus(), 0);
+}
+
+// The month/day label keeps older screens and debts/credits readable.
+function financeDateLabelShort(dateISO) {
+  return new Date(`${dateISO}T12:00:00`).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
 }
 
 function saveNewExpense() {
   const catId = document.getElementById("expenseCategory").value;
   const desc = document.getElementById("expenseDesc").value.trim();
   const amount = parseFloat(document.getElementById("expenseAmount").value);
+  const dateISO = document.getElementById("expenseDate").value;
   if (!catId) return alert(window.lifeOsI18n.t("Select a category."));
   if (isNaN(amount) || amount <= 0) return alert(window.lifeOsI18n.t("Enter a valid amount."));
+  if (!ISO_DATE.test(dateISO)) return alert(window.lifeOsI18n.t("Choose a date."));
   state.expenses.push({
     id: Date.now().toString(),
     categoryId: catId,
     desc: desc || "",
     amount,
-    date: new Date().toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    }),
+    dateISO,
+    date: financeDateLabelShort(dateISO),
   });
   closeModal();
   save();
@@ -135,13 +181,14 @@ function exportToExcel() {
     };
   });
   const expenseRows = state.expenses.map((expense) => ({
-    Date: expense.date || "",
+    Date: expense.dateISO || expense.date || "",
     Category: categoryName(expense.categoryId),
     Description: expense.desc || "",
     [`Amount (${unit})`]: expense.amount,
   }));
   const incomeRows = state.incomes.map((income) => ({
     Source: income.name,
+    Date: income.dateISO || "",
     [`Amount (${unit})`]: income.amount,
   }));
   const summaryRows = [
@@ -217,12 +264,15 @@ function saveEditedIncome(id) {
   if (protectLinkedExpense(id, 'income')) return;
   const name = document.getElementById("editIncomeName").value.trim();
   const amount = parseFloat(document.getElementById("editIncomeAmount").value);
+  const dateISO = document.getElementById("editIncomeDate").value;
   if (!name || isNaN(amount) || amount <= 0)
     return alert(window.lifeOsI18n.t("Enter a name and valid amount."));
+  if (!ISO_DATE.test(dateISO)) return alert(window.lifeOsI18n.t("Choose a date."));
   const inc = state.incomes.find((i) => i.id === id);
   if (inc) {
     inc.name = name;
     inc.amount = amount;
+    inc.dateISO = dateISO;
   }
   closeModal();
   save();
@@ -234,13 +284,17 @@ function saveEditedExpense(id) {
   const catId = document.getElementById("editExpenseCategory").value;
   const desc = document.getElementById("editExpenseDesc").value.trim();
   const amount = parseFloat(document.getElementById("editExpenseAmount").value);
+  const dateISO = document.getElementById("editExpenseDate").value;
   if (!catId) return alert(window.lifeOsI18n.t("Select a category."));
   if (isNaN(amount) || amount <= 0) return alert(window.lifeOsI18n.t("Enter a valid amount."));
+  if (!ISO_DATE.test(dateISO)) return alert(window.lifeOsI18n.t("Choose a date."));
   const exp = state.expenses.find((e) => e.id === id);
   if (exp) {
     exp.categoryId = catId;
     exp.desc = desc;
     exp.amount = amount;
+    exp.dateISO = dateISO;
+    exp.date = financeDateLabelShort(dateISO);
   }
   closeModal();
   save();
