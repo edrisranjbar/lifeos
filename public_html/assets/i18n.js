@@ -8,6 +8,7 @@
   const VERSION = 'overview-compact-1';
   const LANGUAGES = [
     { code: 'en', name: 'English', dir: 'ltr', locale: null },
+    { code: 'fr', name: 'Français', dir: 'ltr', locale: 'fr-FR' },
     { code: 'fa', name: 'فارسی', dir: 'rtl', locale: 'fa-IR-u-ca-gregory' },
     { code: 'ar', name: 'العربية', dir: 'rtl', locale: 'ar-u-nu-arab-ca-gregory' },
   ];
@@ -37,7 +38,7 @@
   // Replace Latin digits in already-built strings such as "25:00".
   const digits = text => {
     if (current.code === 'en') return String(text);
-    const zero = current.code === 'fa' ? 0x06F0 : 0x0660;
+    const zero = current.code === 'fa' ? 0x06F0 : current.code === 'ar' ? 0x0660 : 0x0030;
     return String(text).replace(/[0-9]/g, digit => String.fromCharCode(zero + Number(digit)));
   };
 
