@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Edi Life OS : votre vie, en un tableau de bord auto-hébergé</title>
+  <meta name="description" content="Habitudes, objectifs, concentration, projets et argent dans une application open source auto-hébergée, avec un serveur MCP pour que Claude travaille avec vos vraies données.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Edi Life OS">
+  <meta property="og:locale" content="fr_FR">
+  <meta property="og:locale:alternate" content="en_US">
+  <meta property="og:title" content="Edi Life OS">
+  <meta property="og:description" content="Votre vie, en un tableau de bord auto-hébergé. Open source, sous licence MIT, avec un serveur MCP pour l'IA.">
+  <meta property="og:url" content="https://edrisranjbar.github.io/lifeos/fr/">
+  <meta property="og:image" content="https://edrisranjbar.github.io/lifeos/assets/og.jpg">
+  <meta property="og:image:alt" content="Tableau de bord Edi Life OS avec score de productivité, habitudes, objectifs et concentration">
+  <link rel="canonical" href="https://edrisranjbar.github.io/lifeos/fr/">
+  <link rel="alternate" hreflang="en" href="https://edrisranjbar.github.io/lifeos/">
+  <link rel="alternate" hreflang="fr" href="https://edrisranjbar.github.io/lifeos/fr/">
+  <link rel="alternate" hreflang="fa" href="https://edrisranjbar.github.io/lifeos/fa/">
+  <link rel="alternate" hreflang="x-default" href="https://edrisranjbar.github.io/lifeos/">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Edi Life OS">
+  <meta name="twitter:description" content="Votre vie, en un tableau de bord auto-hébergé. Open source, sous licence MIT, avec un serveur MCP pour l'IA.">
+  <meta name="theme-color" content="#05070a">
+  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+  <link rel="manifest" href="../site.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/site.css">
+  <noscript><style>.reveal{opacity:1;transform:none}</style></noscript>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Edi Life OS","url":"https://edrisranjbar.github.io/lifeos/fr/","description":"Habitudes, objectifs, concentration, projets et argent dans une application auto-hébergée et open source."}</script>
+</head>
+<body>
+  <a class="skip" href="#features">Aller au contenu</a>
+
+  <header class="nav" id="nav">
+    <div class="wrap">
+      <a class="brand" href="#top" aria-label="Accueil Edi Life OS">
+        <svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#39e6ad"/><path d="M9 11h12M9 16h9M9 21h12M9 11v10" stroke="#05070a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Edi Life OS
+      </a>
+      <nav class="nav-links" aria-label="Sections">
+        <a href="#features">Fonctionnalités</a>
+        <a href="#ai">IA</a>
+        <a href="#install">Auto-hébergement</a>
+      </nav>
+      <a class="gh-btn" href="https://github.com/edrisranjbar/lifeos">
+        <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.1-.39-.45-.81-.86-.98-.47-.23-.96-.24-1.2-.05-.2.15-.14.42.08.53.28.18.56.54.63.9.08.41.11.79.11 1.08 0 .64-.03 1.11-.05 1.27-.07.13-.14.28-.23.39-.95.22-1.92-.08-2.42-.98-.35-.63-.51-1.45-.51-2.29 0-1.69 1.01-2.91 2.46-3.38-.12-.26-.22-.59-.22-1.04 0-.44.08-.75.2-.99.53-.1 1.17.07 1.92.51a7.8 7.8 0 0 1 4.14 0c.75-.44 1.39-.61 1.92-.51.12.24.2.55.2.99 0 .45-.1.78-.22 1.04 1.45.47 2.46 1.69 2.46 3.38 0 .84-.16 1.66-.51 2.29-.5.9-1.47 1.2-2.42.98-.09-.11-.16-.26-.23-.39-.02-.16-.05-.63-.05-1.27 0-.29.04-.67.11-1.08.07-.36.35-.72.63-.9.22-.11.28-.38.08-.53-.24-.19-.73-.18-1.2.05-.41.17-.76.59-.86.98-.17.45-.42.79-.69.94A7.48 7.48 0 0 1 8 0Z"/></svg>
+        GitHub
+        <span class="gh-stars" id="stars" hidden aria-label="Étoiles GitHub">★ <span id="starCount"></span></span>
+      </a>
+      <a class="lang-btn" href="../" hreflang="en" lang="en" title="English version">English</a>
+      <a class="lang-btn" href="../fa/" hreflang="fa" lang="fa" title="نسخهٔ فارسی">فارسی</a>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="wrap">
+        <h1 class="reveal">Votre vie, <em>en un seul endroit.</em></h1>
+        <p class="hero-lead reveal">Habitudes, objectifs, concentration et argent.<br><strong>Une application paisible, sur votre propre serveur.</strong></p>
+        <div class="hero-ctas reveal">
+          <a class="btn btn-primary" href="#install">Commencer
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+          </a>
+          <a class="btn btn-ghost" href="https://github.com/edrisranjbar/lifeos">Voir sur GitHub</a>
+        </div>
+        <div class="stage reveal" id="stage">
+          <div class="tilt">
+            <div class="frame">
+              <div class="frame-bar" aria-hidden="true"><i></i><i></i><i></i></div>
+              <img src="../assets/dashboard.webp" width="1600" height="1000" fetchpriority="high" alt="Vue d'ensemble Edi Life OS: score de productivité quotidien basé sur la concentration, les habitudes, les objectifs et le travail, avec plusieurs dimensions de vie">
+            </div>
+          </div>
+          <div class="float float-habit" aria-hidden="true">
+            <span class="ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 3"/></svg></span>
+            <span><b>Réflexion du matin</b>10 jours de suite</span>
+          </div>
+          <div class="float float-focus" aria-hidden="true">
+            <span class="ring"></span>
+            <span><b>17:12 restantes</b>Travail profond · session 2</span>
+          </div>
+          <div class="float float-ai" aria-hidden="true">
+            <span class="ico">✦</span>
+            <span><b>Claude a enregistré une dépense</b><code>lifeos_log_expense</code></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="strip">
+      <div class="wrap strip-row reveal" aria-label="Espaces de travail">
+        <span class="chip" style="--c:#39e6ad"><i></i>Vue d'ensemble</span>
+        <span class="chip" style="--c:#b69ce0"><i></i>Croissance</span>
+        <span class="chip" style="--c:#f3c969"><i></i>Objectifs</span>
+        <span class="chip" style="--c:#39e6ad"><i></i>Habittify</span>
+        <span class="chip" style="--c:#c49bff"><i></i>Concentration</span>
+        <span class="chip" style="--c:#f3c969"><i></i>Finance</span>
+        <span class="chip" style="--c:#39e6ad"><i></i>Todo</span>
+        <span class="chip" style="--c:#7da5ee"><i></i>Kanban</span>
+        <span class="chip" style="--c:#6bc6ce"><i></i>Calendrier</span>
+        <span class="chip" style="--c:#b79cff"><i></i>Bloc-notes</span>
+        <span class="chip" style="--c:#ff9ec4"><i></i>Notes</span>
+      </div>
+    </div>
+
+    <section>
+      <div class="wrap problem">
+        <div class="scatter reveal" aria-hidden="true">
+          <span>Liste de tâches</span><span>Suivi d'habitudes</span><span>Feuille de budget</span><span>Minuteur Pomodoro</span><span>Application de notes</span>
+        </div>
+        <div class="reveal problem-text stack-sm">
+          <p class="eyebrow">Pourquoi ça existe</p>
+          <h2>Cinq applis. Aucune ne parle aux autres.</h2>
+          <p class="lead">Chaque outil est utile à part, mais ensemble ils ne peuvent pas répondre à la seule question qui compte :</p>
+          <blockquote>« Est-ce que je vais vers la vie que je veux ? »</blockquote>
+        </div>
+      </div>
+    </section>
+
+    <section id="features" class="flush-top">
+      <div class="wrap">
+        <div class="section-head reveal">
+          <p class="eyebrow">Un seul endroit, connecté</p>
+          <h2>Onze espaces de travail. Un design. Une base unique.</h2>
+          <p class="lead">Une habitude peut faire avancer un objectif, les cartes arrivent dans votre calendrier et la vue d'ensemble transforme tout en un score quotidien.</p>
+        </div>
+        <div class="bento">
+          <article class="card span-4 reveal" style="--c:#b69ce0">
+            <span class="tag">Croissance</span>
+            <h3>Six dimensions de vie, une direction</h3>
+            <p>Spiritualité, santé, famille, argent, apprentissage et repos, chacun relié à des objectifs à long terme et aux habitudes qui les soutiennent.</p>
+            <img class="shot" src="../assets/growth.webp" loading="lazy" width="1600" height="1000" alt="Page Croissance avec six dimensions de vie et leur progression SMART">
+          </article>
+          <article class="card span-2 reveal">
+            <span class="tag">Habittify</span>
+            <h3>Petits pas, chaque jour</h3>
+            <p>Des habitudes suffisamment petites pour tenir même dans les jours chargés, avec des séries et une vue sur sept jours.</p>
+            <img class="shot" src="../assets/habittify.webp" loading="lazy" width="1600" height="1000" alt="Checklist d'habitudes quotidiennes avec un graphique sur sept jours">
+          </article>
+          <article class="card span-3 reveal" style="--c:#c49bff">
+            <span class="tag">Concentration</span>
+            <h3>Travail profond, avec élégance</h3>
+            <p>Un minuteur Pomodoro avec une bande sonore et un ciel qui suit l'heure de la journée.</p>
+            <img class="shot" src="../assets/focus.webp" loading="lazy" width="1600" height="1000" alt="Minuteur de concentration au-dessus d'un paysage illustré">
+          </article>
+          <article class="card span-3 reveal" style="--c:#7da5ee">
+            <span class="tag">Kanban</span>
+            <h3>Des projets qui avancent</h3>
+            <p>Des tableaux avec étiquettes, priorités, dates, listes de tâches, commentaires et pièces jointes.</p>
+            <img class="shot" src="../assets/kanban.webp" loading="lazy" width="1600" height="1000" alt="Tableau Kanban avec colonnes backlog, en cours, revue et terminé">
+          </article>
+          <article class="card mini span-2 reveal" style="--c:#f3c969">
+            <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9a3 3 0 0 0-3 3v2a3 3 0 0 0 3 3h6a3 3 0 0 1 3 3v2a3 3 0 0 1-3 3H9"/></svg></span>
+            <h3>Finance qui tient la route</h3>
+            <p>Dépenses et budgets, en plus des dettes et créances, ponctuelles ou récurrentes, saisies directement dans votre comptabilité.</p>
+          </article>
+          <article class="card mini span-2 reveal" style="--c:#f3c969">
+            <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg></span>
+            <h3>Objectifs mesurables</h3>
+            <p>Des objectifs SMART guidés par des listes, des mesures ou la régularité d'une habitude.</p>
+          </article>
+          <article class="card mini span-2 reveal" style="--c:#6bc6ce">
+            <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg></span>
+            <h3>Un seul calendrier</h3>
+            <p>Dates d'échéance des cartes et dettes financières ensemble, avec les éléments en retard mis en évidence.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="ai" id="ai">
+      <div class="wrap ai-grid">
+        <div class="reveal stack-sm">
+          <p class="eyebrow">Prêt pour l'IA</p>
+          <h2>Demandez à Claude à propos de votre vraie vie.</h2>
+          <p class="lead">Un serveur MCP intégré donne à Claude et aux autres assistants 15 outils sur votre tableau de bord, objectifs, tâches, habitudes, finances et notes.</p>
+          <ul class="checks">
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg><span>Lit et comprend votre vraie vie</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg><span>Créer et met à jour les objectifs</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg><span>Valide les tâches et habitudes</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg><span>Sauvegarde dans votre propre base</span></li>
+          </ul>
+        </div>
+        <div class="chat reveal" role="img" aria-label="Exemple de conversation: demander à Claude de valider une habitude et d'enregistrer une dépense">
+          <div class="chat-top"><span class="dot"></span>Claude · LifeOS MCP<span class="label">Exemple</span></div>
+          <div class="chat-body">
+            <div class="msg me">Valide Reading pour aujourd'hui.</div>
+            <div class="tool">⚙ <b>lifeos_complete_habit</b> · Reading · today</div>
+            <div class="msg ai">C'est fait. <b>Reading</b> est validée pour aujourd'hui.</div>
+            <div class="msg me">Enregistre une dépense de 450 000 Toman pour la nourriture.</div>
+            <div class="tool">⚙ <b>lifeos_log_expense</b> · 450000 · Food</div>
+            <div class="msg ai">Dépense enregistrée <b>450 000 Toman</b> sous Food pour la période actuelle.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="install">
+      <div class="wrap">
+        <div class="section-head reveal">
+          <p class="eyebrow">Auto-hébergement en quelques minutes</p>
+          <h2>À vous de le faire tourner. Partout.</h2>
+          <p class="lead">PHP simple, MySQL et JavaScript vanilla : pas de framework, pas de build step, rien qui casse à la mise à jour.</p>
+        </div>
+        <div class="install">
+          <div class="code reveal">
+            <div class="code-top"><span>Terminal</span><span class="sr-only" id="copyStatus" role="status" aria-live="polite"></span><button class="copy" type="button" aria-describedby="copyStatus">Copier</button></div>
+            <pre><code><span class="c"># Récupère le code</span>
+<span class="p">$ </span>git clone https://github.com/edrisranjbar/lifeos.git && cd lifeos
+<span class="c"># Configure ton accès et tes mots de passe</span>
+<span class="p">$ </span>cp .env.example .env
+<span class="c"># Démarre l'application et MySQL</span>
+<span class="p">$ </span>docker compose up -d
+<span class="c"># Ouvre http://localhost:8080</span></code></pre>
+          </div>
+          <div class="ways">
+            <div class="way reveal">
+              <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="12" rx="2"/><path d="M7 7V4h10v3M9 12h6"/></svg></span>
+              <div><h3>Docker Compose</h3><p>Application et MySQL avec volumes distincts pour vos données et pièces jointes. Les mises à jour sont simples.</p></div>
+            </div>
+            <div class="way reveal">
+              <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2zM7 12h10"/></svg></span>
+              <div><h3>Hébergement mutualisé</h3><p>Téléchargez le zip de la dernière release, décompressez-le dans le dossier racine, ajoutez vos infos MySQL. C'est prêt.</p></div>
+            </div>
+            <div class="way reveal">
+              <span class="icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></svg></span>
+              <div><h3>PHP simple</h3><p>Tout hébergement PHP 8.1+ avec MySQL 8 ou MariaDB. Lancez-le localement avec le serveur intégré de PHP.</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="flush-top">
+      <div class="wrap principles">
+        <div class="principle reveal"><span class="num">01</span><h3>Vos données restent les vôtres</h3><p>Tout vit dans votre propre base MySQL. Pas d'abonnement, pas de télémétrie.</p></div>
+        <div class="principle reveal"><span class="num">02</span><h3>Open source</h3><p>Sous licence MIT. Lisez-le, forkez-le, modifiez-le et faites-en votre propre version.</p></div>
+        <div class="principle reveal"><span class="num">03</span><h3>Calme par design</h3><p>Thèmes sombres et clairs, pensée pour la concentration et des layouts qui fonctionnent sur mobile.</p></div>
+        <div class="principle reveal"><span class="num">04</span><h3>Construit en public</h3><p>Les issues sont ouvertes et les contributeurs fraîchement arrivés sont les bienvenus.</p></div>
+      </div>
+    </section>
+
+    <section class="cta">
+      <div class="wrap">
+        <p class="eyebrow reveal">Commencez aujourd'hui</p>
+        <h2 class="reveal">Grandissez dans <em>toutes</em> les directions.</h2>
+        <p class="lead reveal">Gratuit, open source, et en marche sur votre propre serveur en quelques minutes.</p>
+        <div class="hero-ctas reveal">
+          <a class="btn btn-primary" href="https://github.com/edrisranjbar/lifeos">Étoile GitHub</a>
+          <a class="btn btn-ghost" href="https://github.com/edrisranjbar/lifeos/releases/latest">Télécharger la dernière version</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <span>© 2026 Edris Ranjbar · Licence MIT</span>
+      <nav aria-label="Pied de page">
+        <a href="https://github.com/edrisranjbar/lifeos">GitHub</a>
+        <a href="https://github.com/edrisranjbar/lifeos/blob/main/CONTRIBUTING.md">Contribuer</a>
+        <a href="https://github.com/edrisranjbar/lifeos/blob/main/docs/deployment.md">Docs</a>
+        <a href="https://github.com/edrisranjbar/lifeos/issues">Issues</a>
+        <a href="../" hreflang="en" lang="en">English</a>
+        <a href="../fa/" hreflang="fa" lang="fa">فارسی</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script src="../assets/site.js" defer></script>
+</body>
+</html>
