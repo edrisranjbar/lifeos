@@ -27,8 +27,8 @@
     </script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <link href="assets/styles/style.css?v=finance-ui-6" rel="stylesheet" />
-    <link href="assets/styles/obligations.css?v=finance-ui-6" rel="stylesheet" />
+    <link href="assets/styles/style.css?v=finance-ui-7" rel="stylesheet" />
+    <link href="assets/styles/obligations.css?v=finance-ui-7" rel="stylesheet" />
     <script src="/assets/html-escape.js?v=persian-1"></script>
   </head>
   <body>
@@ -112,7 +112,7 @@
             </div>
             <button class="btn-ghost btn-small" onclick="openAddIncomeModal()">
               <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-              <span data-i18n="Add">Add</span>
+              <span data-i18n="Add income">Add income</span>
             </button>
           </div>
           <div id="incomeList" class="stream-list"></div>
@@ -127,7 +127,7 @@
             <div class="panel-head-actions">
               <button class="btn-ghost btn-small" onclick="openAddExpenseModal()">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-                <span data-i18n="Log expense">Log expense</span>
+                <span data-i18n="Add expense">Add expense</span>
               </button>
             </div>
           </div>
@@ -206,7 +206,7 @@
         for (const name of ["state.js", "ui.js", "import.js", "actions.js", "modals.js", "render.js", "script.js"]) {
           await new Promise((resolve, reject) => {
             const script = document.createElement('script');
-            script.src = `assets/scripts/${name}?v=finance-ui-6`;
+            script.src = `assets/scripts/${name}?v=finance-ui-7`;
             script.onload = resolve; script.onerror = reject; document.body.append(script);
           });
         }
@@ -218,6 +218,6 @@
         document.body.prepend(error);
       });
     </script>
-    <script type="module" src="assets/scripts/obligations.js?v=finance-ui-6"></script>
+    <script type="module" src="assets/scripts/obligations.js?v=finance-ui-7"></script>
   </body>
 </html>

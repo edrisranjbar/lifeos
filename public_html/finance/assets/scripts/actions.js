@@ -63,11 +63,11 @@ function deleteIncome(id) {
 
 function openAddExpenseModal() {
   const catOptions = state.categories
-    .map((c) => `<option value="${c.id}">${esc(c.label)}</option>`)
+    .map((c) => `<option value="${c.id}">${esc(splitCategoryLabel(c.label).name || c.label)}</option>`)
     .join("");
   openModal(`
     <div class="modal-kicker">${esc(window.lifeOsI18n.t("Expense"))}</div>
-    <div class="modal-title">${esc(window.lifeOsI18n.t("Log expense"))}</div>
+    <div class="modal-title">${esc(window.lifeOsI18n.t("Add expense"))}</div>
     <p class="modal-copy">${esc(window.lifeOsI18n.t("Record what you paid, when, and where it belongs in the budget."))}</p>
     <div class="modal-fields">
       <div>
@@ -97,7 +97,7 @@ function openAddExpenseModal() {
     </div>
     <div class="modal-actions">
       <button class="btn-ghost" onclick="closeModal()">${esc(window.lifeOsI18n.t("Cancel"))}</button>
-      <button class="btn-primary" onclick="saveNewExpense()">${esc(window.lifeOsI18n.t("Log expense"))}</button>
+      <button class="btn-primary" onclick="saveNewExpense()">${esc(window.lifeOsI18n.t("Add expense"))}</button>
     </div>
   `);
   setTimeout(() => document.getElementById("expenseAmount")?.focus(), 0);
@@ -141,16 +141,15 @@ function deleteExpense(id) {
 }
 
 function saveNewBudget() {
-  const emoji = document.getElementById("newCatEmoji").value.trim();
   const name = document.getElementById("newCatName").value.trim();
+  const icon = document.getElementById("newCatIcon").value || "tag";
   const target = parseFloat(document.getElementById("newCatTarget").value);
   const unlimited = document.getElementById("newCatUnlimited").checked;
   if (!name) return alert(window.lifeOsI18n.t("Enter a category name."));
   if (!unlimited && (!Number.isFinite(target) || target <= 0))
     return alert(window.lifeOsI18n.t("Enter a valid budget amount."));
   const id = "cat_" + Date.now().toString(36);
-  const label = emoji ? `${emoji} ${name}` : name;
-  state.categories.push({ id, label, target: Number.isFinite(target) ? target : 0, unlimited });
+  state.categories.push({ id, label: name, icon, target: Number.isFinite(target) ? target : 0, unlimited });
   closeModal();
   save();
   render();
@@ -165,15 +164,17 @@ function exportToExcel() {
   const budgets = financeBudgetTotals();
   const totalBudget = budgets.total;
   const totalSpent = state.expenses.reduce((sum, item) => sum + item.amount, 0);
-  const categoryName = (id) =>
-    state.categories.find((category) => category.id === id)?.label || id;
+  const categoryName = (id) => {
+    const category = state.categories.find((item) => item.id === id);
+    return category ? splitCategoryLabel(category.label).name || category.label : id;
+  };
   const unit = currencyUnit();
   const budgetRows = state.categories.map((category) => {
     const spent = state.expenses
       .filter((expense) => expense.categoryId === category.id)
       .reduce((sum, expense) => sum + expense.amount, 0);
     return {
-      Category: category.label,
+      Category: splitCategoryLabel(category.label).name || category.label,
       [`Budget (${unit})`]: budgetIsUnlimited(category) ? "Unlimited" : category.target,
       [`Spent (${unit})`]: spent,
       [`Remaining (${unit})`]: budgetIsUnlimited(category) ? "" : category.target - spent,
@@ -242,8 +243,8 @@ function splitCategoryLabel(label) {
 }
 
 function saveEditedBudget(id) {
-  const emoji = document.getElementById("editCatEmoji").value.trim();
   const name = document.getElementById("editCatName").value.trim();
+  const icon = document.getElementById("editCatIcon").value || "tag";
   const target = parseFloat(document.getElementById("editCatTarget").value);
   const unlimited = document.getElementById("editCatUnlimited").checked;
   if (!name) return showToast(window.lifeOsI18n.t("Enter a category name."), "error");
@@ -251,7 +252,8 @@ function saveEditedBudget(id) {
     return showToast(window.lifeOsI18n.t("Enter a valid budget amount."), "error");
   const category = state.categories.find((cat) => cat.id === id);
   if (!category) return;
-  category.label = emoji ? `${emoji} ${name}` : name;
+  category.label = name;
+  category.icon = icon;
   category.target = Number.isFinite(target) ? target : 0;
   category.unlimited = unlimited;
   closeModal();
@@ -340,9 +342,9 @@ function showContextMenu(e, type, id) {
   menu.className = "context-menu";
   menu.id = "activeContextMenu";
   menu.innerHTML = `
-    <div class="context-menu-item" onclick="handleContextEdit()">${esc(window.lifeOsI18n.t("✏️ Edit"))}</div>
+    <div class="context-menu-item" onclick="handleContextEdit()">${iconSvg(UI_ICON_PATHS.edit, 13)}<span>${esc(window.lifeOsI18n.t("Edit"))}</span></div>
     <div class="context-menu-divider"></div>
-    <div class="context-menu-item danger" onclick="handleContextDelete()">${esc(window.lifeOsI18n.t("🗑️ Delete"))}</div>
+    <div class="context-menu-item danger" onclick="handleContextDelete()">${iconSvg(UI_ICON_PATHS.trash, 13)}<span>${esc(window.lifeOsI18n.t("Delete"))}</span></div>
   `;
   document.body.appendChild(menu);
   const pad = 8;

@@ -16,7 +16,7 @@ function openImportModal() {
     </p>
     <div class="upload-zone" id="uploadZone">
       <input type="file" id="excelFileInput" accept=".xlsx,.xls" onchange="handleFileSelect(event)">
-      <div style="font-size:13.5px;font-weight:600;color:var(--jade);">${esc(window.lifeOsI18n.t("📂 Choose .xlsx file"))}</div>
+      <div class="upload-cta">${iconSvg(UI_ICON_PATHS.upload, 20)}<span>${esc(window.lifeOsI18n.t("Choose .xlsx file"))}</span></div>
       <div style="font-size:11.5px;color:var(--muted-2);margin-top:4px;">${esc(window.lifeOsI18n.t("or drag & drop here"))}</div>
     </div>
     <div class="modal-actions" style="grid-template-columns:1fr;">

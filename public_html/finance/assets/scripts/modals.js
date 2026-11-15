@@ -60,7 +60,7 @@ function enhanceCategorySelect(select) {
       option.setAttribute('aria-selected', String(select.value === category.id));
       const icon = document.createElement('span');
       icon.className = 'category-icon';
-      icon.textContent = parts.emoji || '◇';
+      icon.innerHTML = categoryIcon(category, 15);
       const copy = document.createElement('span');
       copy.className = 'category-option-copy';
       const name = document.createElement('strong');
@@ -140,7 +140,7 @@ function deleteCategory(id) {
   const category = state.categories.find((cat) => cat.id === id);
   if (!category) return;
   const count = state.expenses.filter((e) => e.categoryId === id).length;
-  if (!confirm(__t("Delete \"{label}\" and its {n} expense(s)? This cannot be undone.", { label: category.label, n: count })))
+  if (!confirm(__t("Delete \"{label}\" and its {n} expense(s)? This cannot be undone.", { label: splitCategoryLabel(category.label).name || category.label, n: count })))
     return;
   state.categories = state.categories.filter((cat) => cat.id !== id);
   state.expenses = state.expenses.filter((e) => e.categoryId !== id);
@@ -155,15 +155,13 @@ function openAddBudgetModal() {
     <div class="modal-title">${esc(window.lifeOsI18n.t("Add category"))}</div>
     <p class="modal-copy">${esc(window.lifeOsI18n.t("Give this category a name, an optional icon and a monthly limit."))}</p>
     <div class="modal-fields">
-      <div class="field-row">
-        <div>
-          <label class="field-label" for="newCatEmoji">${esc(window.lifeOsI18n.t("Icon"))}</label>
-          <input type="text" id="newCatEmoji" placeholder="🎮" maxlength="4" autocomplete="off">
-        </div>
-        <div>
-          <label class="field-label" for="newCatName">${esc(window.lifeOsI18n.t("Category name"))}</label>
-          <input type="text" id="newCatName" placeholder="${esc(window.lifeOsI18n.t("e.g. Entertainment"))}" autocomplete="off">
-        </div>
+      <div>
+        <label class="field-label">${esc(window.lifeOsI18n.t("Icon"))}</label>
+        ${categoryIconPickerHtml("newCat")}
+      </div>
+      <div>
+        <label class="field-label" for="newCatName">${esc(window.lifeOsI18n.t("Category name"))}</label>
+        <input type="text" id="newCatName" placeholder="${esc(window.lifeOsI18n.t("e.g. Entertainment"))}" autocomplete="off">
       </div>
       <div>
         <label class="field-label" for="newCatTarget">${esc(window.lifeOsI18n.t("Monthly limit"))}</label>
@@ -196,15 +194,13 @@ function openEditBudgetModal(id) {
     <div class="modal-title">${esc(window.lifeOsI18n.t("Edit budget"))}</div>
     <p class="modal-copy">${esc(window.lifeOsI18n.t("Change its name, icon, or monthly limit. Existing expenses stay attached."))}</p>
     <div class="modal-fields">
-      <div class="field-row">
-        <div>
-          <label class="field-label" for="editCatEmoji">${esc(window.lifeOsI18n.t("Icon"))}</label>
-          <input type="text" id="editCatEmoji" value="${esc(parts.emoji)}" placeholder="${esc(window.lifeOsI18n.t("Optional emoji"))}" maxlength="8" autocomplete="off">
-        </div>
-        <div>
-          <label class="field-label" for="editCatName">${esc(window.lifeOsI18n.t("Category name"))}</label>
-          <input type="text" id="editCatName" value="${esc(parts.name)}" placeholder="${esc(window.lifeOsI18n.t("Category name"))}" autocomplete="off">
-        </div>
+      <div>
+        <label class="field-label">${esc(window.lifeOsI18n.t("Icon"))}</label>
+        ${categoryIconPickerHtml("editCat", categoryIconKey(category))}
+      </div>
+      <div>
+        <label class="field-label" for="editCatName">${esc(window.lifeOsI18n.t("Category name"))}</label>
+        <input type="text" id="editCatName" value="${esc(parts.name)}" placeholder="${esc(window.lifeOsI18n.t("Category name"))}" autocomplete="off">
       </div>
       <div>
         <label class="field-label" for="editCatTarget">${esc(window.lifeOsI18n.t("Monthly limit"))}</label>

@@ -65,7 +65,7 @@ function render() {
     tbody.innerHTML = `<tr><td colspan="5" style="padding:0;border:0;">${emptyStateHtml(
       "receipt",
       window.lifeOsI18n.t("No expenses logged yet"),
-      window.lifeOsI18n.t("Log your first expense and it will appear here."),
+      window.lifeOsI18n.t("Add your first expense and it will appear here."),
     )}</td></tr>`;
   } else {
     tbody.innerHTML = sorted
@@ -73,7 +73,7 @@ function render() {
         const cat = state.categories.find((c) => c.id === e.categoryId);
         const label = cat ? splitCategoryLabel(cat.label).name || cat.label : e.categoryId;
         return `<tr class="fade-in" data-expense-id="${esc(e.id)}" onclick="showContextMenu(event,'expense','${e.id}')">
-        <td><span class="tx-cat">${esc(label)}</span></td>
+        <td><span class="tx-cat">${cat ? categoryIcon(cat, 13) : ""}<span class="tx-cat-name">${esc(label)}</span></span></td>
         <td><span class="tx-desc" dir="auto">${esc(e.desc) || "—"}</span></td>
         <td><span class="tx-date">${esc(financeDateLabel(e))}</span></td>
         <td class="num-col"><span class="tx-amount num">${fmt(e.amount)}</span></td>
@@ -114,11 +114,12 @@ function render() {
             const over = !unlimited && spent > cat.target;
             const ovBy = spent - cat.target;
             const remaining = cat.target - spent;
+            const catName = splitCategoryLabel(cat.label).name || cat.label;
             return `
     <article class="budget-item${over ? " is-over" : ""}">
       <div class="budget-item-head">
-        <span class="budget-name">${esc(cat.label)}</span>
-        <button class="icon-btn" type="button" aria-label="${esc(__t('Edit {label} budget', { label: splitCategoryLabel(cat.label).name || cat.label }))}" title="${esc(window.lifeOsI18n.t("Edit budget"))}" onclick="openEditBudgetModal('${cat.id}')">
+        <span class="budget-name">${categoryIcon(cat, 15)}<span dir="auto">${esc(catName)}</span></span>
+        <button class="icon-btn" type="button" aria-label="${esc(__t('Edit {label} budget', { label: catName }))}" title="${esc(window.lifeOsI18n.t("Edit budget"))}" onclick="openEditBudgetModal('${cat.id}')">
           <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
         </button>
       </div>
@@ -145,7 +146,7 @@ function render() {
         const remaining = category.target - spent;
         const used = category.target > 0 ? Math.round((spent / category.target) * 100) : 0;
         return `<tr>
-          <td>${esc(category.label)}</td>
+          <td>${esc(splitCategoryLabel(category.label).name || category.label)}</td>
           <td class="num">${budgetIsUnlimited(category) ? esc(window.lifeOsI18n.t("Unlimited")) : fmt(category.target)}</td>
           <td class="num">${fmt(spent)}</td>
           <td class="num">${budgetIsUnlimited(category) ? "—" : (remaining < 0 ? "−" : "") + fmt(remaining)}</td>
@@ -270,7 +271,7 @@ function renderCharts() {
     catTotals.length === 0,
     "receipt",
     window.lifeOsI18n.t("Nothing spent yet"),
-    window.lifeOsI18n.t("Log an expense to see spending by category."),
+    window.lifeOsI18n.t("Add an expense to see spending by category."),
   );
 
   if (catTotals.length === 0) {

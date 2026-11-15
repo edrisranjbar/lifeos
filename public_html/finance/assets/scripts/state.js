@@ -2,18 +2,18 @@
 const DEFAULT_INCOMES = [];
 
 const DEFAULT_CATEGORIES = [
-  { id: "food", label: "🛒 Food & Drinks", target: 6000000 },
-  { id: "family", label: "👨‍👩‍👧 Family", target: 5000000 },
-  { id: "housing", label: "🏗️ Housing & Construction", target: 5000000 },
-  { id: "work", label: "💼 Work & Growth", target: 2000000 },
-  { id: "project", label: "💻 Project Expenses", target: 5000000 },
-  { id: "saving", label: "💰 Saving & Investment", target: 2227196 },
-  { id: "transport", label: "🚗 Transportation", target: 500000 },
-  { id: "loans", label: "🏦 Loans & Debts", target: 5000000 },
-  { id: "bills", label: "📡 Bills, Internet, VPN", target: 1000000 },
-  { id: "clothing", label: "👕 Clothing", target: 1000000 },
-  { id: "charity", label: "🕌 Charity & Donation", target: 500000 },
-  { id: "health", label: "💊 Health & Beauty", target: 500000 },
+  { id: "food", label: "Food & Drinks", icon: "cart", target: 6000000 },
+  { id: "family", label: "Family", icon: "users", target: 5000000 },
+  { id: "housing", label: "Housing & Construction", icon: "home", target: 5000000 },
+  { id: "work", label: "Work & Growth", icon: "briefcase", target: 2000000 },
+  { id: "project", label: "Project Expenses", icon: "code", target: 5000000 },
+  { id: "saving", label: "Saving & Investment", icon: "wallet", target: 2227196 },
+  { id: "transport", label: "Transportation", icon: "car", target: 500000 },
+  { id: "loans", label: "Loans & Debts", icon: "bank", target: 5000000 },
+  { id: "bills", label: "Bills, Internet, VPN", icon: "wifi", target: 1000000 },
+  { id: "clothing", label: "Clothing", icon: "shirt", target: 1000000 },
+  { id: "charity", label: "Charity & Donation", icon: "heart", target: 500000 },
+  { id: "health", label: "Health & Beauty", icon: "pill", target: 500000 },
 ];
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
