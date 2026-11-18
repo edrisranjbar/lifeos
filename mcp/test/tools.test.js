@@ -10,8 +10,8 @@ const query = c => toolDefinitions(c).find(t => t.name === 'lifeos_query');
 
 test('all stable tools have schemas and destructive annotations', () => {
   const tools = toolDefinitions(client(async () => response({ data: {} })));
-  assert.equal(tools.length, 15);
-  assert.equal(new Set(tools.map(t => t.name)).size, 15);
+  assert.equal(tools.length, 18);
+  assert.equal(new Set(tools.map(t => t.name)).size, 18);
   assert.deepEqual(tools.filter(t => t.annotations.readOnlyHint).map(t => t.name), ['lifeos_query']);
   for (const t of tools.filter(t => /delete_(goal|task|note)$/.test(t.name))) {
     assert.match(t.description, /Permanently delete/);
@@ -72,6 +72,17 @@ test('secret opt-in, scope filters and expense arguments are forwarded', async (
 test('configuration rejects plaintext remote origins and URL credentials', () => {
   for (const baseUrl of ['http://example.com', 'https://user:pass@example.com', 'https://example.com/path', 'https://example.com/?x=1']) assert.throws(() => createClient({ baseUrl, token }));
   assert.throws(() => createClient({ baseUrl: 'https://example.com', token: 'short' }));
+});
+test('task custom fields and search are forwarded', async () => {
+  const calls = [];
+  const tools = toolDefinitions({ request: async (...args) => { calls.push(args); return {}; } });
+  await executeTool(tools.find(t => t.name === 'lifeos_query'), { type: 'tasks', source: 'kanban', board_id: 'b', q: 'linkedin:123' });
+  assert.deepEqual(calls[0][2].query, { source: 'kanban', board_id: 'b', q: 'linkedin:123' });
+  const created = await executeTool(tools.find(t => t.name === 'lifeos_create_task'), { source: 'kanban', board_id: 'b', column_id: 'c', title: 'Job', custom_fields: [{ name: 'Job ID', value: 'linkedin:123' }] });
+  assert.equal(created.isError, undefined);
+  assert.deepEqual(calls[1][2].body.custom_fields, [{ name: 'Job ID', value: 'linkedin:123' }]);
+  const invalid = await executeTool(tools.find(t => t.name === 'lifeos_create_task'), { source: 'kanban', board_id: 'b', column_id: 'c', title: 'Job', custom_fields: [{ value: 'missing name' }] });
+  assert.equal(invalid.isError, true);
 });
 test('lifeos_query routes every type to the same API calls as the old read tools', async () => {
   const calls = [];
