@@ -194,4 +194,4 @@
   .ob-fields,.ob-choice{grid-template-columns:1fr}
   .ob-dialog{padding:20px}
 }
-@media print{.obligations{break-inside:avoid}.ob-head-actions,.ob-row-actions,.ob-filters,.ob-plans .ob-more,.ob-history{display:none}}
+@media print{.obligations{display:none!important}}

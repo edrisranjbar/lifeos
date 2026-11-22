@@ -27,8 +27,8 @@
     </script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <link href="assets/styles/style.css?v=finance-ui-7" rel="stylesheet" />
-    <link href="assets/styles/obligations.css?v=finance-ui-7" rel="stylesheet" />
+    <link href="assets/styles/style.css?v=finance-ui-8" rel="stylesheet" />
+    <link href="assets/styles/obligations.css?v=finance-ui-8" rel="stylesheet" />
     <script src="/assets/html-escape.js?v=persian-1"></script>
   </head>
   <body>
@@ -206,7 +206,7 @@
         for (const name of ["state.js", "ui.js", "import.js", "actions.js", "modals.js", "render.js", "script.js"]) {
           await new Promise((resolve, reject) => {
             const script = document.createElement('script');
-            script.src = `assets/scripts/${name}?v=finance-ui-7`;
+            script.src = `assets/scripts/${name}?v=finance-ui-8`;
             script.onload = resolve; script.onerror = reject; document.body.append(script);
           });
         }
@@ -218,6 +218,6 @@
         document.body.prepend(error);
       });
     </script>
-    <script type="module" src="assets/scripts/obligations.js?v=finance-ui-7"></script>
+    <script type="module" src="assets/scripts/obligations.js?v=finance-ui-8"></script>
   </body>
 </html>
