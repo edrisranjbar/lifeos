@@ -26,6 +26,7 @@
     { code: 'ARS', name: 'Argentine peso', unit: 'ARS' },
     { code: 'CLP', name: 'Chilean peso', unit: 'CLP' },
     { code: 'COP', name: 'Colombian peso', unit: 'COP' },
+    { code: 'UYU', name: 'Uruguayan peso', unit: 'UYU' },
     { code: 'SAR', name: 'Saudi riyal', unit: 'SAR' },
     { code: 'QAR', name: 'Qatari riyal', unit: 'QAR' },
     { code: 'KWD', name: 'Kuwaiti dinar', unit: 'KWD' },
