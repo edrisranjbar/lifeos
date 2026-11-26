@@ -17,6 +17,7 @@
   --shadow-card: 0 14px 36px rgba(0, 0, 0, 0.28);
   --grid-dot: rgba(255, 255, 255, 0.07);
   --ink: #27251f;
+  --board-ink: #f2efe6;
   --ink-soft: rgba(39, 37, 31, 0.62);
   --font-hand: "Inter", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
@@ -47,6 +48,7 @@
   --danger: #cd5533;
   --shadow-card: 0 1px 2px rgba(48, 42, 30, 0.05), 0 12px 32px rgba(48, 42, 30, 0.12);
   --grid-dot: rgba(48, 42, 30, 0.12);
+  --board-ink: #27251f;
 }
 
 * { box-sizing: border-box; }
@@ -100,6 +102,11 @@ button svg, .search-field svg, .empty-icon svg { width: 16px; height: 16px; flex
 .btn-primary:focus-visible, .search-field:focus-within { outline: none; }
 .btn-primary:focus-visible { box-shadow: 0 0 0 3px var(--accent-soft), 0 0 0 1px var(--accent); }
 
+.btn-ghost { display: inline-flex; align-items: center; gap: 7px; height: 40px; padding: 0 13px; border: 1px solid var(--border); border-radius: 11px; background: var(--surface-2); color: var(--text-secondary); font-weight: 600; font-size: 13.5px; white-space: nowrap; transition: border-color .15s ease, background .15s ease, color .15s ease, box-shadow .15s ease; }
+.btn-ghost:hover { border-color: var(--border-strong); background: var(--surface); color: var(--text); }
+.btn-ghost[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.btn-ghost:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--accent-soft); }
+
 /* ── Canvas ──────────────────────────────────────────────────── */
 .canvas {
   position: relative;
@@ -116,11 +123,19 @@ button svg, .search-field svg, .empty-icon svg { width: 16px; height: 16px; flex
 .canvas-scene { position: absolute; inset: 0; transform-origin: 0 0; }
 .canvas.panning, .canvas.panning * { cursor: grabbing !important; user-select: none; }
 .canvas.pan-ready { cursor: grab; }
+/* Pen mode: the cursor becomes a crosshair and note affordances step aside. */
+.canvas.drawing-mode, .canvas.drawing-mode .sticky, .canvas.drawing-mode .board-image { cursor: crosshair; }
+.canvas.drawing-mode .sticky-footer, .canvas.drawing-mode .image-bar, .canvas.drawing-mode .note-format { display: none; }
+.canvas.drawing-mode .markdown-preview a { pointer-events: none; }
+.canvas.drop-target { box-shadow: inset 0 0 0 2px var(--accent); }
 .canvas-controls { position: fixed; bottom: 18px; inset-inline-end: 18px; z-index: 55; display: flex; gap: 4px; padding: 5px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); box-shadow: var(--shadow-card); }
 .canvas-controls button { min-width: 34px; padding: 6px 9px; border: 0; border-radius: 7px; background: transparent; font-size: 13px; }
 .canvas-controls button:hover { background: var(--surface-2); }
 .canvas-controls button:focus-visible { outline: 2px solid var(--accent); }
 .connections-layer { position: absolute; top: 0; left: 0; z-index: 0; pointer-events: none; overflow: visible; }
+/* Strokes live in board coordinates too; z is raised above notes at runtime. */
+.drawings-layer { position: absolute; top: 0; left: 0; pointer-events: none; overflow: visible; }
+.drawings-layer path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
 .connection-line { fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-linecap: round; stroke-dasharray: 1 6; opacity: .9; pointer-events: none; }
 .connection-line.connection-hover { stroke-width: 4; stroke-dasharray: none; opacity: 1; }
 .connection-hit { fill: none; stroke: transparent; stroke-width: 18; pointer-events: stroke; cursor: pointer; }
@@ -246,8 +261,75 @@ button svg, .search-field svg, .empty-icon svg { width: 16px; height: 16px; flex
 .voice-input:disabled { opacity: .45; cursor: not-allowed; }
 .sticky .sticky-voice-input { display: none; position: absolute; top: 48px; inset-inline-end: 14px; z-index: 3; width: 28px; height: 28px; }
 .sticky.editing .sticky-voice-input { display: grid; }
-.sticky .resize-handle { position: absolute; right: 0; bottom: 0; width: 18px; height: 18px; border-bottom-right-radius: 14px; cursor: nwse-resize; background: linear-gradient(135deg, transparent 0 55%, rgba(0, 0, 0, .25) 55% 62%, transparent 62% 72%, rgba(0, 0, 0, .25) 72% 79%, transparent 79%); touch-action: none; opacity: 0; transition: opacity 120ms ease; }
-.sticky:hover .resize-handle, .sticky.editing .resize-handle, .sticky.resizing .resize-handle { opacity: 1; }
+.sticky .resize-handle, .board-image .resize-handle { position: absolute; right: 0; bottom: 0; width: 18px; height: 18px; border-bottom-right-radius: 14px; cursor: nwse-resize; background: linear-gradient(135deg, transparent 0 55%, rgba(0, 0, 0, .25) 55% 62%, transparent 62% 72%, rgba(0, 0, 0, .25) 72% 79%, transparent 79%); touch-action: none; opacity: 0; transition: opacity 120ms ease; }
+.sticky:hover .resize-handle, .sticky.editing .resize-handle, .sticky.resizing .resize-handle,
+.board-image:hover .resize-handle, .board-image.resizing .resize-handle { opacity: 1; }
+.board-image.resizing { cursor: nwse-resize; user-select: none; }
+
+/* ── Board images ────────────────────────────────────────────── */
+.board-image {
+  position: absolute;
+  display: block;
+  margin: 0;
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, .08), 0 10px 24px rgba(0, 0, 0, .2), inset 0 0 0 1px rgba(0, 0, 0, .05);
+  overflow: hidden;
+  user-select: none;
+  cursor: grab;
+  transition: box-shadow 160ms ease, opacity 160ms ease;
+}
+.board-image.fresh { animation: board-image-in 240ms cubic-bezier(.2, 0, 0, 1); }
+.board-image img { display: block; width: 100%; height: 100%; object-fit: cover; pointer-events: none; -webkit-user-drag: none; }
+.board-image:hover { box-shadow: 0 1px 1px rgba(0, 0, 0, .08), 0 18px 34px rgba(0, 0, 0, .26), inset 0 0 0 1px rgba(0, 0, 0, .05); }
+.board-image:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.board-image.dragging { cursor: grabbing; transform: scale(1.02); box-shadow: 0 26px 50px rgba(0, 0, 0, .38); }
+.board-image .image-bar { position: absolute; top: 6px; inset-inline-end: 6px; display: flex; gap: 4px; opacity: 0; transition: opacity 140ms ease; }
+.board-image:hover .image-bar, .board-image:focus-within .image-bar { opacity: 1; }
+@media (hover: none) { .board-image .image-bar { opacity: 1; } }
+.image-bar button { display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 8px; background: rgba(10, 14, 20, .72); color: #fff; }
+.image-bar button:hover { background: rgba(10, 14, 20, .92); }
+.image-bar .delete-image:hover { background: rgba(160, 40, 25, .9); }
+.image-bar button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+@keyframes board-image-in { from { opacity: 0; transform: scale(.96); } }
+
+/* ── Drawing tools ───────────────────────────────────────────── */
+.draw-panel {
+  position: fixed;
+  bottom: 18px;
+  inset-inline-start: 18px;
+  z-index: 55;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100vw - 36px);
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+  animation: draw-panel-in 200ms cubic-bezier(.2, 0, 0, 1);
+}
+.draw-panel[hidden] { display: none; }
+@keyframes draw-panel-in { from { opacity: 0; transform: translateY(8px); } }
+.draw-inks, .draw-widths, .draw-actions { display: flex; align-items: center; gap: 5px; }
+.draw-inks, .draw-widths { padding-inline-end: 8px; border-inline-end: 1px solid var(--border); }
+.draw-ink { width: 22px; height: 22px; padding: 0; border: 0; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .2); transition: transform .12s ease, box-shadow .12s ease; }
+.draw-ink:hover { transform: scale(1.12); }
+.draw-ink[aria-pressed="true"] { box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .2), 0 0 0 2px var(--surface), 0 0 0 3.5px var(--accent); }
+.draw-ink[data-ink="ink"] { background: var(--board-ink); }
+.draw-ink[data-ink="red"] { background: #e5484d; }
+.draw-ink[data-ink="blue"] { background: #4c8dff; }
+.draw-ink[data-ink="amber"] { background: #e8a33d; }
+.draw-width { display: grid; place-items: center; width: 26px; height: 26px; padding: 0; border: 0; border-radius: 8px; background: transparent; color: var(--text-secondary); }
+.draw-width span { display: block; border-radius: 50%; background: currentColor; }
+.draw-width:hover { background: var(--surface-2); color: var(--text); }
+.draw-width[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); }
+.draw-actions button { display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 8px; background: transparent; color: var(--text-secondary); }
+.draw-actions button:hover { background: var(--surface-2); color: var(--text); }
+.draw-actions button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); }
+.draw-ink:focus-visible, .draw-width:focus-visible, .draw-actions button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.draw-hint { color: var(--text-tertiary); font-size: 11.5px; white-space: nowrap; }
 
 /* ── Toast ───────────────────────────────────────────────────── */
 .toast { position: fixed; bottom: 24px; left: 50%; z-index: 60; padding: 10px 18px; border: 1px solid var(--border); border-radius: 11px; background: var(--surface); color: var(--text); box-shadow: var(--shadow-card); font-size: 14px; opacity: 0; pointer-events: none; transform: translateX(-50%) translateY(20px); transition: opacity 200ms ease, transform 200ms ease; }
@@ -261,4 +343,6 @@ button svg, .search-field svg, .empty-icon svg { width: 16px; height: 16px; flex
   .search-field { flex: 1; width: auto; }
   .search-field kbd { display: none; }
   .sticky { width: 190px; min-height: 150px; }
+  .draw-panel { bottom: 12px; inset-inline-start: 12px; flex-wrap: wrap; gap: 6px; }
+  .draw-hint { display: none; }
 }

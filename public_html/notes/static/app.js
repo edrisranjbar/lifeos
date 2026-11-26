@@ -14,9 +14,21 @@ const ICONS = {
   lock: '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
   unlock: '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.6-1.7"/>',
   hide: '<path d="M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4.2M6.6 6.6A17 17 0 0 0 2 12s3.5 7 10 7a9.6 9.6 0 0 0 5.4-1.6M9.9 9.9a3 3 0 0 0 4.2 4.2"/>',
+  open: '<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',
   delete: '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/>',
 };
 const icon = name => `<svg viewBox="0 0 24 24" aria-hidden="true">${ICONS[name]}</svg>`;
+
+const SVG_NS = "http://www.w3.org/2000/svg";
+// Freehand ink palette; "ink" resolves per theme when a stroke starts.
+const INKS = [
+  { id: "ink", color: () => document.documentElement.dataset.theme === "light" ? "#27251f" : "#f2efe6" },
+  { id: "red", color: () => "#e5484d" },
+  { id: "blue", color: () => "#4c8dff" },
+  { id: "amber", color: () => "#e8a33d" }
+];
+// The state document stays well under the server's 2 MB request limit.
+const MAX_DOC_CHARS = 1400000;
 // Compact "3 days ago"; falls back to a short date after a week.
 function editedAgo(timestamp) {
   const seconds = (Date.now() - Number(timestamp)) / 1000;
@@ -55,10 +67,22 @@ function bindCanvasNavigation() {
   $('zoomOut').onclick = () => centeredZoom(1 / 1.2);
   $('resetZoom').onclick = () => zoomCanvas(1, canvas.clientWidth / 2, canvas.clientHeight / 2);
   $('fitNotes').onclick = () => {
-    const notes = getFiltered();
-    if (!notes.length) { Object.assign(viewport, {x: 0, y: 0, scale: 1}); applyViewport(); return; }
-    const left = Math.min(...notes.map(n => n.x)), top = Math.min(...notes.map(n => n.y));
-    const right = Math.max(...notes.map(n => n.x + n.w)), bottom = Math.max(...notes.map(n => n.y + n.h));
+    const rects = getFiltered().map(n => ({ x: n.x, y: n.y, w: n.w, h: n.h }));
+    for (const image of state.images) rects.push({ x: image.x, y: image.y, w: image.w, h: image.h });
+    for (const stroke of state.strokes) {
+      let left = Infinity, top = Infinity, right = -Infinity, bottom = -Infinity;
+      for (let i = 0; i < stroke.p.length; i += 2) {
+        left = Math.min(left, stroke.p[i]); right = Math.max(right, stroke.p[i]);
+        top = Math.min(top, stroke.p[i + 1]); bottom = Math.max(bottom, stroke.p[i + 1]);
+      }
+      if (Number.isFinite(left)) {
+        const pad = stroke.width;
+        rects.push({ x: left - pad, y: top - pad, w: right - left + pad * 2, h: bottom - top + pad * 2 });
+      }
+    }
+    if (!rects.length) { Object.assign(viewport, {x: 0, y: 0, scale: 1}); applyViewport(); return; }
+    const left = Math.min(...rects.map(r => r.x)), top = Math.min(...rects.map(r => r.y));
+    const right = Math.max(...rects.map(r => r.x + r.w)), bottom = Math.max(...rects.map(r => r.y + r.h));
     viewport.scale = Math.max(.1, Math.min(1, (canvas.clientWidth - 80) / (right - left), (canvas.clientHeight - 100) / (bottom - top)));
     viewport.x = (canvas.clientWidth - (right - left) * viewport.scale) / 2 - left * viewport.scale;
     viewport.y = (canvas.clientHeight - (bottom - top) * viewport.scale) / 2 - top * viewport.scale;
@@ -80,6 +104,8 @@ function bindCanvasNavigation() {
   let pan = null;
   canvas.addEventListener('pointerdown', e => {
     if (pan) return;
+    // Drawing owns the left button; space and the middle button still pan.
+    if (draw.mode && e.button === 0 && !spaceToPan) return;
     const blank = e.target === canvas || e.target === $('canvasScene') || e.target === $('connectionsLayer');
     if (!(e.button === 1 || (e.button === 0 && (spaceToPan || blank)))) return;
     e.preventDefault(); e.stopPropagation();
@@ -115,10 +141,14 @@ function bindCanvasNavigation() {
 const state = {
   notes: [],
   connections: [],
+  images: [],
+  strokes: [],
   connectFrom: null,
   zCounter: 1,
   search: ""
 };
+// Freehand drawing state (mode is toggled from the toolbar or the D key).
+const draw = { mode: false, ink: "ink", width: 4, erasing: false };
 
 function loadState() {
   try {
@@ -129,15 +159,19 @@ function loadState() {
       state.connections = Array.isArray(saved.connections)
         ? saved.connections.filter(link => link && typeof link.a === "string" && typeof link.b === "string" && link.a !== link.b && ids.has(link.a) && ids.has(link.b))
         : [];
+      state.images = Array.isArray(saved.images) ? saved.images.map(normalizeImage).filter(Boolean) : [];
+      state.strokes = Array.isArray(saved.strokes) ? saved.strokes.map(normalizeStroke).filter(Boolean) : [];
     }
   } catch (e) {
     console.error("Failed to load notes:", e);
   }
   let maxZ = 0;
   for (const n of state.notes) if (typeof n.z === "number" && n.z > maxZ) maxZ = n.z;
+  for (const image of state.images) if (typeof image.z === "number" && image.z > maxZ) maxZ = image.z;
   state.zCounter = maxZ + 1;
 
-  if (state.notes.length === 0) {
+  // Seed a fresh board only when nothing at all is on it yet.
+  if (state.notes.length === 0 && state.images.length === 0 && state.strokes.length === 0) {
     const seed1 = makeNote(t("Today list"), t("Capture your first thought.\n\n• What did you ship?\n• What's next?"), { x: 80, y: 80 });
     const seed2 = makeNote(t("Reading"), t("Atomic Habits — ch. 3 takeaways\n\n1) Habit stacking\n2) Environment design"), { x: 340, y: 60 });
     const seed3 = makeNote(t("Idea 💡"), t("What if the timer app linked to notes so you could dump stray thoughts mid-session?"), { x: 600, y: 140 });
@@ -162,6 +196,40 @@ function normalizeNote(note) {
     h: typeof note.h === "number" ? note.h : NOTE_H,
     z: typeof note.z === "number" ? note.z : 1,
     updated: typeof note.updated === "number" ? note.updated : Date.now()
+  };
+}
+
+// Board images are data URLs produced by the browser's own encoder; anything
+// else that snuck into storage is dropped on load.
+function normalizeImage(image) {
+  if (!image || typeof image !== "object" || !image.id) return null;
+  if (typeof image.src !== "string" || !image.src.startsWith("data:image/")) return null;
+  return {
+    id: image.id,
+    src: image.src,
+    x: typeof image.x === "number" ? image.x : 80,
+    y: typeof image.y === "number" ? image.y : 80,
+    w: typeof image.w === "number" ? Math.min(4000, Math.max(80, image.w)) : 320,
+    h: typeof image.h === "number" ? Math.min(4000, Math.max(60, image.h)) : 240,
+    z: typeof image.z === "number" ? image.z : 1,
+    updated: typeof image.updated === "number" ? image.updated : Date.now()
+  };
+}
+
+// Strokes are flat point lists in board coordinates: [x0, y0, x1, y1, …].
+function normalizeStroke(stroke) {
+  if (!stroke || typeof stroke !== "object" || !Array.isArray(stroke.p)) return null;
+  const points = [];
+  for (const value of stroke.p) {
+    if (typeof value !== "number" || !Number.isFinite(value)) return null;
+    points.push(Math.round(value * 10) / 10);
+  }
+  if (points.length % 2) points.pop();
+  if (points.length < 2) return null;
+  return {
+    color: typeof stroke.color === "string" && /^#[0-9a-f]{6}$/i.test(stroke.color) ? stroke.color : INKS[0].color(),
+    width: typeof stroke.width === "number" ? Math.min(24, Math.max(1, stroke.width)) : 4,
+    p: points
   };
 }
 
@@ -190,10 +258,15 @@ function cryptoId() {
 
 function persist() {
   try {
-    appStorage.setItem(KEY, JSON.stringify({ notes: state.notes, connections: state.connections }));
+    appStorage.setItem(KEY, JSON.stringify({ notes: state.notes, connections: state.connections, images: state.images, strokes: state.strokes }));
   } catch (e) {
     showToast(t("Unable to save note."), "error");
   }
+}
+
+// Approximate stored size of the whole document, used to cap image uploads.
+function docSize() {
+  return JSON.stringify({ notes: state.notes, connections: state.connections, images: state.images, strokes: state.strokes }).length;
 }
 
 const escapeHtml = globalThis.lifeOsHtml.escapeHtml;
@@ -263,23 +336,34 @@ function getFiltered() {
   return state.notes.filter((n) => !n.secret && (n.body.toLowerCase().includes(q) || n.title.toLowerCase().includes(q)));
 }
 
+// The drawings layer must sit above every note and image, whose z indexes
+// grow each time they are raised.
+function syncLayerZ() {
+  const layer = $("drawingsLayer");
+  if (layer) layer.style.zIndex = String(state.zCounter + 1000);
+}
+
 function renderAll() {
   const canvas = $("canvas");
-  // remove existing sticky nodes
-  for (const node of canvas.querySelectorAll(".sticky")) node.remove();
+  // remove existing sticky and image nodes
+  for (const node of canvas.querySelectorAll(".sticky, .board-image")) node.remove();
 
   const filteredIds = new Set(getFiltered().map((n) => n.id));
   const searching = state.search.trim() !== "";
   $("notesCount").textContent = searching
     ? t('{count} of {total} match',{count:window.lifeOsI18n.number(filteredIds.size),total:window.lifeOsI18n.number(state.notes.length)})
     : t(state.notes.length===1?'{count} note':'{count} notes',{count:window.lifeOsI18n.number(state.notes.length)});
-  $("emptyState").hidden = state.notes.length > 0;
+  $("emptyState").hidden = !(state.notes.length || state.images.length || state.strokes.length);
 
   for (const note of state.notes) {
     const el = renderSticky(note);
     el.classList.toggle("dimmed", !filteredIds.has(note.id) && state.search.trim() !== "");
     $('canvasScene').append(el);
   }
+  for (const image of state.images) $('canvasScene').append(renderImageCard(image));
+  renderStrokes();
+  sizeDrawingLayer();
+  syncLayerZ();
   renderConnections();
   syncConnectMode();
 }
@@ -528,6 +612,7 @@ function renderSticky(note) {
   connectBtn.setAttribute("aria-label", t("Connect this note to another"));
   connectBtn.setAttribute("aria-pressed", "false");
   connectBtn.onclick = () => {
+    if (draw.mode) setDrawMode(false);
     document.querySelectorAll(".sticky.editing").forEach(card => card._exitEdit?.());
     state.connectFrom = state.connectFrom === note.id ? null : note.id;
     syncConnectMode();
@@ -593,6 +678,433 @@ function createNote() {
   document.querySelector(`.sticky[data-id="${note.id}"]`)?._enterEdit?.();
 }
 
+/* ── Freehand drawing ────────────────────────────────────────── */
+
+// Quadratic smoothing through midpoints keeps handwriting fluid.
+function strokePath(points) {
+  const count = points.length / 2;
+  if (count === 1) return `M ${points[0]} ${points[1]} l 0.01 0`;
+  let path = `M ${points[0]} ${points[1]}`;
+  if (count === 2) return `${path} L ${points[2]} ${points[3]}`;
+  for (let i = 1; i < count - 1; i++) {
+    const cx = points[i * 2], cy = points[i * 2 + 1];
+    const mx = (cx + points[(i + 1) * 2]) / 2;
+    const my = (cy + points[(i + 1) * 2 + 1]) / 2;
+    path += ` Q ${cx} ${cy} ${mx} ${my}`;
+  }
+  return `${path} L ${points[(count - 1) * 2]} ${points[(count - 1) * 2 + 1]}`;
+}
+
+function renderStrokes() {
+  const svg = $("drawingsLayer");
+  if (!svg) return;
+  svg.replaceChildren(...state.strokes.map(stroke => {
+    const path = document.createElementNS(SVG_NS, "path");
+    path.setAttribute("d", strokePath(stroke.p));
+    path.setAttribute("stroke", stroke.color);
+    path.setAttribute("stroke-width", String(stroke.width));
+    return path;
+  }));
+}
+
+function sizeDrawingLayer() {
+  const layer = $("drawingsLayer");
+  const canvas = $("canvas");
+  if (!layer || !canvas) return;
+  layer.style.width = `${Math.max(canvas.clientWidth, 1)}px`;
+  layer.style.height = `${Math.max(canvas.clientHeight, 1)}px`;
+}
+
+function syncDrawPanel() {
+  const panel = $("drawPanel");
+  panel.hidden = !draw.mode;
+  for (const button of panel.querySelectorAll(".draw-ink")) {
+    button.setAttribute("aria-pressed", String(button.dataset.ink === draw.ink));
+  }
+  for (const button of panel.querySelectorAll(".draw-width")) {
+    button.setAttribute("aria-pressed", String(Number(button.dataset.width) === draw.width));
+  }
+  $("eraserBtn").setAttribute("aria-pressed", String(draw.erasing));
+}
+
+let activeStroke = null;
+let activePath = null;
+let erasing = false;
+
+function cancelActiveStroke() {
+  if (activePath) activePath.remove();
+  activeStroke = null;
+  activePath = null;
+  erasing = false;
+}
+
+function setDrawMode(on) {
+  on = Boolean(on);
+  if (draw.mode === on) return;
+  draw.mode = on;
+  if (on) {
+    if (state.connectFrom) { state.connectFrom = null; syncConnectMode(); }
+    document.querySelectorAll(".sticky.editing").forEach(card => card._exitEdit?.());
+    draw.erasing = false;
+  }
+  cancelActiveStroke();
+  $("canvas").classList.toggle("drawing-mode", on);
+  $("drawBtn").setAttribute("aria-pressed", String(on));
+  syncDrawPanel();
+}
+
+function toScenePoint(event) {
+  const rect = $("canvas").getBoundingClientRect();
+  return {
+    x: (event.clientX - rect.left - viewport.x) / viewport.scale,
+    y: (event.clientY - rect.top - viewport.y) / viewport.scale
+  };
+}
+
+function currentInkColor() {
+  const ink = INKS.find(item => item.id === draw.ink) || INKS[0];
+  return ink.color();
+}
+
+function eraseAt(point) {
+  const radius = 14 / viewport.scale;
+  const radiusSq = radius * radius;
+  const before = state.strokes.length;
+  state.strokes = state.strokes.filter(stroke => {
+    for (let i = 0; i < stroke.p.length; i += 2) {
+      const dx = stroke.p[i] - point.x;
+      const dy = stroke.p[i + 1] - point.y;
+      if (dx * dx + dy * dy <= radiusSq) return false;
+    }
+    return true;
+  });
+  if (state.strokes.length !== before) {
+    renderStrokes();
+    persist();
+  }
+}
+
+function undoStroke() {
+  if (!state.strokes.length) return;
+  state.strokes.pop();
+  renderStrokes();
+  persist();
+}
+
+function clearDrawings() {
+  if (!state.strokes.length) return;
+  if (!confirm(t("Clear all drawings?"))) return;
+  state.strokes = [];
+  renderStrokes();
+  persist();
+  showToast(t("Drawing cleared"));
+}
+
+function bindDrawing() {
+  const canvas = $("canvas");
+  const panel = $("drawPanel");
+  $("drawBtn").addEventListener("click", () => setDrawMode(!draw.mode));
+  for (const button of panel.querySelectorAll(".draw-ink")) {
+    button.addEventListener("click", () => {
+      draw.ink = button.dataset.ink;
+      draw.erasing = false;
+      syncDrawPanel();
+    });
+  }
+  for (const button of panel.querySelectorAll(".draw-width")) {
+    button.addEventListener("click", () => {
+      draw.width = Number(button.dataset.width) || 4;
+      draw.erasing = false;
+      syncDrawPanel();
+    });
+  }
+  $("eraserBtn").addEventListener("click", () => { draw.erasing = !draw.erasing; syncDrawPanel(); });
+  $("undoStroke").addEventListener("click", undoStroke);
+  $("clearStrokes").addEventListener("click", clearDrawings);
+
+  // Drawing runs on the canvas itself so strokes can start anywhere — over
+  // notes and images included — and still follow the board's pan and zoom.
+  canvas.addEventListener("pointerdown", event => {
+    if (!draw.mode || event.button !== 0 || spaceToPan) return;
+    if (event.target.closest("button, a, input, select, textarea")) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const point = toScenePoint(event);
+    canvas.setPointerCapture(event.pointerId);
+    if (draw.erasing) {
+      erasing = true;
+      eraseAt(point);
+      return;
+    }
+    const stroke = {
+      color: currentInkColor(),
+      width: draw.width,
+      p: [Math.round(point.x * 10) / 10, Math.round(point.y * 10) / 10]
+    };
+    activeStroke = stroke;
+    activePath = document.createElementNS(SVG_NS, "path");
+    activePath.setAttribute("stroke", stroke.color);
+    activePath.setAttribute("stroke-width", String(stroke.width));
+    activePath.setAttribute("d", strokePath(stroke.p));
+    $("drawingsLayer").append(activePath);
+  }, true);
+
+  canvas.addEventListener("pointermove", event => {
+    if (erasing) {
+      if (event.buttons & 1) eraseAt(toScenePoint(event));
+      else erasing = false;
+      return;
+    }
+    if (!activeStroke) return;
+    const point = toScenePoint(event);
+    const x = Math.round(point.x * 10) / 10;
+    const y = Math.round(point.y * 10) / 10;
+    const last = activeStroke.p.length;
+    if (x === activeStroke.p[last - 2] && y === activeStroke.p[last - 1]) return;
+    activeStroke.p.push(x, y);
+    activePath.setAttribute("d", strokePath(activeStroke.p));
+  });
+
+  const endStroke = event => {
+    if (erasing) erasing = false;
+    if (activeStroke) {
+      const stroke = activeStroke;
+      activeStroke = null;
+      activePath = null;
+      state.strokes.push(stroke);
+      persist();
+      renderStrokes();
+    }
+    if (event && event.pointerId !== undefined && canvas.hasPointerCapture(event.pointerId)) {
+      canvas.releasePointerCapture(event.pointerId);
+    }
+  };
+  canvas.addEventListener("pointerup", endStroke);
+  canvas.addEventListener("pointercancel", endStroke);
+
+  // While the pen is out, clicks on the board itself must not open or edit
+  // the notes underneath it.
+  const swallow = event => {
+    if (!draw.mode || event.target.closest("button, a")) return;
+    event.stopPropagation();
+    event.preventDefault();
+  };
+  canvas.addEventListener("click", swallow, true);
+  canvas.addEventListener("dblclick", swallow, true);
+}
+
+/* ── Board images ────────────────────────────────────────────── */
+
+async function addImageFiles(files) {
+  const list = Array.from(files || []).filter(file => file && file.type.startsWith("image/"));
+  if (!list.length) {
+    showToast(t("Only image files can be added."), "error");
+    return;
+  }
+  for (const file of list) {
+    try {
+      const sized = await downscaleImage(file);
+      if (docSize() + sized.src.length > MAX_DOC_CHARS) {
+        showToast(t("Board is full. Remove some images first."), "error");
+        return;
+      }
+      pushImage(sized);
+    } catch (error) {
+      console.error("Unable to add image:", error);
+      showToast(t("That image could not be added."), "error");
+    }
+  }
+}
+
+// Re-encode through a canvas so a board image costs a few hundred KB at most.
+async function downscaleImage(file) {
+  const MAX_EDGE = 1400;
+  let source = null, width, height, revoke = null;
+  if (typeof createImageBitmap === "function") {
+    try {
+      source = await createImageBitmap(file);
+      width = source.width;
+      height = source.height;
+    } catch (error) {
+      source = null; // Some formats need the plain <img> path below.
+    }
+  }
+  if (!source) {
+    const url = URL.createObjectURL(file);
+    revoke = url;
+    source = new Image();
+    source.src = url;
+    await source.decode();
+    width = source.naturalWidth;
+    height = source.naturalHeight;
+  }
+  try {
+    if (!width || !height) throw new Error("Image has no pixels");
+    const scale = Math.min(1, MAX_EDGE / Math.max(width, height));
+    const w = Math.max(1, Math.round(width * scale));
+    const h = Math.max(1, Math.round(height * scale));
+    const surface = document.createElement("canvas");
+    surface.width = w;
+    surface.height = h;
+    const context = surface.getContext("2d");
+    context.drawImage(source, 0, 0, w, h);
+    let src = surface.toDataURL("image/webp", 0.85);
+    if (!src.startsWith("data:image/webp")) src = surface.toDataURL("image/jpeg", 0.82);
+    return { src, w, h };
+  } finally {
+    if (revoke) URL.revokeObjectURL(revoke);
+    else if (typeof source.close === "function") source.close();
+  }
+}
+
+function pushImage(sized) {
+  const canvas = $("canvas");
+  const fit = Math.min(1, 400 / sized.w, 320 / sized.h);
+  const w = Math.max(80, Math.round(sized.w * fit));
+  const h = Math.max(60, Math.round(sized.h * fit));
+  const offset = (state.images.length % 5) * 24;
+  state.images.push({
+    id: cryptoId(),
+    src: sized.src,
+    x: snap((canvas.clientWidth / 2 - viewport.x) / viewport.scale - w / 2 + offset),
+    y: snap((canvas.clientHeight / 2 - viewport.y) / viewport.scale - h / 2 + offset),
+    w, h,
+    z: ++state.zCounter,
+    updated: Date.now()
+  });
+  persist();
+  // Entrance animation plays once, on this render only (never persisted).
+  state.images[state.images.length - 1]._fresh = true;
+  renderAll();
+}
+
+function deleteImage(id) {
+  const index = state.images.findIndex(image => image.id === id);
+  if (index === -1) return;
+  if (!confirm(t("Delete this image?"))) return;
+  state.images.splice(index, 1);
+  persist();
+  renderAll();
+}
+
+function renderImageCard(image) {
+  const el = document.createElement("figure");
+  el.className = "board-image";
+  el.dataset.id = image.id;
+  el.style.left = image.x + "px";
+  el.style.top = image.y + "px";
+  el.style.width = image.w + "px";
+  el.style.height = image.h + "px";
+  el.style.zIndex = image.z;
+  if (image._fresh) {
+    el.classList.add("fresh");
+    delete image._fresh;
+  }
+
+  const picture = document.createElement("img");
+  picture.src = image.src;
+  picture.alt = t("Board image");
+  picture.draggable = false;
+
+  const bar = document.createElement("div");
+  bar.className = "image-bar";
+  const openBtn = document.createElement("button");
+  openBtn.type = "button";
+  openBtn.className = "open-image";
+  openBtn.innerHTML = icon("open");
+  openBtn.title = t("Open image");
+  openBtn.setAttribute("aria-label", t("Open image"));
+  openBtn.addEventListener("click", async event => {
+    event.stopPropagation();
+    // Browsers refuse to open data: URLs directly, so go through a blob.
+    try {
+      const blob = await (await fetch(image.src)).blob();
+      const url = URL.createObjectURL(blob);
+      if (window.open(url, "_blank", "noopener")) {
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
+        return;
+      }
+      URL.revokeObjectURL(url);
+      throw new Error("Popup blocked");
+    } catch (error) {
+      console.error("Unable to open image:", error);
+      const link = document.createElement("a");
+      link.href = image.src;
+      link.download = "board-image";
+      link.click();
+    }
+  });
+  const delBtn = document.createElement("button");
+  delBtn.type = "button";
+  delBtn.className = "delete-image";
+  delBtn.innerHTML = icon("delete");
+  delBtn.title = t("Delete image");
+  delBtn.setAttribute("aria-label", t("Delete image"));
+  delBtn.addEventListener("click", event => {
+    event.stopPropagation();
+    deleteImage(image.id);
+  });
+  bar.append(openBtn, delBtn);
+
+  const resize = document.createElement("div");
+  resize.className = "resize-handle";
+  resize.setAttribute("aria-label", t("Resize note"));
+  resize.title = t("Resize");
+
+  el.append(picture, bar, resize);
+  bindDrag(el, image);
+  bindImageResize(el, image, resize);
+  return el;
+}
+
+function bindImageResize(el, image, handle) {
+  let startX, startY, originW, originH;
+  let pointerId = null;
+
+  const onDown = event => {
+    if (event.button !== 0 || spaceToPan) return;
+    event.preventDefault();
+    event.stopPropagation();
+    pointerId = event.pointerId;
+    handle.setPointerCapture(pointerId);
+    el.classList.add("resizing");
+    startX = event.clientX;
+    startY = event.clientY;
+    originW = image.w;
+    originH = image.h;
+    image.z = ++state.zCounter;
+    el.style.zIndex = image.z;
+    syncLayerZ();
+  };
+
+  const onMove = event => {
+    if (pointerId === null) return;
+    const dx = (event.clientX - startX) / viewport.scale;
+    const dy = (event.clientY - startY) / viewport.scale;
+    // Follow whichever axis moved furthest so the picture keeps its proportions.
+    const ratioW = (originW + dx) / originW;
+    const ratioH = (originH + dy) / originH;
+    const scale = Math.max(0.15, Math.abs(ratioW - 1) >= Math.abs(ratioH - 1) ? ratioW : ratioH);
+    image.w = Math.max(80, Math.round(originW * scale));
+    image.h = Math.max(60, Math.round(originH * scale));
+    el.style.width = image.w + "px";
+    el.style.height = image.h + "px";
+  };
+
+  const onUp = () => {
+    if (pointerId === null) return;
+    pointerId = null;
+    el.classList.remove("resizing");
+    image.updated = Date.now();
+    persist();
+  };
+
+  handle.addEventListener("pointerdown", onDown);
+  handle.addEventListener("pointermove", onMove);
+  handle.addEventListener("pointerup", onUp);
+  handle.addEventListener("pointercancel", onUp);
+}
+
 function bindDrag(el, note) {
   let startX, startY, originX, originY;
   let pointerId = null;
@@ -613,6 +1125,7 @@ function bindDrag(el, note) {
     originY = note.y;
     note.z = ++state.zCounter;
     el.style.zIndex = note.z;
+    syncLayerZ();
   };
 
   const onMove = (e) => {
@@ -662,6 +1175,7 @@ function bindResize(el, note, handle) {
     originH = note.h;
     note.z = ++state.zCounter;
     el.style.zIndex = note.z;
+    syncLayerZ();
   };
 
   const onMove = (e) => {
@@ -784,6 +1298,37 @@ function bindEvents() {
     }, 120);
   });
 
+  $("addImageBtn").addEventListener("click", () => $("imageInput").click());
+  $("imageInput").addEventListener("change", (e) => {
+    addImageFiles(e.target.files);
+    e.target.value = "";
+  });
+
+  // Screenshots and copied images land straight on the board.
+  document.addEventListener("paste", (e) => {
+    if (e.target instanceof Element && e.target.closest("textarea, input, [contenteditable='true']")) return;
+    const files = Array.from(e.clipboardData?.files || []).filter((file) => file.type.startsWith("image/"));
+    if (!files.length) return;
+    e.preventDefault();
+    addImageFiles(files);
+  });
+
+  const canvas = $("canvas");
+  canvas.addEventListener("dragover", (e) => {
+    if (!Array.from(e.dataTransfer?.types || []).includes("Files")) return;
+    e.preventDefault();
+    canvas.classList.add("drop-target");
+  });
+  canvas.addEventListener("dragleave", (e) => {
+    if (!e.relatedTarget || !canvas.contains(e.relatedTarget)) canvas.classList.remove("drop-target");
+  });
+  canvas.addEventListener("drop", (e) => {
+    canvas.classList.remove("drop-target");
+    if (!e.dataTransfer?.files?.length) return;
+    e.preventDefault();
+    addImageFiles(e.dataTransfer.files);
+  });
+
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && state.connectFrom) {
       state.connectFrom = null;
@@ -791,19 +1336,30 @@ function bindEvents() {
       showToast(t("Connection canceled"));
       return;
     }
-    if (e.target.matches("input, textarea, [contenteditable='true']")) return;
+    if (e.target instanceof Element && e.target.matches("input, textarea, [contenteditable='true']")) return;
+    if (e.key === "Escape" && draw.mode) {
+      setDrawMode(false);
+      return;
+    }
     const meta = e.metaKey || e.ctrlKey;
     if (meta && e.key.toLowerCase() === "n") {
       e.preventDefault();
       createNote();
+    } else if (meta && e.key.toLowerCase() === "z" && draw.mode) {
+      e.preventDefault();
+      undoStroke();
     } else if (e.key === "/") {
       e.preventDefault();
       $("searchInput").focus();
+    } else if (!meta && !e.altKey && !e.shiftKey && e.key.toLowerCase() === "d") {
+      e.preventDefault();
+      setDrawMode(!draw.mode);
     }
   });
 
   window.addEventListener("resize", () => {
     renderConnections();
+    sizeDrawingLayer();
   });
 }
 
@@ -822,5 +1378,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   loadState();
   bindEvents();
   bindCanvasNavigation();
+  bindDrawing();
   renderAll();
 });
