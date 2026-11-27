@@ -353,7 +353,7 @@ function renderAll() {
   $("notesCount").textContent = searching
     ? t('{count} of {total} match',{count:window.lifeOsI18n.number(filteredIds.size),total:window.lifeOsI18n.number(state.notes.length)})
     : t(state.notes.length===1?'{count} note':'{count} notes',{count:window.lifeOsI18n.number(state.notes.length)});
-  $("emptyState").hidden = !(state.notes.length || state.images.length || state.strokes.length);
+  $("emptyState").hidden = Boolean(state.notes.length || state.images.length || state.strokes.length);
 
   for (const note of state.notes) {
     const el = renderSticky(note);
