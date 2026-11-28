@@ -29,6 +29,19 @@ const INKS = [
 ];
 // The state document stays well under the server's 2 MB request limit.
 const MAX_DOC_CHARS = 1400000;
+
+// Mind-map branch palette; every child inherits its parent's ink.
+const MIND_INKS = [
+  { id: "amber", hex: "#e8a33d" },
+  { id: "blue", hex: "#4c8dff" },
+  { id: "red", hex: "#e5484d" },
+  { id: "green", hex: "#3fa265" },
+  { id: "purple", hex: "#8b5cf6" }
+];
+const MIND_H = 30;      // pill height, shared by layout maths
+const MIND_GAP_X = 56;  // horizontal gap between a node and its children
+const MIND_GAP_Y = 10;  // vertical gap between sibling subtrees
+const MIND_FONT = "600 13px Inter, system-ui, sans-serif";
 // Compact "3 days ago"; falls back to a short date after a week.
 function editedAgo(timestamp) {
   const seconds = (Date.now() - Number(timestamp)) / 1000;
@@ -69,6 +82,7 @@ function bindCanvasNavigation() {
   $('fitNotes').onclick = () => {
     const rects = getFiltered().map(n => ({ x: n.x, y: n.y, w: n.w, h: n.h }));
     for (const image of state.images) rects.push({ x: image.x, y: image.y, w: image.w, h: image.h });
+    for (const node of state.mind.nodes) rects.push({ x: node.x, y: node.y, w: node.w, h: MIND_H });
     for (const stroke of state.strokes) {
       let left = Infinity, top = Infinity, right = -Infinity, bottom = -Infinity;
       for (let i = 0; i < stroke.p.length; i += 2) {
@@ -143,12 +157,15 @@ const state = {
   connections: [],
   images: [],
   strokes: [],
+  mind: { nodes: [], manual: false },
   connectFrom: null,
   zCounter: 1,
   search: ""
 };
 // Freehand drawing state (mode is toggled from the toolbar or the D key).
 const draw = { mode: false, ink: "ink", width: 4, erasing: false };
+// Mind-map UI state; the node data itself lives in state.mind.
+const mindUI = { mode: false, selected: null, editing: null, editOriginal: "" };
 
 function loadState() {
   try {
@@ -161,6 +178,23 @@ function loadState() {
         : [];
       state.images = Array.isArray(saved.images) ? saved.images.map(normalizeImage).filter(Boolean) : [];
       state.strokes = Array.isArray(saved.strokes) ? saved.strokes.map(normalizeStroke).filter(Boolean) : [];
+      if (saved.mind && Array.isArray(saved.mind.nodes)) {
+        state.mind.nodes = saved.mind.nodes.map(normalizeMindNode).filter(Boolean);
+        state.mind.manual = saved.mind.manual === true;
+        // Drop links to nodes that never made it into storage, then break any
+        // parent cycles so layout recursion always terminates.
+        const mindIndex = new Map(state.mind.nodes.map(node => [node.id, node]));
+        for (const node of state.mind.nodes) {
+          if (node.parent && !mindIndex.has(node.parent)) node.parent = null;
+          const seen = new Set([node.id]);
+          let cursor = node.parent;
+          while (cursor && mindIndex.has(cursor)) {
+            if (seen.has(cursor)) { node.parent = null; break; }
+            seen.add(cursor);
+            cursor = mindIndex.get(cursor).parent;
+          }
+        }
+      }
     }
   } catch (e) {
     console.error("Failed to load notes:", e);
@@ -171,7 +205,7 @@ function loadState() {
   state.zCounter = maxZ + 1;
 
   // Seed a fresh board only when nothing at all is on it yet.
-  if (state.notes.length === 0 && state.images.length === 0 && state.strokes.length === 0) {
+  if (state.notes.length === 0 && state.images.length === 0 && state.strokes.length === 0 && state.mind.nodes.length === 0) {
     const seed1 = makeNote(t("Today list"), t("Capture your first thought.\n\n• What did you ship?\n• What's next?"), { x: 80, y: 80 });
     const seed2 = makeNote(t("Reading"), t("Atomic Habits — ch. 3 takeaways\n\n1) Habit stacking\n2) Environment design"), { x: 340, y: 60 });
     const seed3 = makeNote(t("Idea 💡"), t("What if the timer app linked to notes so you could dump stray thoughts mid-session?"), { x: 600, y: 140 });
@@ -233,6 +267,22 @@ function normalizeStroke(stroke) {
   };
 }
 
+// Mind-map nodes are pills in board coordinates; parent points at another
+// node's id (null for a root) and w is the measured pill width.
+function normalizeMindNode(raw) {
+  if (!raw || typeof raw !== "object" || !raw.id || typeof raw.id !== "string") return null;
+  const text = typeof raw.text === "string" ? raw.text.replace(/\s+/g, " ").trim().slice(0, 300) : "";
+  return {
+    id: raw.id,
+    parent: typeof raw.parent === "string" ? raw.parent : null,
+    text,
+    color: MIND_INKS.some(ink => ink.id === raw.color) ? raw.color : MIND_INKS[0].id,
+    x: Number.isFinite(raw.x) ? raw.x : 100,
+    y: Number.isFinite(raw.y) ? raw.y : 100,
+    w: Number.isFinite(raw.w) ? Math.min(400, Math.max(48, raw.w)) : measureMindWidth(text)
+  };
+}
+
 function makeNote(title, body, pos) {
   return {
     id: cryptoId(),
@@ -258,7 +308,7 @@ function cryptoId() {
 
 function persist() {
   try {
-    appStorage.setItem(KEY, JSON.stringify({ notes: state.notes, connections: state.connections, images: state.images, strokes: state.strokes }));
+    appStorage.setItem(KEY, JSON.stringify({ notes: state.notes, connections: state.connections, images: state.images, strokes: state.strokes, mind: state.mind }));
   } catch (e) {
     showToast(t("Unable to save note."), "error");
   }
@@ -266,7 +316,7 @@ function persist() {
 
 // Approximate stored size of the whole document, used to cap image uploads.
 function docSize() {
-  return JSON.stringify({ notes: state.notes, connections: state.connections, images: state.images, strokes: state.strokes }).length;
+  return JSON.stringify({ notes: state.notes, connections: state.connections, images: state.images, strokes: state.strokes, mind: state.mind }).length;
 }
 
 const escapeHtml = globalThis.lifeOsHtml.escapeHtml;
@@ -345,15 +395,15 @@ function syncLayerZ() {
 
 function renderAll() {
   const canvas = $("canvas");
-  // remove existing sticky and image nodes
-  for (const node of canvas.querySelectorAll(".sticky, .board-image")) node.remove();
+  // remove existing sticky, image and mind-map nodes
+  for (const node of canvas.querySelectorAll(".sticky, .board-image, .mind-node")) node.remove();
 
   const filteredIds = new Set(getFiltered().map((n) => n.id));
   const searching = state.search.trim() !== "";
   $("notesCount").textContent = searching
     ? t('{count} of {total} match',{count:window.lifeOsI18n.number(filteredIds.size),total:window.lifeOsI18n.number(state.notes.length)})
     : t(state.notes.length===1?'{count} note':'{count} notes',{count:window.lifeOsI18n.number(state.notes.length)});
-  $("emptyState").hidden = Boolean(state.notes.length || state.images.length || state.strokes.length);
+  syncEmptyState();
 
   for (const note of state.notes) {
     const el = renderSticky(note);
@@ -361,6 +411,7 @@ function renderAll() {
     $('canvasScene').append(el);
   }
   for (const image of state.images) $('canvasScene').append(renderImageCard(image));
+  renderMind();
   renderStrokes();
   sizeDrawingLayer();
   syncLayerZ();
@@ -741,6 +792,7 @@ function cancelActiveStroke() {
 function setDrawMode(on) {
   on = Boolean(on);
   if (draw.mode === on) return;
+  if (on && mindUI.mode) setMapMode(false);
   draw.mode = on;
   if (on) {
     if (state.connectFrom) { state.connectFrom = null; syncConnectMode(); }
@@ -884,6 +936,8 @@ function bindDrawing() {
 
   // While the pen is out, clicks on the board itself must not open or edit
   // the notes underneath it.
+  // While the pen is out, clicks on the board itself must not open or edit the
+  // notes underneath it. The mind map leaves notes and images interactive.
   const swallow = event => {
     if (!draw.mode || event.target.closest("button, a")) return;
     event.stopPropagation();
@@ -1103,6 +1157,542 @@ function bindImageResize(el, image, handle) {
   handle.addEventListener("pointermove", onMove);
   handle.addEventListener("pointerup", onUp);
   handle.addEventListener("pointercancel", onUp);
+}
+
+/* ── Mind map ─────────────────────────────────────────────── */
+
+let mindMeasureCtx = null;
+
+// Pill width estimated from the rendered text so layout maths and the DOM agree.
+function measureMindWidth(text) {
+  if (!mindMeasureCtx) mindMeasureCtx = document.createElement("canvas").getContext("2d");
+  mindMeasureCtx.font = MIND_FONT;
+  const width = Math.ceil(mindMeasureCtx.measureText(String(text || " ")).width) + 30;
+  return Math.min(280, Math.max(76, width));
+}
+
+function mindById(id) {
+  return state.mind.nodes.find(node => node.id === id) || null;
+}
+
+function mindChildren(node) {
+  return state.mind.nodes.filter(candidate => candidate.parent === node.id);
+}
+
+// Node plus every descendant, cycle-safe.
+function mindSubtree(node) {
+  const out = [node];
+  const seen = new Set([node.id]);
+  const walk = current => {
+    for (const child of mindChildren(current)) {
+      if (seen.has(child.id)) continue;
+      seen.add(child.id);
+      out.push(child);
+      walk(child);
+    }
+  };
+  walk(node);
+  return out;
+}
+
+function mindSubtreeHeight(node, seen = new Set()) {
+  if (seen.has(node.id)) return MIND_H;
+  seen.add(node.id);
+  const kids = mindChildren(node);
+  if (!kids.length) return MIND_H;
+  let total = MIND_GAP_Y * (kids.length - 1);
+  for (const kid of kids) total += mindSubtreeHeight(kid, seen);
+  return Math.max(MIND_H, total);
+}
+
+// Tidy horizontal tree: children sit right of their parent, stacked and
+// centred on it. The root keeps its position; everything else follows.
+function layoutMindChildren(node) {
+  const kids = mindChildren(node);
+  if (!kids.length) return;
+  const heights = kids.map(kid => mindSubtreeHeight(kid));
+  let total = MIND_GAP_Y * (kids.length - 1);
+  for (const height of heights) total += height;
+  let top = node.y + MIND_H / 2 - total / 2;
+  kids.forEach((kid, index) => {
+    kid.x = node.x + node.w + MIND_GAP_X;
+    kid.y = top + heights[index] / 2 - MIND_H / 2;
+    layoutMindChildren(kid);
+    top += heights[index] + MIND_GAP_Y;
+  });
+}
+
+// Re-tidy every root; also clears the manual flag so later inserts auto-layout.
+function tidyMind() {
+  const roots = state.mind.nodes.filter(node => !node.parent);
+  if (!roots.length) return;
+  const anchorX = roots[0].x;
+  let top = roots[0].y;
+  for (const root of roots) {
+    root.x = anchorX;
+    root.y = top;
+    layoutMindChildren(root);
+    top += mindSubtreeHeight(root) + MIND_GAP_Y * 3;
+  }
+  state.mind.manual = false;
+}
+
+// After the user dragged things around, new nodes land below their parent's
+// branch instead of rearranging the whole map.
+function mindPlaceBelow(parent, node) {
+  let bottom = parent.y + MIND_H;
+  const walk = current => {
+    bottom = Math.max(bottom, current.y + MIND_H);
+    for (const kid of mindChildren(current)) walk(kid);
+  };
+  walk(parent);
+  node.x = parent.x + parent.w + MIND_GAP_X;
+  node.y = bottom + MIND_GAP_Y;
+}
+
+function mindCreateRoot(x, y) {
+  const roots = state.mind.nodes.filter(node => !node.parent);
+  const node = {
+    id: cryptoId(),
+    parent: null,
+    text: "",
+    color: MIND_INKS[roots.length % MIND_INKS.length].id,
+    x,
+    y,
+    w: measureMindWidth("")
+  };
+  state.mind.nodes.push(node);
+  if (!state.mind.manual) tidyMind();
+  return node;
+}
+
+function mindAddChild(parent) {
+  const node = {
+    id: cryptoId(),
+    parent: parent.id,
+    text: "",
+    color: parent.color,
+    x: parent.x + parent.w + MIND_GAP_X,
+    y: parent.y,
+    w: measureMindWidth("")
+  };
+  state.mind.nodes.push(node);
+  if (!state.mind.manual) tidyMind();
+  else mindPlaceBelow(parent, node);
+  return node;
+}
+
+// A sibling joins the same parent directly after the node it follows.
+function mindAddSibling(sibling) {
+  const gapY = sibling.y + MIND_H + MIND_GAP_Y * 3;
+  if (!sibling.parent) return mindCreateRoot(sibling.x, gapY);
+  const parent = mindById(sibling.parent);
+  if (!parent) return mindCreateRoot(sibling.x, gapY);
+  const node = {
+    id: cryptoId(),
+    parent: parent.id,
+    text: "",
+    color: sibling.color,
+    x: sibling.x,
+    y: sibling.y + MIND_H + MIND_GAP_Y,
+    w: measureMindWidth("")
+  };
+  state.mind.nodes.splice(state.mind.nodes.indexOf(sibling) + 1, 0, node);
+  if (!state.mind.manual) tidyMind();
+  else mindPlaceBelow(parent, node);
+  return node;
+}
+
+function mindViewCenter() {
+  const canvas = $("canvas");
+  return {
+    x: (-viewport.x + canvas.clientWidth / 2) / viewport.scale,
+    y: (-viewport.y + canvas.clientHeight / 2) / viewport.scale
+  };
+}
+
+// Tab and Enter grow the map from the keyboard; without a selection the new
+// node becomes a root in the middle of the view.
+function mindGrow(kind, initial) {
+  const selected = mindUI.selected ? mindById(mindUI.selected) : null;
+  let node;
+  if (kind === "child" && selected) node = mindAddChild(selected);
+  else if (kind === "sibling" && selected) node = mindAddSibling(selected);
+  else {
+    const center = mindViewCenter();
+    node = mindCreateRoot(center.x - 60, center.y - MIND_H / 2);
+  }
+  persist();
+  renderAll();
+  mindSelect(node.id);
+  mindEditStart(node, initial);
+}
+
+function mindPill(id) {
+  return $("canvasScene").querySelector(`.mind-node[data-id="${id}"]`);
+}
+
+function mindSelect(id) {
+  mindUI.selected = id;
+  for (const el of document.querySelectorAll(".mind-node")) {
+    el.classList.toggle("selected", el.dataset.id === id);
+  }
+  syncMapPanel();
+}
+
+function syncEmptyState() {
+  $("emptyState").hidden = Boolean(state.notes.length || state.images.length || state.strokes.length || state.mind.nodes.length);
+}
+
+// Move existing pills to their current node geometry — used after layout or
+// a drag so the DOM stays in sync without a full re-render.
+function mindSyncPositions() {
+  for (const node of state.mind.nodes) {
+    const el = mindPill(node.id);
+    if (!el) continue;
+    el.style.left = `${node.x}px`;
+    el.style.top = `${node.y}px`;
+    el.style.width = `${node.w}px`;
+  }
+  renderMindEdges();
+}
+
+function mindRemoveNodes(branch) {
+  const doomed = new Set(branch.map(item => item.id));
+  state.mind.nodes = state.mind.nodes.filter(node => !doomed.has(node.id));
+  if (mindUI.selected && doomed.has(mindUI.selected)) mindUI.selected = null;
+  if (mindUI.editing && doomed.has(mindUI.editing)) mindUI.editing = null;
+  for (const el of document.querySelectorAll(".mind-node")) if (doomed.has(el.dataset.id)) el.remove();
+  if (!state.mind.manual) tidyMind();
+  persist();
+  mindSyncPositions();
+  syncMapPanel();
+  syncEmptyState();
+}
+
+function mindDeleteNode(id, confirmFirst) {
+  const node = mindById(id);
+  if (!node) return;
+  const branch = mindSubtree(node);
+  if (confirmFirst && branch.length > 1 && !confirm(t("Delete this node and its branches?"))) return;
+  mindRemoveNodes(branch);
+  showToast(t("Node deleted"));
+}
+
+function mindRecolor(id, color) {
+  const node = mindById(id);
+  if (!node) return;
+  const branch = new Set(mindSubtree(node).map(item => item.id));
+  for (const item of state.mind.nodes) if (branch.has(item.id)) item.color = color;
+  persist();
+  renderMind();
+}
+
+function syncMapPanel() {
+  const panel = $("mapPanel");
+  panel.hidden = !mindUI.mode;
+  const node = mindUI.selected ? mindById(mindUI.selected) : null;
+  for (const dot of panel.querySelectorAll(".map-ink")) {
+    dot.disabled = !node;
+    dot.setAttribute("aria-pressed", String(Boolean(node && node.color === dot.dataset.color)));
+  }
+  $("mapDelete").disabled = !node;
+}
+
+function renderMindEdges() {
+  const svg = $("mindEdges");
+  if (!svg) return;
+  const paths = [];
+  for (const node of state.mind.nodes) {
+    if (!node.parent) continue;
+    const parent = mindById(node.parent);
+    if (!parent) continue;
+    const ink = MIND_INKS.find(item => item.id === node.color) || MIND_INKS[0];
+    const x1 = parent.x + parent.w;
+    const y1 = parent.y + MIND_H / 2;
+    const x2 = node.x;
+    const y2 = node.y + MIND_H / 2;
+    const reach = Math.max(Math.abs(x2 - x1) * 0.55, 40) * (x2 >= x1 ? 1 : -1);
+    const path = document.createElementNS(SVG_NS, "path");
+    path.setAttribute("d", `M ${x1} ${y1} C ${x1 + reach} ${y1}, ${x2 - reach} ${y2}, ${x2} ${y2}`);
+    path.setAttribute("stroke", ink.hex);
+    paths.push(path);
+  }
+  svg.replaceChildren(...paths);
+}
+
+function renderMind() {
+  const scene = $("canvasScene");
+  for (const el of scene.querySelectorAll(".mind-node")) el.remove();
+  const query = state.search.trim().toLowerCase();
+  for (const node of state.mind.nodes) {
+    const el = document.createElement("div");
+    el.className = "mind-node";
+    el.dataset.id = node.id;
+    el.dataset.color = node.color;
+    if (mindUI.selected === node.id) el.classList.add("selected");
+    if (query && !node.text.toLowerCase().includes(query)) el.classList.add("dimmed");
+    el.style.left = `${node.x}px`;
+    el.style.top = `${node.y}px`;
+    el.style.width = `${node.w}px`;
+    el.style.zIndex = String(state.zCounter + 500);
+
+    const label = document.createElement("span");
+    label.className = "mind-label";
+    label.textContent = node.text;
+    label.dataset.ph = t("Idea…");
+    el.append(label);
+
+    const add = document.createElement("button");
+    add.type = "button";
+    add.className = "mind-add";
+    add.title = t("Add child node");
+    add.setAttribute("aria-label", t("Add child node"));
+    add.textContent = "+";
+    add.addEventListener("click", event => {
+      event.stopPropagation();
+      const grown = mindAddChild(node);
+      persist();
+      renderAll();
+      mindSelect(grown.id);
+      mindEditStart(grown);
+    });
+    el.append(add);
+
+    el.addEventListener("pointerdown", event => mindPointerDown(event, node, el));
+    el.addEventListener("dblclick", event => {
+      event.stopPropagation();
+      if (event.target.closest(".mind-add")) return;
+      mindEditStart(node);
+    });
+    scene.append(el);
+  }
+  renderMindEdges();
+}
+
+function mindPointerDown(event, node, el) {
+  if (!mindUI.mode || event.button !== 0) return;
+  if (event.target.closest(".mind-add")) return;
+  // Finish any other node's edit before this press re-arranges the board.
+  if (mindUI.editing && mindUI.editing !== node.id) mindEditCommit();
+  mindSelect(node.id);
+  // Clicking the node being edited just moves the caret.
+  if (mindUI.editing === node.id) return;
+  event.stopPropagation();
+  event.preventDefault();
+  const startX = event.clientX;
+  const startY = event.clientY;
+  // Dragging carries the whole branch along with it.
+  const branch = mindSubtree(node).map(item => ({ item, x: item.x, y: item.y }));
+  let moved = false;
+  el.setPointerCapture(event.pointerId);
+  const onMove = moveEvent => {
+    const dx = (moveEvent.clientX - startX) / viewport.scale;
+    const dy = (moveEvent.clientY - startY) / viewport.scale;
+    if (!moved) {
+      if (Math.hypot(moveEvent.clientX - startX, moveEvent.clientY - startY) < 3) return;
+      moved = true;
+      el.classList.add("dragging");
+    }
+    for (const entry of branch) {
+      entry.item.x = entry.x + dx;
+      entry.item.y = entry.y + dy;
+      const pill = mindPill(entry.item.id);
+      if (pill) {
+        pill.style.left = `${entry.item.x}px`;
+        pill.style.top = `${entry.item.y}px`;
+      }
+    }
+    renderMindEdges();
+  };
+  const onUp = upEvent => {
+    el.removeEventListener("pointermove", onMove);
+    el.removeEventListener("pointerup", onUp);
+    el.removeEventListener("pointercancel", onUp);
+    if (el.hasPointerCapture(upEvent.pointerId)) el.releasePointerCapture(upEvent.pointerId);
+    el.classList.remove("dragging");
+    if (moved) {
+      state.mind.manual = true;
+      persist();
+    }
+  };
+  el.addEventListener("pointermove", onMove);
+  el.addEventListener("pointerup", onUp);
+  el.addEventListener("pointercancel", onUp);
+}
+
+function mindEditStart(node, initial) {
+  if (!mindUI.mode) return;
+  if (mindUI.editing === node.id) {
+    // Already editing this node — leave its in-progress text alone.
+    mindSelect(node.id);
+    return;
+  }
+  if (mindUI.editing) mindEditCommit();
+  const el = mindPill(node.id);
+  if (!el) return;
+  mindUI.editing = node.id;
+  mindUI.editOriginal = node.text;
+  mindSelect(node.id);
+  const label = el.querySelector(".mind-label");
+  el.classList.add("editing");
+  el.style.width = "auto";
+  el.style.maxWidth = "320px";
+  label.contentEditable = "true";
+  label.textContent = initial !== undefined ? initial : node.text;
+  label.addEventListener("keydown", mindEditKey);
+  label.addEventListener("blur", mindEditCommit);
+  label.focus();
+  const range = document.createRange();
+  range.selectNodeContents(label);
+  if (initial !== undefined) range.collapse(false); // keep the first typed character
+  const selection = window.getSelection();
+  selection.removeAllRanges();
+  selection.addRange(range);
+}
+
+// Saving happens in place — the pills around the one being edited must not be
+// rebuilt mid-click.
+function mindEditCommit() {
+  const id = mindUI.editing;
+  if (!id) return;
+  const node = mindById(id);
+  const el = mindPill(id);
+  mindUI.editing = null;
+  if (!node || !el) return;
+  const label = el.querySelector(".mind-label");
+  label.removeEventListener("keydown", mindEditKey);
+  label.removeEventListener("blur", mindEditCommit);
+  label.contentEditable = "false";
+  const text = (label.textContent || "").replace(/\s+/g, " ").trim().slice(0, 300);
+  if (!text) {
+    if (!mindUI.editOriginal) {
+      // A node that was never named cancels itself.
+      mindRemoveNodes([node]);
+      return;
+    }
+    node.text = mindUI.editOriginal;
+    label.textContent = node.text;
+  } else {
+    node.text = text;
+  }
+  node.w = measureMindWidth(node.text);
+  if (!state.mind.manual) tidyMind();
+  persist();
+  el.classList.remove("editing");
+  el.style.maxWidth = "";
+  const query = state.search.trim().toLowerCase();
+  el.classList.toggle("dimmed", Boolean(query) && !node.text.toLowerCase().includes(query));
+  mindSyncPositions();
+}
+
+function mindEditKey(event) {
+  event.stopPropagation();
+  if (event.isComposing) return; // let an IME finish its composition
+  if (event.key === "Enter" && !event.shiftKey) {
+    event.preventDefault();
+    mindEditCommit();
+  } else if (event.key === "Escape") {
+    event.preventDefault();
+    const label = event.currentTarget;
+    label.textContent = mindUI.editOriginal;
+    mindEditCommit();
+  } else if (event.key === "Tab") {
+    event.preventDefault();
+    const editingId = mindUI.editing;
+    mindEditCommit();
+    const node = mindById(editingId);
+    if (node) {
+      const grown = mindAddChild(node);
+      persist();
+      renderAll();
+      mindSelect(grown.id);
+      mindEditStart(grown);
+    }
+  }
+}
+
+function setMapMode(on) {
+  on = Boolean(on);
+  if (mindUI.mode === on) return;
+  if (on && draw.mode) setDrawMode(false);
+  mindUI.mode = on;
+  if (on) {
+    if (state.connectFrom) {
+      state.connectFrom = null;
+      syncConnectMode();
+    }
+    document.querySelectorAll(".sticky.editing").forEach(card => card._exitEdit?.());
+    if (!state.mind.nodes.length) {
+      // Walking into an empty map seeds a root in the middle of the view.
+      const center = mindViewCenter();
+      const root = mindCreateRoot(center.x - 60, center.y - MIND_H / 2);
+      persist();
+      renderAll();
+      mindSelect(root.id);
+      mindEditStart(root);
+    }
+  } else {
+    if (mindUI.editing) mindEditCommit();
+    mindUI.selected = null;
+  }
+  $("canvas").classList.toggle("map-mode", on);
+  $("mapBtn").setAttribute("aria-pressed", String(on));
+  syncMapPanel();
+}
+
+function bindMindMap() {
+  $("mapBtn").addEventListener("click", () => setMapMode(!mindUI.mode));
+  for (const dot of $("mapPanel").querySelectorAll(".map-ink")) {
+    dot.addEventListener("click", () => {
+      if (mindUI.selected) mindRecolor(mindUI.selected, dot.dataset.color);
+    });
+  }
+  $("mapArrange").addEventListener("click", () => {
+    if (!state.mind.nodes.length) return;
+    tidyMind();
+    persist();
+    mindSyncPositions();
+    showToast(t("Map arranged"));
+  });
+  $("mapDelete").addEventListener("click", () => {
+    if (mindUI.selected) mindDeleteNode(mindUI.selected, true);
+  });
+
+  const canvas = $("canvas");
+  const blank = event => event.target === canvas || event.target === $("canvasScene") || event.target === $("connectionsLayer");
+
+  // Double-clicking empty board grows the map: a child of the selection, or a
+  // fresh root when nothing is selected.
+  let deselectTimer = 0;
+  canvas.addEventListener("dblclick", event => {
+    if (!mindUI.mode || !blank(event)) return;
+    clearTimeout(deselectTimer);
+    deselectTimer = 0;
+    const selected = mindUI.selected ? mindById(mindUI.selected) : null;
+    let node;
+    if (selected) {
+      node = mindAddChild(selected);
+    } else {
+      const point = toScenePoint(event);
+      node = mindCreateRoot(point.x - 40, point.y - MIND_H / 2);
+    }
+    persist();
+    renderAll();
+    mindSelect(node.id);
+    mindEditStart(node);
+  });
+
+  // A click on empty board clears the selection — deferred so a quick second
+  // click can still turn it into a double-click that creates a node.
+  canvas.addEventListener("click", event => {
+    if (!mindUI.mode || mindUI.editing || !blank(event) || !mindUI.selected) return;
+    clearTimeout(deselectTimer);
+    deselectTimer = setTimeout(() => {
+      deselectTimer = 0;
+      if (mindUI.mode && !mindUI.editing) mindSelect(null);
+    }, 260);
+  });
 }
 
 function bindDrag(el, note) {
@@ -1342,6 +1932,36 @@ function bindEvents() {
       return;
     }
     const meta = e.metaKey || e.ctrlKey;
+    // Mind-map keys: Tab grows a child, Enter a sibling, Delete removes the
+    // branch, and any printable key starts editing the selected node. Panel
+    // buttons keep their native keyboard behaviour.
+    if (mindUI.mode && !meta && !(e.target instanceof Element && e.target.closest("button"))) {
+      if (e.key === "Escape") {
+        setMapMode(false);
+        return;
+      }
+      if (e.key === "Tab") {
+        e.preventDefault();
+        mindGrow("child");
+        return;
+      }
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        mindGrow("sibling");
+        return;
+      }
+      if ((e.key === "Delete" || e.key === "Backspace") && mindUI.selected) {
+        e.preventDefault();
+        mindDeleteNode(mindUI.selected, true);
+        return;
+      }
+      if (mindUI.selected && e.key.length === 1 && e.key !== " " && !e.altKey && !e.shiftKey) {
+        e.preventDefault();
+        const node = mindById(mindUI.selected);
+        if (node) mindEditStart(node, e.key);
+        return;
+      }
+    }
     if (meta && e.key.toLowerCase() === "n") {
       e.preventDefault();
       createNote();
@@ -1354,6 +1974,9 @@ function bindEvents() {
     } else if (!meta && !e.altKey && !e.shiftKey && e.key.toLowerCase() === "d") {
       e.preventDefault();
       setDrawMode(!draw.mode);
+    } else if (!meta && !e.altKey && !e.shiftKey && e.key.toLowerCase() === "m") {
+      e.preventDefault();
+      setMapMode(!mindUI.mode);
     }
   });
 
@@ -1379,5 +2002,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   bindEvents();
   bindCanvasNavigation();
   bindDrawing();
+  bindMindMap();
   renderAll();
 });

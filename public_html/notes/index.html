@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
-      content="Connected Markdown notes on an infinite board with freehand drawing, images and private previews."
+      content="Connected Markdown notes on an infinite board with freehand drawing, images, mind maps and private previews."
     />
     <title>Notes · Edi Life OS</title>
     <script>
@@ -25,7 +25,7 @@
         }
       })();
     </script>
-    <link rel="stylesheet" href="static/style.css?v=notes-board-1" />
+    <link rel="stylesheet" href="static/style.css?v=notes-mindmap-1" />
   <script src="/assets/html-escape.js?v=issue19-1"></script>
 </head>
   <body>
@@ -43,6 +43,16 @@
         >
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="M15 5l4 4"/></svg>
           <span>Draw</span>
+        </button>
+        <button
+          class="btn-ghost"
+          id="mapBtn"
+          type="button"
+          aria-pressed="false"
+          title="Mind map (M)"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="2.5"/><circle cx="18.5" cy="5.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/><path d="M7.5 11.1 16.2 6.7M7.5 12.9l8.7 4.4"/></svg>
+          <span>Map</span>
         </button>
         <button
           class="btn-ghost"
@@ -79,6 +89,7 @@
     <main class="canvas" id="canvas" aria-label="Sticky notes canvas">
       <div class="canvas-scene" id="canvasScene">
         <svg class="connections-layer" id="connectionsLayer" aria-label="Note connections"></svg>
+        <svg class="mind-edges" id="mindEdges" aria-hidden="true"></svg>
         <svg class="drawings-layer" id="drawingsLayer" aria-hidden="true"></svg>
       </div>
       <div class="empty-state" id="emptyState" hidden>
@@ -111,6 +122,25 @@
       <span class="draw-hint">Esc to exit</span>
     </div>
 
+    <div class="map-panel" id="mapPanel" hidden role="group" aria-label="Mind map tools">
+      <div class="map-inks" role="group" aria-label="Branch color">
+        <button type="button" class="map-ink" data-color="amber" aria-pressed="false" title="Amber" aria-label="Amber"></button>
+        <button type="button" class="map-ink" data-color="blue" aria-pressed="false" title="Blue" aria-label="Blue"></button>
+        <button type="button" class="map-ink" data-color="red" aria-pressed="false" title="Red" aria-label="Red"></button>
+        <button type="button" class="map-ink" data-color="green" aria-pressed="false" title="Green" aria-label="Green"></button>
+        <button type="button" class="map-ink" data-color="purple" aria-pressed="false" title="Purple" aria-label="Purple"></button>
+      </div>
+      <button type="button" class="map-action" id="mapArrange" title="Tidy the map">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+        <span>Arrange</span>
+      </button>
+      <button type="button" class="map-action" id="mapDelete" title="Delete node" disabled>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg>
+        <span>Delete</span>
+      </button>
+      <span class="map-hint">Double-click to add · type to edit · Tab for a child · Enter for a sibling · Esc to exit</span>
+    </div>
+
     <div class="canvas-controls" role="group" aria-label="Canvas zoom">
       <button type="button" id="zoomOut" aria-label="Zoom out">−</button>
       <button type="button" id="resetZoom" title="Reset zoom">100%</button>
@@ -120,6 +150,6 @@
 
     <div class="toast" id="toast"></div>
     <script src="../assets/voice-input.js" defer></script>
-    <script src="static/app.js?v=notes-board-1" defer></script>
+    <script src="static/app.js?v=notes-mindmap-1" defer></script>
   </body>
 </html>

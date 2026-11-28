@@ -1738,5 +1738,20 @@
   "Delete this image?": "این تصویر حذف شود؟",
   "Board image": "تصویر بوم",
   "Open image": "باز کردن تصویر",
-  "Delete image": "حذف تصویر"
+  "Delete image": "حذف تصویر",
+  "Map": "نقشه",
+  "Mind map (M)": "نقشه ذهنی (M)",
+  "Mind map tools": "ابزارهای نقشه ذهنی",
+  "Branch color": "رنگ شاخه",
+  "Green": "سبز",
+  "Purple": "بنفش",
+  "Arrange": "مرتب‌سازی",
+  "Tidy the map": "مرتب کردن نقشه",
+  "Delete node": "حذف گره",
+  "Double-click to add · type to edit · Tab for a child · Enter for a sibling · Esc to exit": "دوبار کلیک برای افزودن · تایپ برای ویرایش · Tab فرزند · Enter هم‌سطح · Esc خروج",
+  "Add child node": "افزودن گره فرزند",
+  "Idea…": "ایده…",
+  "Delete this node and its branches?": "این گره و شاخه‌هایش حذف شود؟",
+  "Node deleted": "گره حذف شد",
+  "Map arranged": "نقشه مرتب شد"
 }
